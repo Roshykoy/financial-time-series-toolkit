@@ -40,7 +40,9 @@ def main():
         from src.fts_toolkit.scraper import scraper
 
         # Get more data for robust testing
-        df = scraper.get_fx_data_yahoo(symbol='EURUSD=X', days=180)  # 6 months
+        df = scraper.get_fx_data_yahoo(symbol=config.DEFAULT_SYMBOL,
+                                       days=config.LOOKBACK_DAYS)  # Fetch ~2 years of data
+        print(f"    Fetching data for {config.LOOKBACK_DAYS} days...")  # Optional: log what you're fetching
         print(f"    ✅ Got {len(df)} data points")
         print(f"    📅 Date range: {df['Date'].min()} to {df['Date'].max()}")
 
@@ -63,13 +65,37 @@ def main():
 
         # Create stationary sequences for ML
         X_train = X_test = y_train = y_test = None  # Initialize
+        n_components_for_pca = 0.95  # Initialize to None (PCA skipped by default)
+
         try:
+            if n_components_for_pca is not None:
+                print(
+                    f"    🧪 Attempting ML sequence creation with PCA, aiming for n_components/variance: {n_components_for_pca}")
+            else:
+                print(f"    🧪 Attempting ML sequence creation WITHOUT PCA.")
+
             X_train, X_test, y_train, y_test = advanced_processor.prepare_training_data(
-                df_processed, test_size=0.3
+                df_processed,
+                test_size=0.3,
+                n_pca_components=n_components_for_pca  # Pass the PCA parameter here
             )
-            print(f"    🎯 ML sequences: Train {X_train.shape}, Test {X_test.shape}")
+
+            # Check if sequence creation was successful (X_train would not be empty or None)
+            if X_train is not None and X_train.shape[0] > 0:
+                print(f"    🎯 ML sequences created: Train {X_train.shape}, Test {X_test.shape}")
+                if n_components_for_pca is not None:
+                    # X_train.shape[2] will be the actual number of components PCA selected if n_components_for_pca
+                    # was a float (e.g. 0.95) or it will be the integer you specified.
+                    print(f"    ✨ PCA resulted in {X_train.shape[2]} features.")
+            else:
+                # This case might be redundant if prepare_training_data raises an error or returns empty arrays
+                # that are caught by the except block, but it's a safeguard.
+                print(f"    ⚠️ ML sequence creation did not return data, even if no exception was raised.")
+                X_train = None  # Ensure X_train is None to skip subsequent ML model training
+
         except Exception as e:
             print(f"    ⚠️ ML sequence creation failed: {e}")
+            X_train = None  # Ensure X_train is None if an exception occurs
 
         # Test Econometric Models
         print("\n📈 Testing Econometric Models...")
@@ -126,60 +152,101 @@ def main():
                 print(f"    ❌ Hybrid modeling failed: {e}")
 
         # Enhanced ML Models (if sequences were created)
-        if X_train is not None and y_train is not None:  # ensure training data exists
+        if X_train is not None and y_train is not None and X_train.size > 0 and X_test.size > 0:
             print("\n🤖 Testing Enhanced ML Models...")
             from src.fts_toolkit.models import forecaster
 
             try:
-                # Train models with advanced features
+                # Train models
                 linear_model = forecaster.train_linear_model(X_train, y_train, X_test, y_test)
                 rf_model = forecaster.train_random_forest(X_train, y_train, X_test, y_test, n_estimators=100)
+                svr_model = forecaster.train_svr_model(X_train, y_train, X_test, y_test)
+                xgboost_model = forecaster.train_xgboost_model(
+                    X_train, y_train, X_test, y_test,
+                    n_estimators=100, learning_rate=0.1, max_depth=3, early_stopping_rounds=10
+                )
 
                 # Model comparison
                 print("\n📊 Enhanced Model Comparison:")
                 comparison = forecaster.get_model_comparison()
                 print(comparison[['test_mse', 'test_mae']].round(6))
 
-                # Feature importance (for Random Forest)
-                if hasattr(rf_model, 'feature_importances_'):  # No need for advanced_processor.feature_columns here yet
-                    num_flat_features = X_train.shape[1] * X_train.shape[2]  # window_size * num_original_features
+                # --- GENERATE FLAT FEATURE NAMES ONCE (after X_train is confirmed valid) ---
+                flat_feature_names = []  # Initialize
+                num_features_per_step = X_train.shape[2]
+                base_feature_names = []
 
-                    flat_feature_names = []
-                    if hasattr(advanced_processor, 'feature_columns'):
-                        for i in range(X_train.shape[1]):  # Iterate through window_size
-                            for col_name in advanced_processor.feature_columns:
-                                flat_feature_names.append(
-                                    f"{col_name}_t-{X_train.shape[1] - 1 - i}")  # e.g., Close_t-59, Volume_t-59 ...
-                                # Close_t-0, Volume_t-0
-                    else:  # Fallback if feature_columns is not available
-                        flat_feature_names = [f"flat_feature_{i}" for i in range(num_flat_features)]
+                if n_components_for_pca is not None:  # Check if PCA was applied
+                    base_feature_names = [f"PC_{i}" for i in range(num_features_per_step)]
+                    print(
+                        f"    📊 Generating feature importance names for {num_features_per_step} Principal Components.")
+                elif hasattr(advanced_processor, 'feature_columns') and advanced_processor.feature_columns:
+                    base_feature_names = advanced_processor.feature_columns
+                    print(
+                        f"    📊 Generating feature importance names for {len(base_feature_names)} original engineered features.")
+                else:
+                    base_feature_names = [f"feature_{i}" for i in range(num_features_per_step)]  # Fallback
+                    print(f"    📊 Using generic base feature names for importance.")
 
-                    # Ensure flat_feature_names matches the length of feature_importances_
+                window_steps = X_train.shape[1]  # This is your window_size
+                for i in range(window_steps):
+                    for col_name in base_feature_names:
+                        flat_feature_names.append(f"{col_name}_t-{window_steps - 1 - i}")
+                # --- END OF FLAT FEATURE NAMES GENERATION ---
+
+                # Feature importance for Random Forest
+                if hasattr(rf_model, 'feature_importances_'):
                     if len(flat_feature_names) == len(rf_model.feature_importances_):
-                        feature_importance = pd.DataFrame({
+                        feature_importance_rf = pd.DataFrame({
                             'feature': flat_feature_names,
                             'importance': rf_model.feature_importances_
                         }).sort_values('importance', ascending=False).head(10)
-
-                        print("\n🎯 Top 10 Most Important Features (Flattened):")
-                        for _, row in feature_importance.iterrows():
-                            print(f"    {row['feature']}: {row['importance']:.4f}")
+                        print("\n🎯 Top 10 Most Important Features for Random Forest (Flattened):")
+                        for _, row_rf in feature_importance_rf.iterrows():
+                            print(f"    {row_rf['feature']}: {row_rf['importance']:.4f}")
                     else:
                         print(
-                            f"    ⚠️ Could not display feature importance: Mismatch in feature names length ({len(flat_feature_names)}) and importances length ({len(rf_model.feature_importances_)}).")
-                        # Fallback to simple generic names for debug if complex mapping fails
-                        generic_flat_feature_names = [f"flat_feature_{i}" for i in
-                                                      range(len(rf_model.feature_importances_))]
-                        feature_importance_generic = pd.DataFrame({
-                            'feature': generic_flat_feature_names,
+                            f"    ⚠️ Could not display RF feature importance: Mismatch in names length ({len(flat_feature_names)}) vs importances length ({len(rf_model.feature_importances_)}). Using generic.")
+                        # Fallback for RF if needed
+                        generic_rf_flat_names = [f"rf_flat_feature_{k}" for k in
+                                                 range(len(rf_model.feature_importances_))]
+                        feature_importance_rf_generic = pd.DataFrame({
+                            'feature': generic_rf_flat_names,
                             'importance': rf_model.feature_importances_
                         }).sort_values('importance', ascending=False).head(10)
-                        print("\n🎯 Top 10 Most Important Features (Generic Flattened, Debug):")
-                        for _, row in feature_importance_generic.iterrows():
-                            print(f"    {row['feature']}: {row['importance']:.4f}")
+                        print("\n🎯 Top 10 Most Important Features for Random Forest (Generic Flattened, Debug):")
+                        for _, row_rf_gen in feature_importance_rf_generic.iterrows():
+                            print(f"    {row_rf_gen['feature']}: {row_rf_gen['importance']:.4f}")
+
+                # Feature importance for XGBoost
+                if hasattr(xgboost_model, 'feature_importances_'):
+                    if len(flat_feature_names) == len(xgboost_model.feature_importances_):
+                        feature_importance_xgb = pd.DataFrame({
+                            'feature': flat_feature_names,  # Reusing the same flat_feature_names
+                            'importance': xgboost_model.feature_importances_
+                        }).sort_values('importance', ascending=False).head(10)
+                        print("\n🎯 Top 10 Most Important Features for XGBoost (Flattened):")
+                        for _, row_xgb in feature_importance_xgb.iterrows():
+                            print(f"    {row_xgb['feature']}: {row_xgb['importance']:.4f}")
+                    else:
+                        print(
+                            f"    ⚠️ Could not display XGBoost feature importance: Mismatch in names length ({len(flat_feature_names)}) vs importances length ({len(xgboost_model.feature_importances_)}). Using generic.")
+                        # Fallback for XGBoost if needed
+                        generic_xgb_flat_names = [f"xgb_flat_feature_{k}" for k in
+                                                  range(len(xgboost_model.feature_importances_))]
+                        feature_importance_xgb_generic = pd.DataFrame({
+                            'feature': generic_xgb_flat_names,
+                            'importance': xgboost_model.feature_importances_
+                        }).sort_values('importance', ascending=False).head(10)
+                        print("\n🎯 Top 10 Most Important Features for XGBoost (Generic Flattened, Debug):")
+                        for _, row_xgb_gen in feature_importance_xgb_generic.iterrows():
+                            print(f"    {row_xgb_gen['feature']}: {row_xgb_gen['importance']:.4f}")
 
             except Exception as e:
                 print(f"    ❌ Enhanced ML modeling failed: {e}")
+                traceback.print_exc()  # Print full traceback for ML errors
+        else:
+            print("\n🤖 Skipping Enhanced ML Models training as no valid sequence data is available.")
 
         # Advanced Performance Metrics
         print("\n📊 Advanced Performance Analysis...")

@@ -8,10 +8,13 @@ import pandas as pd
 from sklearn.linear_model import LinearRegression
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.metrics import mean_squared_error, mean_absolute_error
+from sklearn.svm import SVR
+import xgboost as xgb
 from .config import config
 import logging
 
 logger = logging.getLogger(__name__)
+
 
 class FXForecaster:
     """Simple forecasting models for FX data"""
@@ -131,13 +134,176 @@ class FXForecaster:
         logger.info(f"Random Forest - Test MSE: {test_mse:.6f}, Test MAE: {test_mae:.6f}")
         return model
 
+    def train_svr_model(self, X_train, y_train, X_test, y_test,
+                        kernel='rbf', C=1.0, epsilon=0.1, gamma='scale'):
+        """
+        Train a Support Vector Regression (SVR) model.
+
+        Args:
+            X_train, y_train: Training data and labels.
+            X_test, y_test: Testing data and labels.
+            kernel (str): Specifies the kernel type to be used in the algorithm.
+                          Common values: 'linear', 'poly', 'rbf', 'sigmoid'.
+            C (float): Regularization parameter. The strength of the regularization is
+                       inversely proportional to C. Must be strictly positive.
+            epsilon (float): Epsilon in the epsilon-SVR model. It specifies the epsilon-tube
+                             within which no penalty is associated in the training loss function
+                             with points predicted within a distance epsilon from the actual value.
+            gamma (str or float): Kernel coefficient for 'rbf', 'poly' and 'sigmoid'.
+                                  'scale' means 1 / (n_features * X.var())
+                                  'auto' means 1 / n_features
+        """
+        logger.info(f"Training SVR model with kernel={kernel}, C={C}, epsilon={epsilon}, gamma={gamma}...")
+        model = SVR(kernel=kernel, C=C, epsilon=epsilon, gamma=gamma)
+
+        # Reshape data for sklearn (flatten sequences)
+        # X_train is (samples, window_size, features_per_step)
+        # X_train_flat should be (samples, window_size * features_per_step)
+        X_train_flat = X_train.reshape(X_train.shape[0], -1)
+        X_test_flat = X_test.reshape(X_test.shape[0], -1)
+
+        # Ensure y_train is 1D for sklearn models
+        if y_train.ndim > 1:
+            y_train = y_train.ravel()
+
+        model.fit(X_train_flat, y_train)
+
+        # Predictions
+        y_pred_train = model.predict(X_train_flat)
+        y_pred_test = model.predict(X_test_flat)
+
+        # --- CRITICAL FIX for aligning y_true and y_pred and handling potential NaNs ---
+        # (Copied from your other model methods for consistency)
+        temp_df_test = pd.DataFrame({'y_true': y_test, 'y_pred': y_pred_test})
+        temp_df_test.dropna(inplace=True)
+        y_test_clean = temp_df_test['y_true'].values
+        y_pred_test_clean = temp_df_test['y_pred'].values
+
+        temp_df_train = pd.DataFrame({'y_true': y_train, 'y_pred': y_pred_train})
+        temp_df_train.dropna(inplace=True)
+        y_train_clean = temp_df_train['y_true'].values
+        y_pred_train_clean = temp_df_train['y_pred'].values
+        # --- END OF CRITICAL FIX ---
+
+        # Calculate metrics - use the cleaned arrays
+        # Ensure there's data to calculate metrics on after cleaning
+        if len(y_train_clean) > 0 and len(y_test_clean) > 0:
+            train_mse = mean_squared_error(y_train_clean, y_pred_train_clean)
+            test_mse = mean_squared_error(y_test_clean, y_pred_test_clean)
+            train_mae = mean_absolute_error(y_train_clean, y_pred_train_clean)
+            test_mae = mean_absolute_error(y_test_clean, y_pred_test_clean)
+
+            logger.info(f"SVR Model - Test MSE: {test_mse:.6f}, Test MAE: {test_mae:.6f}")
+        else:
+            logger.warning(
+                "SVR Model - Not enough data to calculate metrics after cleaning NaNs from predictions/actuals.")
+            train_mse, test_mse, train_mae, test_mae = np.nan, np.nan, np.nan, np.nan
+
+        self.models['svr'] = model
+        self.metrics['svr'] = {
+            'train_mse': train_mse,
+            'test_mse': test_mse,
+            'train_mae': train_mae,
+            'test_mae': test_mae,
+        }
+        # Store cleaned test predictions
+        self.predictions['svr'] = y_pred_test_clean if len(y_test_clean) > 0 else np.array([])
+
+        return model
+
+    def train_xgboost_model(self, X_train, y_train, X_test, y_test,
+                            n_estimators=100, learning_rate=0.1, max_depth=5,
+                            early_stopping_rounds=10, verbosity=0, **kwargs):  # Added verbosity
+        """
+        Train an XGBoost regression model.
+
+        Args:
+            X_train, y_train: Training data and labels.
+            X_test, y_test: Testing data and labels.
+            n_estimators (int): Number of gradient boosted trees. Equivalent to number of boosting rounds.
+            learning_rate (float): Boosting learning rate (xgb's "eta")
+            max_depth (int): Maximum depth of a tree.
+            early_stopping_rounds (int): Activates early stopping. Validation error needs to decrease at least
+                                         every <early_stopping_rounds> round(s) to continue training.
+                                         Requires an eval_set.
+            verbosity (int): Verbosity of printing messages. 0 (silent) - 3 (debug).
+            **kwargs: Other XGBoost specific parameters.
+        """
+        logger.info(
+            f"Training XGBoost model with n_estimators={n_estimators}, learning_rate={learning_rate}, max_depth={max_depth}...")
+
+        model = xgb.XGBRegressor(
+            n_estimators=n_estimators,
+            learning_rate=learning_rate,
+            max_depth=max_depth,
+            random_state=config.RANDOM_SEED,  # For reproducibility
+            objective='reg:squarederror',  # Common objective for regression
+            early_stopping_rounds=early_stopping_rounds,
+            verbosity=verbosity,  # Set verbosity
+            **kwargs  # Pass any other xgb specific params
+        )
+
+        # Reshape data for XGBoost (flatten sequences)
+        X_train_flat = X_train.reshape(X_train.shape[0], -1)
+        X_test_flat = X_test.reshape(X_test.shape[0], -1)
+
+        # Ensure y_train is 1D
+        if y_train.ndim > 1:
+            y_train = y_train.ravel()
+
+        # XGBoost can use an evaluation set for early stopping
+        eval_set = [(X_test_flat, y_test)]
+
+        model.fit(X_train_flat, y_train, eval_set=eval_set,
+                  verbose=False)  # verbose=False here to use xgb's verbosity param
+
+        # Predictions
+        y_pred_train = model.predict(X_train_flat)
+        y_pred_test = model.predict(X_test_flat)
+
+        # --- CRITICAL FIX for aligning y_true and y_pred and handling potential NaNs ---
+        temp_df_test = pd.DataFrame({'y_true': y_test, 'y_pred': y_pred_test})
+        temp_df_test.dropna(inplace=True)
+        y_test_clean = temp_df_test['y_true'].values
+        y_pred_test_clean = temp_df_test['y_pred'].values
+
+        temp_df_train = pd.DataFrame({'y_true': y_train, 'y_pred': y_pred_train})
+        temp_df_train.dropna(inplace=True)
+        y_train_clean = temp_df_train['y_true'].values
+        y_pred_train_clean = temp_df_train['y_pred'].values
+        # --- END OF CRITICAL FIX ---
+
+        # Calculate metrics
+        if len(y_train_clean) > 0 and len(y_test_clean) > 0:
+            train_mse = mean_squared_error(y_train_clean, y_pred_train_clean)
+            test_mse = mean_squared_error(y_test_clean, y_pred_test_clean)
+            train_mae = mean_absolute_error(y_train_clean, y_pred_train_clean)
+            test_mae = mean_absolute_error(y_test_clean, y_pred_test_clean)
+            logger.info(f"XGBoost Model - Test MSE: {test_mse:.6f}, Test MAE: {test_mae:.6f}")
+            if model.best_iteration is not None:  # If early stopping was used
+                logger.info(f"XGBoost Model - Best iteration: {model.best_iteration}")
+        else:
+            logger.warning("XGBoost Model - Not enough data to calculate metrics after cleaning.")
+            train_mse, test_mse, train_mae, test_mae = np.nan, np.nan, np.nan, np.nan
+
+        self.models['xgboost'] = model
+        self.metrics['xgboost'] = {
+            'train_mse': train_mse,
+            'test_mse': test_mse,
+            'train_mae': train_mae,
+            'test_mae': test_mae,
+        }
+        self.predictions['xgboost'] = y_pred_test_clean if len(y_test_clean) > 0 else np.array([])
+
+        return model
+
     def simple_moving_average_forecast(self, data, window=5):
         """Simple moving average forecast"""
         if len(data) < window:
             # Handle cases where data is too short for the window
             if len(data) > 0:
                 return np.mean(data)
-            return np.nan # Return NaN if data is empty
+            return np.nan  # Return NaN if data is empty
         return np.mean(data[-window:])
 
     def predict_next(self, model_name, X_last):
@@ -149,12 +315,12 @@ class FXForecaster:
 
         # Ensure X_last is correctly reshaped for prediction
         # X_last might be a single sequence (e.g., X_test[0]), so reshape it to (1, -1)
-        if X_last.ndim == 2: # if X_last is (window_size, num_features)
-             X_flat = X_last.reshape(1, -1)
-        elif X_last.ndim == 1: # if X_last is (num_features,) already flattened
-             X_flat = X_last.reshape(1, -1)
-        else: # assuming X_last is (num_features,) from an already flattened context
-             X_flat = X_last.reshape(1, -1)
+        if X_last.ndim == 2:  # if X_last is (window_size, num_features)
+            X_flat = X_last.reshape(1, -1)
+        elif X_last.ndim == 1:  # if X_last is (num_features,) already flattened
+            X_flat = X_last.reshape(1, -1)
+        else:  # assuming X_last is (num_features,) from an already flattened context
+            X_flat = X_last.reshape(1, -1)
 
         prediction = model.predict(X_flat)[0]
 

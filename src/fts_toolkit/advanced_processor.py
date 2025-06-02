@@ -9,6 +9,7 @@ from scipy import stats
 from statsmodels.tsa.stattools import adfuller, kpss
 from statsmodels.tsa.seasonal import seasonal_decompose
 from sklearn.preprocessing import MinMaxScaler, StandardScaler
+from sklearn.decomposition import PCA
 from .config import config
 import logging
 import warnings  # Import warnings to suppress InterpolationWarning
@@ -169,6 +170,60 @@ class AdvancedFXProcessor:
             f"Could not achieve stationarity for {series.name or 'Series'} within {max_diff} differences. Returning last differenced series.")
         return current_series, diff_order
 
+    def handle_outliers_iqr(self, df: pd.DataFrame, columns: list, threshold: float = 1.5) -> pd.DataFrame:
+        """
+                Detects and handles outliers in specified columns using the IQR method by capping.
+
+                Args:
+                    df (pd.DataFrame): Input DataFrame.
+                    columns (list): List of column names to process for outliers.
+                    threshold (float): The IQR threshold multiplier (e.g., 1.5).
+
+                Returns:
+                    pd.DataFrame: DataFrame with outliers capped in the specified columns.
+        """
+        df_processed = df.copy()  # Work on a copy
+        logger.info(f"🔍 Starting outlier handling for columns: {columns}")
+
+        for col in columns:
+            if col not in df_processed.columns:
+                logger.warning(f"  Column '{col}' not found in DataFrame. Skipping outlier handling for it.")
+                continue
+
+            if not pd.api.types.is_numeric_dtype(df_processed[col]):
+                logger.warning(f"  Column '{col}' is not numeric. Skipping outlier handling for it.")
+                continue
+
+            logger.debug(f"  Processing column: {col}")
+            Q1 = df_processed[col].quantile(0.25)
+            Q3 = df_processed[col].quantile(0.75)
+            IQR = Q3 - Q1
+
+            lower_bound = Q1 - threshold * IQR
+            upper_bound = Q3 + threshold * IQR
+
+            # Detect outliers
+            outliers_lower = df_processed[col] < lower_bound
+            outliers_upper = df_processed[col] > upper_bound
+            num_outliers_lower = outliers_lower.sum()
+            num_outliers_upper = outliers_upper.sum()
+
+            if num_outliers_lower > 0 or num_outliers_upper > 0:
+                logger.info(
+                    f"    Found {num_outliers_lower} lower-bound and {num_outliers_upper} upper-bound outliers in '{col}'.")
+                logger.info(
+                    f"    '{col}': Q1={Q1:.4f}, Q3={Q3:.4f}, IQR={IQR:.4f}, LowerBound={lower_bound:.4f}, UpperBound={upper_bound:.4f}")
+
+                # Cap outliers
+                df_processed[col] = np.where(outliers_lower, lower_bound, df_processed[col])
+                df_processed[col] = np.where(outliers_upper, upper_bound, df_processed[col])
+                logger.info(f"    Capped outliers in '{col}'.")
+            else:
+                logger.debug(f"    No outliers detected in '{col}' with threshold {threshold}.")
+
+        logger.info("✅ Outlier handling completed.")
+        return df_processed
+
     def engineer_advanced_features(self, df):
         """
         Advanced feature engineering based on the report's recommendations
@@ -179,6 +234,19 @@ class AdvancedFXProcessor:
         # Ensure all relevant columns ('Volume', 'Open', 'High', 'Low', 'Close') are numeric
         # and handle missing values before any calculations.
         df = self._clean_initial_data(df)
+
+        ohlcv_columns = ['Open', 'High', 'Low', 'Close']
+        if 'Volume' in df.columns and pd.api.types.is_numeric_dtype(df['Volume']):  # Check if Volume is numeric
+            ohlcv_columns.append('Volume')
+
+        # Filter out columns that might not exist or are not numeric yet from ohlcv_columns
+        columns_to_check_for_outliers = [col for col in ohlcv_columns if
+                                         col in df.columns and pd.api.types.is_numeric_dtype(df[col])]
+
+        if columns_to_check_for_outliers:
+            df = self.handle_outliers_iqr(df, columns=columns_to_check_for_outliers)
+        else:
+            logger.info("No suitable OHLCV columns found for outlier handling or Volume is not numeric.")
 
         # Basic price transformations
         # These operations will now work correctly as price columns are numeric
@@ -241,14 +309,30 @@ class AdvancedFXProcessor:
 
         # Volume-based features (if Volume exists and is numeric)
         if 'Volume' in df.columns and pd.api.types.is_numeric_dtype(df['Volume']):
-            # This line caused the error previously; now 'Volume' is numeric
-            df['volume_sma_20'] = df['Volume'].rolling(window=20).mean()
-            df['volume_ratio'] = df['Volume'] / df['volume_sma_20']
-            df['price_volume'] = df['Close'] * df['Volume']
+            logger.debug("Calculating volume-based features...")
+            # Use min_periods=1 for rolling mean to get a value as soon as possible,
+            # though for a 20-period SMA, it's more meaningful after 20 periods.
+            df['volume_sma_20'] = df['Volume'].rolling(window=20, min_periods=1).mean()
+
+            # Calculate volume_ratio carefully to avoid infinity and handle NaNs
+            # 1. Divide, which might produce NaN (0/0) or inf (x/0)
+            # 2. Replace inf/-inf with NaN
+            # 3. Fill remaining NaNs (e.g., with 0, assuming 0 ratio if volume or avg volume is 0/NaN)
+            df['volume_ratio'] = df['Volume'].divide(df['volume_sma_20']).replace([np.inf, -np.inf], np.nan)
+
+            # What to fill NaNs in volume_ratio with is debatable.
+            # If volume_sma_20 is 0, the ratio is undefined.
+            # If we are keeping the column, we need to fill these NaNs.
+            # Filling with 0 is one option, implying no significant volume activity relative to average.
+            # The initial NaNs (first 19 from rolling) will also be filled.
+            df['volume_ratio'] = df['volume_ratio'].fillna(0)
+            logger.debug(f"NaNs in 'volume_ratio' after processing: {df['volume_ratio'].isnull().sum()}")
+
+            df['price_volume'] = df['Close'] * df['Volume']  # This is fine; will be 0 if Volume is 0
         else:
             logger.warning(
-                "Volume column not suitable for advanced volume features (missing or non-numeric). Skipping.")
-            # Ensure these columns exist even if not calculated
+                "Volume column not suitable for advanced volume features (missing or non-numeric). Skipping and "
+                "filling with NaN.")
             df['volume_sma_20'] = np.nan
             df['volume_ratio'] = np.nan
             df['price_volume'] = np.nan
@@ -293,139 +377,193 @@ class AdvancedFXProcessor:
         rsi = 100 - (100 / (1 + rs))
         return rsi
 
-    def create_stationary_sequences(self, df, target_col='Close', window_size=None, test_stationarity=True):
+    def create_stationary_sequences(self, df, target_col='Close', window_size=None,
+                                    test_stationarity_bool=True,  # Renamed for clarity
+                                    n_pca_components=None):  # New parameter for PCA
         """
-        Create sequences with stationarity testing and transformation for machine learning models.
+        Create sequences with stationarity testing, optional PCA, and transformation for ML models.
         """
         if window_size is None:
             try:
                 window_size = config.WINDOW_SIZE
             except AttributeError:
                 logger.error("config.WINDOW_SIZE not found. Using default window_size=60.")
-                window_size = 60  # Fallback
+                window_size = 60
 
         df_processed = df.copy()
 
         # Test stationarity of target variable
-        if test_stationarity:
-            # Ensure target_col is numeric before testing stationarity
-            if target_col not in df_processed.columns or not pd.api.types.is_numeric_dtype(df_processed[target_col]):
-                logger.error(f"Target column '{target_col}' is missing or not numeric. Cannot test stationarity.")
-                test_stationarity = False  # Skip stationarity testing if target is not numeric
+        if test_stationarity_bool:
+            if target_col not in df_processed.columns or \
+                    not pd.api.types.is_numeric_dtype(df_processed[target_col]):
+                logger.error(
+                    f"Target column '{target_col}' for stationarity testing is missing or not numeric. Skipping stationarity processing.")
+                # test_stationarity_bool = False # Flag is already being checked; no need to modify here
             else:
                 target_series = df_processed[target_col].dropna()
                 if target_series.empty:
                     logger.warning(
-                        f"Target series '{target_col}' is empty after dropping NaNs. Skipping stationarity test.")
-                    test_stationarity = False
+                        f"Target series '{target_col}' is empty after dropping NaNs. Skipping stationarity test and differencing.")
                 else:
-                    stationarity_result = self.test_stationarity(target_series, target_col)
-                    self.stationarity_results[target_col] = stationarity_result
+                    # Perform the stationarity test
+                    stationarity_test_output = self.test_stationarity(target_series, target_col)
+                    self.stationarity_results[
+                        target_col] = stationarity_test_output  # Store original target_col results
 
-                    # Make target stationary if needed
-                    if stationarity_result['recommendation'] != 'stationary':
-                        logger.info(f"Making {target_col} stationary...")
+                    # Check if the test itself had an error
+                    if stationarity_test_output.get('error'):
+                        logger.warning(
+                            f"Stationarity test for {target_col} resulted in an error: {stationarity_test_output['error']}. Not attempting to make stationary.")
+                    # Access 'recommendation' only if no error from the test
+                    elif stationarity_test_output.get('recommendation') != 'stationary':
+                        logger.info(
+                            f"Target '{target_col}' is {stationarity_test_output.get('recommendation', 'unknown')}. Making it stationary...")
+                        # Pass the original target_series to make_stationary
                         stationary_target, diff_order = self.make_stationary(target_series)
 
-                        # --- FIX START ---
-                        # Apply transformation back to the main DataFrame for consistency
-                        # Create a new DataFrame with the stationary series and the desired new column name
-                        new_stationary_col_name = f'{target_col}_stationary'
-                        # Ensure the index matches df_processed's index for correct alignment
-                        # You'll likely need to reindex stationary_target if it doesn't align perfectly
-                        # or ensure the original series was indexed appropriately before differencing.
-                        # For now, we'll assume the index of stationary_target is suitable for joining.
-                        temp_df = pd.DataFrame({new_stationary_col_name: stationary_target},
-                                               index=stationary_target.index)
+                        if not stationary_target.empty:
+                            # Use original target_col for naming to avoid nesting _stationary_stationary
+                            original_target_base_name = target_col.replace(f'_stationary_d{diff_order - 1}',
+                                                                           '') if diff_order > 0 else target_col  # Get base name
+                            new_stationary_col_name = f'{original_target_base_name}_stationary_d{diff_order}'
 
-                        # Join the new stationary column to the processed DataFrame
-                        # Use left join to keep all rows from df_processed and add the new column
-                        df_processed = df_processed.join(temp_df, how='left')
+                            temp_df = pd.DataFrame({new_stationary_col_name: stationary_target},
+                                                   index=stationary_target.index)
+                            df_processed = df_processed.join(temp_df, how='left')
+                            target_col = new_stationary_col_name  # Update the target column name FOR THIS FUNCTION'S SCOPE
+                            logger.info(f"Target column for sequences is now '{target_col}'.")
+                        elif len(target_series) > 0:  # stationary_target is empty but original series was not
+                            logger.warning(
+                                f"Failed to make '{target_col}' stationary or result is empty (e.g., series too short for differencing). Using original (or last successfully differenced) series as target.")
+                        # If stationary_target is empty and original series was also empty, it's already handled.
+                    else:
+                        logger.info(
+                            f"Target '{target_col}' is already {stationarity_test_output.get('recommendation', 'stationary')}.")
+        # Ensure current_target_col_name reflects the final target_col after potential stationarization
+        current_target_col_name = target_col
 
-                        # Update target_col to use the newly created stationary column
-                        target_col = new_stationary_col_name
-                        # --- FIX END ---
-
-        # Select numeric features only
-        # Make sure to include the potentially new target_col if it was created
         numeric_cols = df_processed.select_dtypes(include=[np.number]).columns.tolist()
 
-        # Ensure target_col is in numeric_cols before filtering it out for features
         if target_col not in numeric_cols:
-            logger.warning(
-                f"Target column '{target_col}' not found in numeric columns after stationarity check. This might lead to issues.")
-            # Consider adding target_col to numeric_cols if it's supposed to be numeric. This can happen if,
-            # for example, the original 'Close' was numeric but the _stationary version somehow isn't,
-            # or if the original 'Close' was dropped for some reason before this step. For robustness,
-            # we can explicitly add it if it exists in df_processed and is numeric.
             if target_col in df_processed.columns and pd.api.types.is_numeric_dtype(df_processed[target_col]):
-                numeric_cols.append(target_col)
+                numeric_cols.append(target_col)  # Ensure target_col is considered numeric
+            else:  # If target_col is still not numeric (e.g. after differencing it was removed or became all NaN)
+                logger.error(
+                    f"Target column '{target_col}' is not available as a numeric column. Cannot proceed with sequence creation.")
+                # You might want to raise an error or return empty arrays here
+                return np.array([]), np.array([]), target_col
 
         feature_cols = [col for col in numeric_cols if col != target_col and not col.startswith('Date')]
 
-        # Remove rows with NaN values. This is crucial AFTER all feature engineering
-        # and stationarity transformations, as many operations introduce NaNs at the beginning.
-        subset_for_dropna = feature_cols + [target_col]
+        # Ensure all columns in subset_for_dropna actually exist
+        # Original code used target_col which could be string 'Close_stationary'
+        # Ensure the actual target_col (potentially modified by stationarity) is used for subset
+        current_target_col_name = target_col
+        subset_for_dropna = feature_cols + [current_target_col_name]
 
-        # Ensure all columns in subset_for_dropna actually exist in df_processed
         valid_subset_for_dropna = [col for col in subset_for_dropna if col in df_processed.columns]
-        if len(valid_subset_for_dropna) < len(subset_for_dropna):
-            missing_cols = set(subset_for_dropna) - set(valid_subset_for_dropna)
-            logger.warning(
-                f"Some columns specified for dropna (e.g., {missing_cols}) are not in the DataFrame. Dropping NaNs based on available columns.")
+
+        # ---- START OF DEBUGGING BLOCK ----
+        if not valid_subset_for_dropna:
+            logger.error("CRITICAL DEBUG: No valid columns found for dropna. Check feature_cols and target_col.")
+        else:
+            logger.info(
+                f"DEBUG: About to call dropna. Inspecting df_processed with {len(valid_subset_for_dropna)} columns for dropna.")
+
+            # Create the slice that will be used in dropna
+            df_slice_for_dropna = df_processed[valid_subset_for_dropna]
+
+            # Print how many NaNs each column in this slice has
+            nan_counts = df_slice_for_dropna.isnull().sum().sort_values(ascending=False)
+            logger.info(
+                f"DEBUG: NaN counts per column (before dropna):\n{nan_counts[nan_counts > 0]}")  # Show only columns with NaNs
+
+            # Save this slice to a CSV for detailed inspection
+            # You can open this CSV in Excel or a data analysis tool
+            debug_csv_path = "debug_df_slice_before_dropna.csv"
+            try:
+                df_slice_for_dropna.to_csv(debug_csv_path)
+                logger.info(f"DEBUG: Saved df_slice_for_dropna to {debug_csv_path} for inspection.")
+            except Exception as e_csv:
+                logger.error(f"DEBUG: Failed to save debug CSV: {e_csv}")
+
+            # Check how many rows remain if we drop NaNs
+            rows_after_dropna_test = df_slice_for_dropna.dropna().shape[0]
+            logger.info(f"DEBUG: Test - number of rows that would remain after dropna: {rows_after_dropna_test}")
+
+        # ---- END OF DEBUGGING BLOCK ----
 
         df_clean = df_processed[valid_subset_for_dropna].dropna().copy()
 
         if len(df_clean) < window_size + 1:
             raise ValueError(
                 f"Insufficient data for sequence creation after dropping NaNs. "
-                f"Need at least {window_size + 1} rows, got {len(df_clean)}."
-                f"Consider checking input data or reducing window_size."
+                f"Need {window_size + 1} rows, got {len(df_clean)}. "
+                f"Target: '{current_target_col_name}', Features: {feature_cols[:3]}..."
             )
 
-        # Prepare features and target
-        features = df_clean[feature_cols].values
-        target = df_clean[target_col].values
+        features_data = df_clean[feature_cols].values
+        target_data = df_clean[current_target_col_name].values
 
-        # Scale features
-        # Fit scaler only on training data if doing train/test split here.
-        # For simplicity in this general function, we fit on all clean features.
-        # In a full ML pipeline, you'd fit scaler on X_train only.
-        features_scaled = self.scaler.fit_transform(features)
+        self.feature_columns = feature_cols  # Store original feature names BEFORE PCA
 
-        # Create sequences
+        # --- NEW: Optional PCA step ---
+        if n_pca_components is not None and features_data.shape[
+            1] > 1:  # Apply PCA if requested and more than 1 feature
+            logger.info(f"🔩 Applying PCA with n_components={n_pca_components} to {features_data.shape[1]} features.")
+            pca = PCA(n_components=n_pca_components)
+            features_data = pca.fit_transform(features_data)  # Fit PCA and transform features
+            logger.info(f"  Features transformed to {features_data.shape[1]} principal components.")
+            # Note: After PCA, self.feature_columns (original names) won't directly map to the PCA components.
+            # For interpretability, you might store pca.explained_variance_ratio_
+        else:
+            logger.info("PCA step skipped.")
+        # --- End of PCA step ---
+
+        # Scale features (either original or PCA-transformed)
+        # Important: self.scaler should be fit only on training data in a true pipeline.
+        # For now, it's fit on all data passed to this function.
+        # This is generally handled correctly in your walk_forward_validation.
+        if features_data.shape[0] > 0:  # Check if features_data is not empty
+            features_scaled = self.scaler.fit_transform(features_data)
+        else:
+            logger.warning("No feature data to scale after cleaning and PCA (if applied).")
+            return np.array([]), np.array([]), current_target_col_name
+
         X, y = [], []
         for i in range(len(features_scaled) - window_size):
             X.append(features_scaled[i:i + window_size])
-            y.append(target[i + window_size])
+            y.append(target_data[i + window_size])  # Use target_data
 
         X = np.array(X)
         y = np.array(y)
 
-        self.feature_columns = feature_cols  # Store feature columns for later use (e.g., inverse transform)
+        # Log the number of features actually used for X after PCA and scaling
+        num_features_in_x = X.shape[2] if X.ndim == 3 else 0  # X is (samples, window, features)
+        logger.info(f"Created sequences: X shape {X.shape}, y shape {y.shape}")
+        if num_features_in_x > 0:
+            logger.info(
+                f"Using {num_features_in_x} features in sequences (after PCA if applied). Original features (before PCA): {self.feature_columns[:5]}...")
+        else:
+            logger.info("No features in the generated sequences X.")
 
-        logger.info(f"Created stationary sequences: X shape {X.shape}, y shape {y.shape}")
-        logger.info(f"Using {len(feature_cols)} features: {feature_cols[:5]}{'...' if len(feature_cols) > 5 else ''}")
+        return X, y, current_target_col_name  # Return the actual target column name used
 
-        return X, y, target_col
-
-    def prepare_training_data(self, df: pd.DataFrame, test_size: float = 0.2, target_col: str = 'Close'):
+    def prepare_training_data(self, df: pd.DataFrame, test_size: float = 0.2, target_col: str = 'Close',
+                              n_pca_components=None):  # Pass PCA components here too
         """
         Prepares data for training by creating stationary sequences and performing a train/test split.
-
-        Args:
-            df (pd.DataFrame): The DataFrame with engineered features.
-            test_size (float): The proportion of the dataset to include in the test split.
-            target_col (str): The name of the target column to predict.
-
-        Returns:
-            tuple: X_train, X_test, y_train, y_test arrays for machine learning models.
         """
-        # Call the existing method to get sequences
-        # create_stationary_sequences returns X, y, and the final_target_col (which might be differenced)
-        X, y, final_target_col_used = self.create_stationary_sequences(df, target_col=target_col)
+        # Pass n_pca_components to create_stationary_sequences
+        X, y, final_target_col_used = self.create_stationary_sequences(
+            df, target_col=target_col, n_pca_components=n_pca_components
+        )  # Note: I removed test_stationarity_bool for now, assuming it's usually True.
+        # You can add it back if you need to control it from here.
 
-        # Time series split (no shuffling)
+        if X.shape[0] == 0:  # Check if X is empty
+            logger.error("No data returned from create_stationary_sequences. Cannot split into train/test.")
+            return np.array([]), np.array([]), np.array([]), np.array([])
+
         split_idx = int(len(X) * (1 - test_size))
 
         X_train = X[:split_idx]
