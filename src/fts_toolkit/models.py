@@ -5,11 +5,17 @@ Simple models for FX prediction
 
 import numpy as np
 import pandas as pd
+import xgboost as xgb
+import tensorflow as tf
+import keras_tuner as kt
 from sklearn.linear_model import LinearRegression
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.metrics import mean_squared_error, mean_absolute_error
 from sklearn.svm import SVR
-import xgboost as xgb
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import LSTM, Dense, Dropout, GRU
+from tensorflow.keras.callbacks import EarlyStopping
+from tensorflow.keras.optimizers import Adam
 from .config import config
 import logging
 
@@ -77,12 +83,14 @@ class FXForecaster:
         logger.info(f"Linear Model - Test MSE: {test_mse:.6f}, Test MAE: {test_mae:.6f}")
         return model
 
-    def train_random_forest(self, X_train, y_train, X_test, y_test, n_estimators=50):
+    def train_random_forest(self, X_train, y_train, X_test, y_test,
+                            n_estimators=100, max_depth=10): # ADD max_depth here, use config default
         """Train a random forest model"""
+        logger.info(f"Training Random Forest model with n_estimators={n_estimators}, max_depth={max_depth}...")
         model = RandomForestRegressor(
-            n_estimators=n_estimators,
+            n_estimators=n_estimators,       # Use the passed n_estimators
             random_state=config.RANDOM_SEED,
-            max_depth=10
+            max_depth=max_depth              # Use the passed max_depth
         )
 
         # Reshape data for sklearn
@@ -131,7 +139,7 @@ class FXForecaster:
         }
         self.predictions['random_forest'] = y_pred_test_clean  # Store cleaned test predictions here
 
-        logger.info(f"Random Forest - Test MSE: {test_mse:.6f}, Test MAE: {test_mae:.6f}")
+        logger.info(f"Random Forest - Test MSE: {test_mse:.6f}, Test MAE: {test_mae:.6f}") # Ensure this log is present
         return model
 
     def train_svr_model(self, X_train, y_train, X_test, y_test,
@@ -296,6 +304,301 @@ class FXForecaster:
         self.predictions['xgboost'] = y_pred_test_clean if len(y_test_clean) > 0 else np.array([])
 
         return model
+
+    def _build_lstm_model(self, hp, input_shape):
+        """Builds and compiles an LSTM model for KerasTuner."""
+        model = Sequential()
+
+        # Tune the number of units in the first LSTM layer
+        hp_units_l1 = hp.Int('lstm_units_l1', min_value=32, max_value=128, step=16)
+        # Tune the number of units in the second LSTM layer
+        hp_units_l2 = hp.Int('lstm_units_l2', min_value=32, max_value=128, step=16)
+
+        # Tune dropout rates
+        hp_dropout_l1 = hp.Float('dropout_l1', min_value=0.1, max_value=0.5, step=0.1)
+        hp_dropout_l2 = hp.Float('dropout_l2', min_value=0.1, max_value=0.5, step=0.1)
+
+        # First LSTM layer
+        model.add(LSTM(hp_units_l1, activation='relu', input_shape=input_shape, return_sequences=True))
+        model.add(Dropout(hp_dropout_l1))
+
+        # Second LSTM layer
+        model.add(LSTM(hp_units_l2, activation='relu', return_sequences=False))
+        model.add(Dropout(hp_dropout_l2))
+
+        # Output layer
+        model.add(Dense(1))
+
+        # Tune the learning rate for the optimizer
+        hp_learning_rate = hp.Choice('learning_rate', values=[1e-2, 1e-3, 1e-4])
+
+        model.compile(
+            optimizer=Adam(learning_rate=hp_learning_rate),
+            loss='mean_squared_error',
+            metrics=['mean_absolute_error']
+        )
+        return model
+
+    def train_lstm_model(self, X_train, y_train, X_test, y_test,
+                         # These existing params will now be tuner/search params
+                         epochs=50,  # Epochs per trial for the tuner
+                         batch_size=32,
+                         validation_split=0.1,  # Used by tuner.search
+                         early_stopping_patience=10,  # Used by tuner.search
+                         # KerasTuner specific parameters from config
+                         tuner_max_trials=10,
+                         tuner_executions_per_trial=2,
+                         tuner_directory='keras_tuner_dir',  # Directory to store tuner results
+                         tuner_project_name='lstm_tuning'):
+        """
+        Tune and Train an LSTM model using KerasTuner.
+        """
+        logger.info(f"Starting LSTM hyperparameter tuning with KerasTuner: "
+                    f"max_trials={tuner_max_trials}, executions_per_trial={tuner_executions_per_trial}, "
+                    f"epochs_per_trial={epochs}...")
+
+        input_shape = (X_train.shape[1], X_train.shape[2])
+
+        # Define the tuner (e.g., RandomSearch or Hyperband)
+        # We pass a lambda that calls our build function with the input_shape
+        tuner = kt.RandomSearch(
+            # Pass a partial function or lambda to inject input_shape
+            lambda hp: self._build_lstm_model(hp, input_shape=input_shape),
+            objective=kt.Objective('val_loss', direction='min'),  # Minimize validation loss
+            max_trials=tuner_max_trials,
+            executions_per_trial=tuner_executions_per_trial,
+            directory=tuner_directory,
+            project_name=f"{tuner_project_name}_lstm"  # Differentiate if you also tune GRU
+        )
+
+        # Announce search space summary
+        tuner.search_space_summary()
+        logger.info("Starting KerasTuner search...")
+
+        # Define EarlyStopping callback for the search
+        early_stopping = EarlyStopping(
+            monitor='val_loss',
+            patience=early_stopping_patience,
+            verbose=1  # Log when training stops early
+        )
+
+        # Run the hyperparameter search
+        # y_train should be 1D here.
+        if y_train.ndim > 1: y_train = y_train.ravel()
+
+        tuner.search(X_train, y_train,
+                     epochs=epochs,  # Epochs for each trial
+                     batch_size=batch_size,
+                     validation_split=validation_split,
+                     callbacks=[early_stopping],
+                     verbose=1  # Show progress for each trial
+                     )
+        logger.info("KerasTuner search completed.")
+
+        # Get the optimal hyperparameters
+        best_hps = tuner.get_best_hyperparameters(num_trials=1)[0]
+        logger.info(f"Best LSTM Hyperparameters found: "
+                    f"L1 Units: {best_hps.get('lstm_units_l1')}, "
+                    f"L2 Units: {best_hps.get('lstm_units_l2')}, "
+                    f"Dropout L1: {best_hps.get('dropout_l1'):.2f}, "
+                    f"Dropout L2: {best_hps.get('dropout_l2'):.2f}, "
+                    f"Learning Rate: {best_hps.get('learning_rate'):.4f}")
+
+        # Build the model with the best hyperparameters and train it on the full training data
+        # (Or retrieve the best model directly from the tuner if it was trained sufficiently)
+        logger.info("Building and training the best LSTM model with optimal hyperparameters...")
+        best_model = tuner.hypermodel.build(best_hps)  # Build model with best HPs
+
+        # Retrain the best model on the full training data (no validation_split here)
+        # You might want more epochs for this final training run.
+        # For consistency, let's use the same 'epochs' and 'early_stopping_patience' for now,
+        # or you could define separate config params for final model training.
+        final_model_epochs = epochs  # Or a new config value like config.LSTM_FINAL_EPOCHS
+        final_early_stopping = EarlyStopping(
+            monitor='val_loss',  # Still monitor val_loss if using X_test as val_data
+            patience=early_stopping_patience,  # Or a different patience for final training
+            restore_best_weights=True,
+            verbose=1
+        )
+        history = best_model.fit(X_train, y_train,
+                                 epochs=final_model_epochs,
+                                 batch_size=batch_size,
+                                 validation_data=(X_test, y_test),
+                                 # Use X_test, y_test for final model's val_loss monitoring
+                                 callbacks=[final_early_stopping],
+                                 verbose=1)
+        logger.info("Best LSTM model retrained.")
+        print(best_model.summary())
+
+        # Predictions
+        y_pred_train_keras = best_model.predict(X_train)
+        y_pred_test_keras = best_model.predict(X_test)
+
+        y_pred_train = y_pred_train_keras.flatten()
+        y_pred_test = y_pred_test_keras.flatten()
+
+        # ... (rest of your metrics calculation and storage logic is the same) ...
+        # Just ensure you use the key 'lstm_tuned' or similar if you want to compare
+        # with the non-tuned version. For now, I'll assume it replaces 'lstm_stacked'.
+
+        if len(y_train.flatten()) > 0 and len(y_test.flatten()) > 0:  # Use original y_train/y_test for lengths
+            train_mse = mean_squared_error(y_train.flatten(),
+                                           y_pred_train)  # Use original y_train, y_pred_train from best_model
+            test_mse = mean_squared_error(y_test.flatten(),
+                                          y_pred_test)  # Use original y_test, y_pred_test from best_model
+            train_mae = mean_absolute_error(y_train.flatten(), y_pred_train)
+            test_mae = mean_absolute_error(y_test.flatten(), y_pred_test)
+            logger.info(f"Tuned LSTM Model - Test MSE: {test_mse:.6f}, Test MAE: {test_mae:.6f}")
+            # history for the retrained best_model might not have val_loss if validation_data wasn't used in retrain
+            # If using validation_data in final fit (as above), then history.history['val_loss'] is available
+            if 'val_loss' in history.history:
+                best_epoch_final_training = np.argmin(history.history['val_loss']) + 1
+                logger.info(
+                    f"Tuned LSTM Model - Best epoch in final training: {best_epoch_final_training} (stopped at epoch {len(history.epoch)})")
+
+        else:
+            logger.warning("Tuned LSTM Model - Not enough data to calculate metrics.")
+            train_mse, test_mse, train_mae, test_mae = np.nan, np.nan, np.nan, np.nan
+
+        self.models['lstm_tuned'] = best_model  # Using a new key
+        self.metrics['lstm_tuned'] = {
+            'train_mse': train_mse, 'test_mse': test_mse,
+            'train_mae': train_mae, 'test_mae': test_mae,
+        }
+        self.predictions['lstm_tuned'] = y_pred_test if len(y_test.flatten()) > 0 else np.array([])
+
+        return best_model
+
+    def _build_gru_model(self, hp, input_shape):
+        """Builds and compiles a GRU model for KerasTuner."""
+        model = Sequential()
+
+        # Tune the number of units in the GRU layer
+        hp_units = hp.Int('gru_units', min_value=32, max_value=128, step=16)
+        # Tune dropout rate
+        hp_dropout = hp.Float('gru_dropout', min_value=0.1, max_value=0.5, step=0.1)
+
+        # GRU layer
+        # For a single GRU layer before Dense, return_sequences=False
+        # If you wanted to tune stacking GRU layers, you'd add more hp for units/layers
+        # and set return_sequences=True for non-final GRU layers.
+        model.add(GRU(hp_units, activation='relu', input_shape=input_shape, return_sequences=False))
+        model.add(Dropout(hp_dropout))
+
+        # Output layer
+        model.add(Dense(1))
+
+        # Tune the learning rate for the optimizer
+        hp_learning_rate = hp.Choice('gru_learning_rate', values=[1e-2, 1e-3, 1e-4])
+
+        model.compile(
+            optimizer=Adam(learning_rate=hp_learning_rate),
+            loss='mean_squared_error',
+            metrics=['mean_absolute_error']
+        )
+        return model
+
+    def train_gru_model(self, X_train, y_train, X_test, y_test,
+                        # These existing params will now be tuner/search params
+                        epochs=50,  # Epochs per trial for the tuner
+                        batch_size=32,
+                        validation_split=0.1,  # Used by tuner.search
+                        early_stopping_patience=10,  # Used by tuner.search
+                        # KerasTuner specific parameters from config
+                        tuner_max_trials=10,
+                        tuner_executions_per_trial=2,
+                        tuner_directory='keras_tuner_dir',  # Default, will be overridden
+                        tuner_project_name='gru_tuning'):  # Default, will be overridden
+        """
+        Tune and Train a GRU model using KerasTuner.
+        """
+        logger.info(f"Starting GRU hyperparameter tuning with KerasTuner: "
+                    f"max_trials={tuner_max_trials}, executions_per_trial={tuner_executions_per_trial}, "
+                    f"epochs_per_trial={epochs}...")
+
+        input_shape = (X_train.shape[1], X_train.shape[2])
+
+        tuner = kt.RandomSearch(
+            lambda hp: self._build_gru_model(hp, input_shape=input_shape),
+            objective=kt.Objective('val_loss', direction='min'),
+            max_trials=tuner_max_trials,
+            executions_per_trial=tuner_executions_per_trial,
+            directory=tuner_directory,  # This should be a unique path for GRU tuner
+            project_name=f"{tuner_project_name}_gru"
+        )
+
+        tuner.search_space_summary()
+        logger.info("Starting KerasTuner search for GRU...")
+
+        early_stopping = EarlyStopping(
+            monitor='val_loss',
+            patience=early_stopping_patience,
+            verbose=1
+        )
+
+        if y_train.ndim > 1: y_train = y_train.ravel()
+
+        tuner.search(X_train, y_train,
+                     epochs=epochs,
+                     batch_size=batch_size,
+                     validation_split=validation_split,
+                     callbacks=[early_stopping],
+                     verbose=1
+                     )
+        logger.info("KerasTuner search for GRU completed.")
+
+        best_hps = tuner.get_best_hyperparameters(num_trials=1)[0]
+        logger.info(f"Best GRU Hyperparameters found: "
+                    f"Units: {best_hps.get('gru_units')}, "
+                    f"Dropout: {best_hps.get('gru_dropout'):.2f}, "
+                    f"Learning Rate: {best_hps.get('gru_learning_rate'):.4f}")
+
+        logger.info("Building and training the best GRU model with optimal hyperparameters...")
+        best_model = tuner.hypermodel.build(best_hps)
+
+        final_model_epochs = epochs
+        final_early_stopping = EarlyStopping(
+            monitor='val_loss',
+            patience=early_stopping_patience,
+            restore_best_weights=True,
+            verbose=1
+        )
+        history = best_model.fit(X_train, y_train,
+                                 epochs=final_model_epochs,
+                                 batch_size=batch_size,
+                                 validation_data=(X_test, y_test),
+                                 callbacks=[final_early_stopping],
+                                 verbose=1)
+        logger.info("Best GRU model retrained.")
+        print(best_model.summary())
+
+        y_pred_train_keras = best_model.predict(X_train)
+        y_pred_test_keras = best_model.predict(X_test)
+        y_pred_train = y_pred_train_keras.flatten()
+        y_pred_test = y_pred_test_keras.flatten()
+
+        if len(y_train.flatten()) > 0 and len(y_test.flatten()) > 0:
+            train_mse = mean_squared_error(y_train.flatten(), y_pred_train)
+            test_mse = mean_squared_error(y_test.flatten(), y_pred_test)
+            train_mae = mean_absolute_error(y_train.flatten(), y_pred_train)
+            test_mae = mean_absolute_error(y_test.flatten(), y_pred_test)
+            logger.info(f"Tuned GRU Model - Test MSE: {test_mse:.6f}, Test MAE: {test_mae:.6f}")
+            if 'val_loss' in history.history:
+                best_epoch_final_training = np.argmin(history.history['val_loss']) + 1
+                logger.info(
+                    f"Tuned GRU Model - Best epoch in final training: {best_epoch_final_training} (stopped at epoch {len(history.epoch)})")
+        else:
+            logger.warning("Tuned GRU Model - Not enough data to calculate metrics.")
+            train_mse, test_mse, train_mae, test_mae = np.nan, np.nan, np.nan, np.nan
+
+        self.models['gru_tuned'] = best_model  # Using a new key
+        self.metrics['gru_tuned'] = {
+            'train_mse': train_mse, 'test_mse': test_mse,
+            'train_mae': train_mae, 'test_mae': test_mae,
+        }
+        self.predictions['gru_tuned'] = y_pred_test if len(y_test.flatten()) > 0 else np.array([])
+
+        return best_model
 
     def simple_moving_average_forecast(self, data, window=5):
         """Simple moving average forecast"""

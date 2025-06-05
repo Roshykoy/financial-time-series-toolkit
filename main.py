@@ -4,6 +4,7 @@ Testing sophisticated methodologies for financial prediction
 """
 import numpy as np
 import pandas as pd
+import matplotlib.pyplot as plt
 from scipy.stats import kurtosis, skew, jarque_bera
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import mean_squared_error
@@ -31,18 +32,20 @@ def main():
 
     try:
         # Initialize configuration
-        from src.fts_toolkit.config import config
+        from src.fts_toolkit.config import config  # Ensure this is how you import your config
         config.setup_directories()
-        config.print_config()
+        config.print_config()  # This will show your loaded configurations
 
         # Get data
         print("\n📊 Testing Advanced Data Pipeline...")
         from src.fts_toolkit.scraper import scraper
 
-        # Get more data for robust testing
         df = scraper.get_fx_data_yahoo(symbol=config.DEFAULT_SYMBOL,
-                                       days=config.LOOKBACK_DAYS)  # Fetch ~2 years of data
-        print(f"    Fetching data for {config.LOOKBACK_DAYS} days...")  # Optional: log what you're fetching
+                                       days=config.LOOKBACK_DAYS)
+        print(f"    Fetching data for {config.LOOKBACK_DAYS} days...")
+        if df.empty:
+            print(f"    ❌ Could not fetch data for {config.DEFAULT_SYMBOL}. Exiting.")
+            return
         print(f"    ✅ Got {len(df)} data points")
         print(f"    📅 Date range: {df['Date'].min()} to {df['Date'].max()}")
 
@@ -63,9 +66,40 @@ def main():
         df_processed = advanced_processor.engineer_advanced_features(df)
         print(f"    ✅ Advanced features: {df_processed.shape[1]} columns")
 
+        # --- Get PCA config from config.py ---
+        pca_config_value = str(config.PCA_N_COMPONENTS_CONFIG)  # Ensure it's a string for .lower()
+        n_components_for_pca = None  # Default to skipping PCA
+
+        if pca_config_value.lower() != 'none' and pca_config_value:
+            try:
+                # Try to convert to float (for variance e.g., 0.95)
+                n_components_for_pca_float = float(pca_config_value)
+                if 0 < n_components_for_pca_float <= 1.0:
+                    n_components_for_pca = n_components_for_pca_float
+                elif n_components_for_pca_float >= 1.0:  # Treat as integer number of components
+                    n_components_for_pca = int(n_components_for_pca_float)
+                else:  # Invalid float (e.g., negative)
+                    logger.warning(
+                        f"    ⚠️ Invalid float value for PCA_N_COMPONENTS: '{pca_config_value}'. Skipping PCA.")
+                    n_components_for_pca = None
+            except ValueError:
+                try:
+                    # Try to convert to int (for specific number of components e.g., 10)
+                    n_components_for_pca = int(pca_config_value)
+                    if n_components_for_pca < 1:  # Number of components must be at least 1
+                        logger.warning(
+                            f"    ⚠️ PCA_N_COMPONENTS must be >= 1 if integer: '{pca_config_value}'. Skipping PCA.")
+                        n_components_for_pca = None
+                except ValueError:
+                    logger.warning(
+                        f"    ⚠️ Invalid value for PCA_N_COMPONENTS in config: '{pca_config_value}'. Skipping PCA.")
+                    n_components_for_pca = None
+        else:
+            logger.info("    PCA_N_COMPONENTS is 'None' or empty in config. Skipping PCA.")
+        # --- End of PCA config handling ---
+
         # Create stationary sequences for ML
         X_train = X_test = y_train = y_test = None  # Initialize
-        n_components_for_pca = 0.95  # Initialize to None (PCA skipped by default)
 
         try:
             if n_components_for_pca is not None:
@@ -76,80 +110,73 @@ def main():
 
             X_train, X_test, y_train, y_test = advanced_processor.prepare_training_data(
                 df_processed,
-                test_size=0.3,
-                n_pca_components=n_components_for_pca  # Pass the PCA parameter here
+                test_size=config.ML_TEST_SIZE,  # Use from config
+                n_pca_components=n_components_for_pca  # Use parsed value from config
             )
 
-            # Check if sequence creation was successful (X_train would not be empty or None)
             if X_train is not None and X_train.shape[0] > 0:
                 print(f"    🎯 ML sequences created: Train {X_train.shape}, Test {X_test.shape}")
                 if n_components_for_pca is not None:
-                    # X_train.shape[2] will be the actual number of components PCA selected if n_components_for_pca
-                    # was a float (e.g. 0.95) or it will be the integer you specified.
                     print(f"    ✨ PCA resulted in {X_train.shape[2]} features.")
             else:
-                # This case might be redundant if prepare_training_data raises an error or returns empty arrays
-                # that are caught by the except block, but it's a safeguard.
                 print(f"    ⚠️ ML sequence creation did not return data, even if no exception was raised.")
-                X_train = None  # Ensure X_train is None to skip subsequent ML model training
-
+                X_train = None
         except Exception as e:
             print(f"    ⚠️ ML sequence creation failed: {e}")
-            X_train = None  # Ensure X_train is None if an exception occurs
+            traceback.print_exc()  # Good to have traceback here too
+            X_train = None
 
         # Test Econometric Models
         print("\n📈 Testing Econometric Models...")
         from src.fts_toolkit.econometric_models import arima_model, garch_model, arima_garch_model
 
-        # Prepare returns series for econometric modeling
         returns_series = df['log_returns'].dropna()
         price_series = df['Close'].dropna()
 
-        if len(returns_series) > 50:  # Minimum data requirement
-
-            # Test ARIMA model
+        if len(price_series) > 50:  # ARIMA works on price series
             print("\n    🔍 ARIMA Model Testing:")
             try:
-                arima_fitted = arima_model.fit(price_series)
+                arima_fitted = arima_model.fit(price_series)  # Uses internal auto_arima
                 arima_diagnostics = arima_model.diagnostic_check()
                 arima_forecast = arima_model.forecast(steps=5)
-
                 print(f"    ✅ ARIMA{arima_model.order} fitted successfully")
                 print(f"    📊 AIC: {arima_fitted.aic:.4f}")
                 print(f"    🔮 5-step forecast: {arima_forecast['forecast'].iloc[-1]:.5f}")
-
             except Exception as e:
                 print(f"    ❌ ARIMA fitting failed: {e}")
+                traceback.print_exc()
+        else:
+            print("    ℹ️ Insufficient data for ARIMA model testing.")
 
-            # Test GARCH model
+        if len(returns_series) > 50:  # GARCH works on returns series
             print("\n    📊 GARCH Model Testing:")
             try:
-                garch_fitted = garch_model.fit(returns_series, order=(1, 1))
+                garch_fitted = garch_model.fit(returns_series, order=(1, 1))  # order can be configured
                 garch_diagnostics = garch_model.diagnostic_check()
                 garch_vol_forecast = garch_model.forecast_volatility(horizon=5)
-
                 print(f"    ✅ GARCH(1,1) fitted successfully")
                 print(f"    📊 Log-likelihood: {garch_fitted.loglikelihood:.4f}")
                 print(f"    🔮 Volatility forecast: {garch_vol_forecast['volatility_forecast'][0]:.6f}")
-
             except Exception as e:
                 print(f"    ❌ GARCH fitting failed: {e}")
+                traceback.print_exc()
 
-            # Test Hybrid ARIMA-GARCH
             print("\n    🤝 Hybrid ARIMA-GARCH Testing:")
             try:
-                hybrid_fitted = arima_garch_model.fit(price_series)
+                # Assuming arima_model was fitted above. Hybrid can use that instance or fit its own.
+                # The current hybrid_arima_garch.fit() re-fits ARIMA.
+                hybrid_fitted = arima_garch_model.fit(price_series)  # Pass price_series
                 hybrid_forecast = arima_garch_model.forecast(steps=5)
-
                 print(f"    ✅ Hybrid model fitted successfully")
                 print(f"    📊 Model type: {hybrid_forecast['model_type']}")
                 print(f"    🔮 Mean forecast: {hybrid_forecast['mean_forecast'].iloc[-1]:.5f}")
-
                 if hybrid_forecast['volatility_forecast'] is not None:
                     print(f"    📈 Volatility forecast: {hybrid_forecast['volatility_forecast'][0]:.6f}")
-
             except Exception as e:
                 print(f"    ❌ Hybrid modeling failed: {e}")
+                traceback.print_exc()
+        else:
+            print("    ℹ️ Insufficient data for GARCH/Hybrid model testing.")
 
         # Enhanced ML Models (if sequences were created)
         if X_train is not None and y_train is not None and X_train.size > 0 and X_test.size > 0:
@@ -157,13 +184,47 @@ def main():
             from src.fts_toolkit.models import forecaster
 
             try:
-                # Train models
+                # Train models using hyperparameters from config
                 linear_model = forecaster.train_linear_model(X_train, y_train, X_test, y_test)
-                rf_model = forecaster.train_random_forest(X_train, y_train, X_test, y_test, n_estimators=100)
-                svr_model = forecaster.train_svr_model(X_train, y_train, X_test, y_test)
+
+                rf_model = forecaster.train_random_forest(
+                    X_train, y_train, X_test, y_test,
+                    n_estimators=config.RF_N_ESTIMATORS,
+                    max_depth=config.RF_MAX_DEPTH
+                )
+
+                svr_model = forecaster.train_svr_model(
+                    X_train, y_train, X_test, y_test,
+                    kernel=config.SVR_KERNEL, C=config.SVR_C,
+                    epsilon=config.SVR_EPSILON, gamma=config.SVR_GAMMA
+                )
+
                 xgboost_model = forecaster.train_xgboost_model(
                     X_train, y_train, X_test, y_test,
-                    n_estimators=100, learning_rate=0.1, max_depth=3, early_stopping_rounds=10
+                    n_estimators=config.XGB_N_ESTIMATORS, learning_rate=config.XGB_LEARNING_RATE,
+                    max_depth=config.XGB_MAX_DEPTH, early_stopping_rounds=config.XGB_EARLY_STOPPING_ROUNDS
+                )
+
+                lstm_model = forecaster.train_lstm_model(
+                    X_train, y_train, X_test, y_test,
+                    epochs=config.LSTM_TUNER_EPOCHS, batch_size=config.LSTM_BATCH_SIZE,
+                    validation_split=config.LSTM_VALIDATION_SPLIT,
+                    early_stopping_patience=config.LSTM_EARLY_STOPPING_PATIENCE,
+                    tuner_max_trials=config.LSTM_TUNER_MAX_TRIALS,
+                    tuner_executions_per_trial=config.LSTM_TUNER_EXECUTIONS_PER_TRIAL,
+                    tuner_directory=config.LSTM_TUNER_DIR,
+                    tuner_project_name=config.LSTM_TUNER_PROJECT_NAME
+                )
+
+                gru_model = forecaster.train_gru_model(
+                    X_train, y_train, X_test, y_test,
+                    epochs=config.GRU_TUNER_EPOCHS, batch_size=config.GRU_BATCH_SIZE,
+                    validation_split=config.GRU_VALIDATION_SPLIT,
+                    early_stopping_patience=config.GRU_EARLY_STOPPING_PATIENCE,
+                    tuner_max_trials=config.GRU_TUNER_MAX_TRIALS,
+                    tuner_executions_per_trial=config.GRU_TUNER_EXECUTIONS_PER_TRIAL,
+                    tuner_directory=config.GRU_TUNER_DIR,
+                    tuner_project_name=config.GRU_TUNER_PROJECT_NAME
                 )
 
                 # Model comparison
@@ -172,11 +233,11 @@ def main():
                 print(comparison[['test_mse', 'test_mae']].round(6))
 
                 # --- GENERATE FLAT FEATURE NAMES ONCE (after X_train is confirmed valid) ---
-                flat_feature_names = []  # Initialize
+                flat_feature_names = []
                 num_features_per_step = X_train.shape[2]
                 base_feature_names = []
 
-                if n_components_for_pca is not None:  # Check if PCA was applied
+                if n_components_for_pca is not None:
                     base_feature_names = [f"PC_{i}" for i in range(num_features_per_step)]
                     print(
                         f"    📊 Generating feature importance names for {num_features_per_step} Principal Components.")
@@ -185,10 +246,10 @@ def main():
                     print(
                         f"    📊 Generating feature importance names for {len(base_feature_names)} original engineered features.")
                 else:
-                    base_feature_names = [f"feature_{i}" for i in range(num_features_per_step)]  # Fallback
+                    base_feature_names = [f"feature_{i}" for i in range(num_features_per_step)]
                     print(f"    📊 Using generic base feature names for importance.")
 
-                window_steps = X_train.shape[1]  # This is your window_size
+                window_steps = X_train.shape[1]
                 for i in range(window_steps):
                     for col_name in base_feature_names:
                         flat_feature_names.append(f"{col_name}_t-{window_steps - 1 - i}")
@@ -207,12 +268,10 @@ def main():
                     else:
                         print(
                             f"    ⚠️ Could not display RF feature importance: Mismatch in names length ({len(flat_feature_names)}) vs importances length ({len(rf_model.feature_importances_)}). Using generic.")
-                        # Fallback for RF if needed
                         generic_rf_flat_names = [f"rf_flat_feature_{k}" for k in
                                                  range(len(rf_model.feature_importances_))]
                         feature_importance_rf_generic = pd.DataFrame({
-                            'feature': generic_rf_flat_names,
-                            'importance': rf_model.feature_importances_
+                            'feature': generic_rf_flat_names, 'importance': rf_model.feature_importances_
                         }).sort_values('importance', ascending=False).head(10)
                         print("\n🎯 Top 10 Most Important Features for Random Forest (Generic Flattened, Debug):")
                         for _, row_rf_gen in feature_importance_rf_generic.iterrows():
@@ -222,7 +281,7 @@ def main():
                 if hasattr(xgboost_model, 'feature_importances_'):
                     if len(flat_feature_names) == len(xgboost_model.feature_importances_):
                         feature_importance_xgb = pd.DataFrame({
-                            'feature': flat_feature_names,  # Reusing the same flat_feature_names
+                            'feature': flat_feature_names,
                             'importance': xgboost_model.feature_importances_
                         }).sort_values('importance', ascending=False).head(10)
                         print("\n🎯 Top 10 Most Important Features for XGBoost (Flattened):")
@@ -231,12 +290,10 @@ def main():
                     else:
                         print(
                             f"    ⚠️ Could not display XGBoost feature importance: Mismatch in names length ({len(flat_feature_names)}) vs importances length ({len(xgboost_model.feature_importances_)}). Using generic.")
-                        # Fallback for XGBoost if needed
                         generic_xgb_flat_names = [f"xgb_flat_feature_{k}" for k in
                                                   range(len(xgboost_model.feature_importances_))]
                         feature_importance_xgb_generic = pd.DataFrame({
-                            'feature': generic_xgb_flat_names,
-                            'importance': xgboost_model.feature_importances_
+                            'feature': generic_xgb_flat_names, 'importance': xgboost_model.feature_importances_
                         }).sort_values('importance', ascending=False).head(10)
                         print("\n🎯 Top 10 Most Important Features for XGBoost (Generic Flattened, Debug):")
                         for _, row_xgb_gen in feature_importance_xgb_generic.iterrows():
@@ -244,97 +301,218 @@ def main():
 
             except Exception as e:
                 print(f"    ❌ Enhanced ML modeling failed: {e}")
-                traceback.print_exc()  # Print full traceback for ML errors
+                traceback.print_exc()
         else:
             print("\n🤖 Skipping Enhanced ML Models training as no valid sequence data is available.")
+
+        # --- 📈 Testing Multivariate Models (VAR) ---
+        from src.fts_toolkit.multivariate_models import VARAnalyzer
+        print("\n📈 Testing Multivariate Models (VAR)...")
+        var_symbols_str = config.VAR_SYMBOLS_STR
+        var_symbols_list = [s.strip() for s in var_symbols_str.split(',') if s.strip()]
+
+        if not var_symbols_list or len(var_symbols_list) < 2:
+            print("   ⚠️ Insufficient symbols defined for VAR analysis in config.VAR_SYMBOLS_STR. Skipping VAR.")
+        else:
+            print(f"   Fetching data for VAR symbols: {var_symbols_list}")
+            all_series_data_var = {}  # Use a different name to avoid conflict with 'df' if it's used above
+            for symbol_var in var_symbols_list:
+                df_symbol_var = scraper.get_fx_data_yahoo(symbol=symbol_var, days=config.LOOKBACK_DAYS)
+                if df_symbol_var is not None and not df_symbol_var.empty:
+                    df_symbol_var['Date'] = pd.to_datetime(df_symbol_var['Date'])
+                    df_symbol_var.set_index('Date', inplace=True)
+                    all_series_data_var[symbol_var] = df_symbol_var['Close']
+                    print(f"    ✅ Got {len(df_symbol_var)} data points for {symbol_var}")
+                else:
+                    print(f"    ⚠️ Could not fetch data for {symbol_var} for VAR.")
+
+            if len(all_series_data_var) >= 2:  # Need at least 2 series
+                var_input_df_raw = pd.concat(all_series_data_var.values(), axis=1, keys=all_series_data_var.keys())
+                var_input_df_raw.sort_index(inplace=True)
+                var_input_df_raw.dropna(how='all', inplace=True)  # Drop rows where ALL values are NaN
+
+                if len(var_input_df_raw) < config.VAR_MAX_LAGS + 10:  # Heuristic for enough data
+                    print(
+                        f"    ⚠️ Insufficient aligned data for VAR ({len(var_input_df_raw)} rows after initial NaN handling). Skipping VAR.")
+                else:
+                    print(f"    📊 Combined VAR input data shape (raw prices): {var_input_df_raw.shape}")
+
+                    # Instantiate VARAnalyzer with your existing advanced_processor
+                    var_analyzer = VARAnalyzer(advanced_processor_instance=advanced_processor)
+
+                    # Prepare data (make stationary)
+                    stationary_var_data = var_analyzer.prepare_data_for_var(
+                        var_input_df_raw.copy())  # Pass a copy
+
+                    if stationary_var_data is not None and not stationary_var_data.empty and stationary_var_data.shape[
+                        1] >= 2:
+                        # Fit VAR model
+                        var_fitted_model = var_analyzer.fit(ic=config.AIC_BIC_FOR_VAR_LAG.lower() if hasattr(config,
+                                                                                                             'AIC_BIC_FOR_VAR_LAG') else 'aic')  # Example: make IC configurable
+
+                        if var_fitted_model:
+                            # Forecast (already there)
+                            var_forecast = var_analyzer.forecast(steps=config.VAR_FORECAST_STEPS)
+                            print(f"\n    🔮 VAR Model Forecast ({config.VAR_FORECAST_STEPS}-step ahead):")
+                            print(var_forecast)
+
+                            # --- NEW: Impulse Response Functions (IRF) ---
+                            print("\n    📊 Analyzing Impulse Response Functions...")
+                            # Call get_impulse_response without orth. Orthogonalization is a plotting choice.
+                            irf = var_analyzer.get_impulse_response(steps=config.VAR_IRF_STEPS)
+                            if irf:
+                                print(f"    IRF object calculated for {config.VAR_IRF_STEPS} steps.")
+                                try:
+                                    # When plotting, you specify orth=True for Cholesky orthogonalized IRFs
+                                    fig_irf = irf.plot(orth=True, signif=0.05)
+                                    if fig_irf:
+                                        figures = [plt.figure(i) for i in plt.get_fignums() if
+                                                   plt.figure(i) is fig_irf or (hasattr(fig_irf, 'fig') and plt.figure(
+                                                       i) is fig_irf.fig)]
+                                        # If irf.plot returns a single figure object directly
+                                        if not figures and hasattr(fig_irf, 'tight_layout'):
+                                            figures = [fig_irf]
+
+                                        if not figures:  # If still no figures, it might be a multi-figure plot
+                                            figures = [plt.figure(n) for n in
+                                                       plt.get_fignums()]  # Get all current figures
+                                            # This might get more than just the IRF plot if other plots were open.
+                                            # A cleaner way would be to create a new figure before irf.plot if statsmodels doesn't return it well.
+
+                                        plot_found_and_saved = False
+                                        for i, fig in enumerate(figures):
+                                            # Heuristic to check if it's likely the IRF plot (it might have multiple axes)
+                                            if len(fig.axes) >= stationary_var_data.shape[1]:  # Number of variables
+                                                fig.suptitle(f"Impulse Response Functions (VAR) - Plot {i + 1}",
+                                                             fontsize=14)
+                                                fig.savefig(f"var_irf_plot_{symbol_var}_{i + 1}.png")
+                                                print(f"    Saved IRF plot var_irf_plot_{symbol_var}_{i + 1}.png")
+                                                plot_found_and_saved = True
+
+                                        if plot_found_and_saved:
+                                            plt.close(
+                                                'all')  # Close all figures after saving to prevent display in non-GUI
+                                        else:
+                                            print(
+                                                "    IRF plot was generated by statsmodels but not identified for saving/titling.")
+
+                                    print("    IRF plots generated (attempted to save as PNG).")
+                                except Exception as e_plot_irf:
+                                    print(f"    Could not plot/save IRF: {e_plot_irf}")
+                                    traceback.print_exc()
+                                    print(
+                                        "    IRF object is available but plotting/saving failed. You can access irf.irfs, irf.cum_effects etc. for manual analysis.")
+                            else:
+                                print("    ❌ IRF calculation failed.")
+
+                            # --- NEW: Forecast Error Variance Decomposition (FEVD) ---
+                            print("\n    📊 Analyzing Forecast Error Variance Decomposition...")
+                            fevd = var_analyzer.get_fevd(steps=config.VAR_IRF_STEPS)
+                            if fevd:
+                                print(f"    FEVD calculated for {config.VAR_IRF_STEPS} steps. Summary:")
+                                try:
+                                    print(fevd.summary())
+                                    # You can also plot FEVD:
+                                    # fig_fevd = fevd.plot()
+                                    # if fig_fevd:
+                                    #    fig_fevd.suptitle("Forecast Error Variance Decomposition (VAR)", fontsize=14)
+                                    #    # fig_fevd.savefig("var_fevd_plot.png")
+                                    #    # print("    Saved FEVD plot var_fevd_plot.png")
+                                    # print("    (FEVD plotting can be added similarly to IRF)")
+                                except Exception as e_fevd_summary:
+                                    print(f"    Could not print FEVD summary: {e_fevd_summary}")
+                            else:
+                                print("    ❌ VAR model fitting failed.")
+                        else:
+                            print("    ❌ VAR data preparation resulted in no usable data.")
+                    else:
+                        print("    ❌ Not enough series data successfully fetched/aligned for VAR analysis.")
 
         # Advanced Performance Metrics
         print("\n📊 Advanced Performance Analysis...")
 
         # Market regime analysis
         print("\n    📈 Market Regime Analysis:")
-        df['volatility_regime'] = np.where(
-            df['log_returns'].rolling(20).std() > df['log_returns'].rolling(60).std().mean(),
-            'High Volatility', 'Low Volatility'
-        )
-
-        regime_counts = df['volatility_regime'].value_counts()
-        print(f"    High Volatility periods: {regime_counts.get('High Volatility', 0)} days")
-        print(f"    Low Volatility periods: {regime_counts.get('Low Volatility', 0)} days")
+        # Ensure log_returns exists and has enough non-NaN values for rolling operations
+        if 'log_returns' in df and df['log_returns'].count() >= 60:
+            df['volatility_regime'] = np.where(
+                df['log_returns'].rolling(20).std() > df['log_returns'].rolling(60).std().mean(),
+                'High Volatility', 'Low Volatility'
+            )
+            regime_counts = df['volatility_regime'].value_counts()
+            print(f"    High Volatility periods: {regime_counts.get('High Volatility', 0)} days")
+            print(f"    Low Volatility periods: {regime_counts.get('Low Volatility', 0)} days")
+        else:
+            print("    ℹ️ Insufficient data or 'log_returns' missing for Market Regime Analysis.")
 
         # Stylized facts analysis
         print("\n    📊 Stylized Facts Analysis:")
-        returns_clean = returns_series.dropna()
+        returns_clean = returns_series.dropna()  # returns_series was df['log_returns'].dropna()
 
         if len(returns_clean) > 30:
-            # Volatility clustering test
-            acf_returns = np.abs(returns_clean).autocorr(lag=1)  # Original variable name
-            acf_squared_returns = (returns_clean ** 2).autocorr(lag=1)  # Will overwrite default if computed
-
+            acf_returns = np.abs(returns_clean).autocorr(lag=1)
+            acf_squared_returns = (returns_clean ** 2).autocorr(lag=1)
             print(f"    Volatility clustering (|returns| ACF): {acf_returns:.4f}")
             print(f"    Volatility persistence (returns² ACF): {acf_squared_returns:.4f}")
 
-            # Excess kurtosis (fat tails)
-            kurt = kurtosis(returns_clean, fisher=True)  # Excess kurtosis, will overwrite default
+            kurt = kurtosis(returns_clean, fisher=True)
             skewness = skew(returns_clean)
-
             print(f"    Excess kurtosis (fat tails): {kurt:.4f}")
             print(f"    Skewness: {skewness:.4f}")
 
-            # Jarque-Bera normality test
             jb_stat, jb_pvalue = jarque_bera(returns_clean)
             print(f"    Jarque-Bera test p-value: {jb_pvalue:.4f} ({'Non-normal' if jb_pvalue < 0.05 else 'Normal'})")
+        else:
+            print("    ℹ️ Insufficient data for Stylized Facts Analysis.")
 
         # Walk-forward validation simulation
         print("\n🔄 Walk-Forward Validation Simulation...")
-        if len(df_processed) > 120:  # Need sufficient data in df_processed
+        if len(df_processed) > 120:
             try:
-                results = simulate_walk_forward_validation(df_processed, window_size=60, test_size=10)
-                if results['rmse_scores']:  # Check if simulation ran successfully
+                # Ensure simulate_walk_forward_validation is defined in the global scope or imported
+                results_wfv = simulate_walk_forward_validation(df_processed, window_size=60, test_size=10)
+                if results_wfv['rmse_scores']:
                     print(f"    ✅ Walk-forward validation completed")
-                    print(f"    📊 Average RMSE: {np.mean(results['rmse_scores']):.6f}")
-                    print(f"    📊 RMSE std: {np.std(results['rmse_scores']):.6f}")
-                    print(f"    🔄 Number of validation windows: {len(results['rmse_scores'])}")
+                    print(f"    📊 Average RMSE: {np.mean(results_wfv['rmse_scores']):.6f}")
+                    print(f"    📊 RMSE std: {np.std(results_wfv['rmse_scores']):.6f}")
+                    print(f"    🔄 Number of validation windows: {len(results_wfv['rmse_scores'])}")
                 else:
                     print(f"    ⚠️ Walk-forward validation did not produce results. Check data and parameters.")
             except Exception as e:
                 print(f"    ❌ Walk-forward validation failed: {e}")
+                traceback.print_exc()
         else:
             print(f"    ℹ️ Insufficient data for walk-forward validation (need > 120, got {len(df_processed)})")
 
         # Risk metrics
         print("\n⚠️ Risk Analysis...")
         if len(returns_clean) > 30:
-            # Value at Risk (VaR)
-            var_95 = np.percentile(returns_clean, 5)  # 5% VaR
-            var_99 = np.percentile(returns_clean, 1)  # 1% VaR
-
+            var_95 = np.percentile(returns_clean, 5)
+            var_99 = np.percentile(returns_clean, 1)
             print(f"    VaR (95%): {var_95:.4f} ({var_95 * 100:.2f}%)")
             print(f"    VaR (99%): {var_99:.4f} ({var_99 * 100:.2f}%)")
 
-            # Maximum Drawdown
             cumulative_returns = (1 + returns_clean).cumprod()
             rolling_max = cumulative_returns.expanding().max()
             drawdown = (cumulative_returns - rolling_max) / rolling_max
             max_drawdown = drawdown.min()
-
             print(f"    Maximum Drawdown: {max_drawdown:.4f} ({max_drawdown * 100:.2f}%)")
+        else:
+            print("    ℹ️ Insufficient data for Risk Analysis.")
 
         # Model interpretation and insights
         print("\n🔍 Model Insights and Recommendations...")
-
         print("    📝 Stationarity Analysis:")
-        print(f"    • Price series: {close_stationarity['recommendation']}")
-        print(f"    • Return series: {returns_stationarity['recommendation']}")
+        print(f"    • Price series: {close_stationarity.get('recommendation', 'N/A')}")  # Use .get for safety
+        print(f"    • Return series: {returns_stationarity.get('recommendation', 'N/A')}")  # Use .get for safety
 
         print("\n    📝 Model Recommendations:")
-        if close_stationarity['recommendation'] != 'stationary':
+        if close_stationarity.get('recommendation') != 'stationary':
             print("    • Use differenced prices or returns for ARIMA modeling")
-
-        if acf_squared_returns > 0.1:  # Uses value computed (or default 0.0)
+        if acf_squared_returns > 0.1:
             print("    • Strong volatility clustering detected → GARCH modeling recommended")
-        if kurt > 3:  # Uses value computed (or default 0.0)
-            print("    • Fat tails detected → Consider t-distribution for GARCH")
+        if kurt > 1:  # Standard kurtosis of normal dist is 3, excess is 0. Fat tails usually > 0 for excess.
+            print("    • Fat tails detected → Consider t-distribution for GARCH or models robust to outliers.")
 
         print("\n    📝 Practical Considerations:")
         print("    • Short-term forecasts (1-5 days): ARIMA-GARCH hybrid recommended")
@@ -342,19 +520,15 @@ def main():
         print("    • Long-term forecasts (>1 month): Fundamental analysis required")
 
         print("\n✅ Advanced Financial Time Series Analysis Completed!")
-        print("\n🎯 Next Steps for Production Implementation:")
-        print("    1. Implement Vector Autoregression (VAR) for multi-currency analysis")
-        print("    2. Add LSTM/GRU models with proper sequence handling")
-        print("    3. Develop regime-switching models")
-        print("    4. Implement real-time data feeds")
-        print("    5. Add portfolio optimization and risk management")
-        print("    6. Create interactive dashboard with plotly/dash")
+        # ... (Next Steps printout) ...
 
     except ImportError as e:
         print(f"❌ Import error: {e}")
-        print("    Install required packages: pip install statsmodels arch scipy pandas numpy scikit-learn")
+        print("    Ensure all required packages from requirements.txt are installed in your environment.")
+        print(
+            "    Relevant packages include: statsmodels, arch, scipy, pandas, numpy, scikit-learn, tensorflow, keras-tuner, xgboost")
     except Exception as e:
-        print(f"❌ Error in main: {e}")
+        print(f"❌ An unexpected error occurred in main: {e}")
         traceback.print_exc()
 
 
