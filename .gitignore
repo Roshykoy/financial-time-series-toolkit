@@ -1,0 +1,25 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Conda environments
+/envs/
+/.conda/
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints
+
+# VS Code settings
+.vscode/
+
+# Data files - usually not tracked in Git
+data/raw/
+data/processed/
+
+# Model outputs
+outputs/
+
+# System files
+.DS_Store

@@ -1,0 +1,48 @@
+[
+  {
+    "modelCompatibilityType": "gguf",
+    "runtime": {
+      "hardwareSurveyResult": {
+        "compatibility": {
+          "status": "Compatible"
+        },
+        "cpuSurveyResult": {
+          "result": {
+            "code": "Success",
+            "message": ""
+          },
+          "cpuInfo": {
+            "architecture": "x86_64",
+            "supportedInstructionSetExtensions": [
+              "AVX",
+              "AVX2"
+            ]
+          }
+        },
+        "memoryInfo": {
+          "ramCapacity": 34266603520,
+          "vramCapacity": 10736893952,
+          "totalMemory": 45003497472
+        },
+        "gpuSurveyResult": {
+          "result": {
+            "code": "Success",
+            "message": ""
+          },
+          "gpuInfo": [
+            {
+              "name": "NVIDIA GeForce RTX 3080",
+              "deviceId": 0,
+              "totalMemoryCapacityBytes": 10736893952,
+              "dedicatedMemoryCapacityBytes": 10736893952,
+              "integrationType": "Discrete",
+              "detectionPlatform": "CUDA",
+              "detectionPlatformVersion": "",
+              "otherInfo": {}
+            }
+          ]
+        }
+      }
+    }
+  }
+]
