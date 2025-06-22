@@ -126,6 +126,5 @@ dependencies:
       - scipy==1.15.3
       - six==1.17.0
       - threadpoolctl==3.6.0
-      - tqdm==4.67.1
       - tzdata==2025.2
 prefix: /home/rheuks/miniconda3/envs/marksix_ai

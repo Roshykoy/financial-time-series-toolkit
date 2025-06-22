@@ -1,85 +1,25 @@
 # Byte-compiled / optimized / DLL files
 __pycache__/
-*.py[cod]
-*$py.class
+*.pyc
+*.pyo
+*.pyd
 
-# C extensions
-*.so
+# Conda environments
+/envs/
+/.conda/
 
-# Distribution / packaging
-.Python
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
-*.egg-info/
-.installed.cfg
-*.egg
-MANIFEST
-
-# PyInstaller
-*.spec
-
-# Installer logs
-pip-log.txt
-pip-delete-this-directory.txt
-
-# Unit test / coverage reports
-htmlcov/
-.tox/
-.nox/
-.coverage
-.coverage.*
-.cache
-nosetests.xml
-coverage.xml
-*.cover
-.hypothesis/
-.pytest_cache/
-
-# Environments
-.env
-.venv
-env/
-venv/
-ENV/
-env.bak/
-venv.bak/
-marksix_ai/
-
-# Spyder project settings
-.spyderproject
-.spyderworkspace
-
-# VSCode
-.vscode/
-
-# Jupyter Notebook
+# Jupyter Notebook checkpoints
 .ipynb_checkpoints
 
-# --- Project-Specific ---
+# VS Code settings
+.vscode/
 
-# Trained models and artifacts
-models/
-*.pkl
-*.pth
-
-# Data files
+# Data files - usually not tracked in Git
+data/raw/
 data/processed/
-data/raw/*.csv
 
-# Outputs
+# Model outputs
 outputs/
-*.csv
-*.log
 
-# IDE settings
-.idea/
+# System files
+.DS_Store
