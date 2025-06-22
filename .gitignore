@@ -82,4 +82,5 @@ outputs/
 *.log
 
 # IDE settings
-.idea/
+.idea/# Exclude individual trial files but keep summaries
+hyperparameter_results/trial_*.json
