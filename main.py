@@ -1,296 +1,382 @@
 # main.py
 import os
 import traceback
-import json
+import torch
 from src.training_pipeline import run_training
 from src.inference_pipeline import run_inference
 from src.evaluation_pipeline import run_evaluation
-from src.hyperparameter_optimizer import run_hyperparameter_optimization
-from src.config_manager import run_config_manager
-from src.config import CONFIG
 
-def display_system_info():
-    """Display system information and current configuration."""
-    import torch
-    print("\n--- System Information ---")
-    print(f"PyTorch Version: {torch.__version__}")
-    print(f"CUDA Available: {torch.cuda.is_available()}")
+def print_banner():
+    """Prints the application banner."""
+    print("\n" + "=" * 70)
+    print("MARK SIX LOTTERY PREDICTION SYSTEM v2.0")
+    print("Hybrid Generative-Ensemble Architecture")
+    print("=" * 70)
+    print("Architecture: CVAE + Graph Neural Networks + Meta-Learning")
+    print("• Conditional Variational Autoencoder for generation")
+    print("• Graph Neural Network encoder for number relationships")
+    print("• LSTM temporal context encoder")
+    print("• Attention-based meta-learner for dynamic ensemble weights")
+    print("• Hard negative mining with contrastive learning")
+    print("=" * 70)
+
+def check_system_requirements():
+    """Checks system requirements and provides recommendations."""
+    print("\nSystem Requirements Check:")
+    print("-" * 30)
+    
+    # Check PyTorch and CUDA
+    print(f"PyTorch version: {torch.__version__}")
     if torch.cuda.is_available():
-        print(f"CUDA Device: {torch.cuda.get_device_name(0)}")
-        print(f"CUDA Memory: {torch.cuda.get_device_properties(0).total_memory / 1e9:.1f} GB")
+        print(f"CUDA available: Yes (Device: {torch.cuda.get_device_name()})")
+        print(f"CUDA memory: {torch.cuda.get_device_properties(0).total_memory / 1e9:.1f} GB")
+    else:
+        print("CUDA available: No (CPU-only mode)")
+        print("⚠️  Warning: Training will be significantly slower on CPU")
     
-    print("\n--- Current Configuration ---")
-    key_params = ['learning_rate', 'hidden_size', 'num_layers', 'dropout', 'batch_size', 'epochs']
-    for param in key_params:
-        if param in CONFIG:
-            print(f"{param}: {CONFIG[param]}")
+    # Check memory
+    try:
+        import psutil
+        memory = psutil.virtual_memory()
+        print(f"System RAM: {memory.total / 1e9:.1f} GB")
+        if memory.total < 8e9:  # Less than 8GB
+            print("⚠️  Warning: Recommend at least 8GB RAM for stable training")
+    except ImportError:
+        print("RAM info: Unable to detect (install psutil for details)")
     
-    # Check if optimized parameters exist
-    if os.path.exists('best_hyperparameters.json'):
-        print("\n💡 Optimized hyperparameters available! Check 'best_hyperparameters.json'")
+    print()
 
-def load_optimized_config():
-    """Load and apply optimized hyperparameters if available."""
-    if os.path.exists('best_hyperparameters.json'):
-        try:
-            with open('best_hyperparameters.json', 'r') as f:
-                optimized_config = json.load(f)
-            
-            print("\n--- Found Optimized Hyperparameters ---")
-            print("Current vs Optimized:")
-            for key, optimized_value in optimized_config.items():
-                if key in CONFIG:
-                    current_value = CONFIG[key]
-                    print(f"  {key}: {current_value} → {optimized_value}")
-            
-            if input("\nApply optimized hyperparameters for this session? (y/n): ").lower() == 'y':
-                CONFIG.update(optimized_config)
-                print("✅ Optimized hyperparameters applied!")
-                return True
-        except Exception as e:
-            print(f"Error loading optimized config: {e}")
+def get_training_options():
+    """Gets training configuration options from user."""
+    print("Training Configuration Options:")
+    print("-" * 32)
     
-    return False
+    # Epochs
+    try:
+        epochs = int(input(f"Number of training epochs (default: {CONFIG['epochs']}): ") or CONFIG['epochs'])
+        if epochs <= 0:
+            epochs = CONFIG['epochs']
+    except ValueError:
+        epochs = CONFIG['epochs']
+    
+    # Batch size
+    try:
+        batch_size = int(input(f"Batch size (default: {CONFIG['batch_size']}): ") or CONFIG['batch_size'])
+        if batch_size <= 0:
+            batch_size = CONFIG['batch_size']
+    except ValueError:
+        batch_size = CONFIG['batch_size']
+    
+    # Learning rate
+    try:
+        lr_input = input(f"Learning rate (default: {CONFIG['learning_rate']}): ")
+        learning_rate = float(lr_input) if lr_input else CONFIG['learning_rate']
+        if learning_rate <= 0:
+            learning_rate = CONFIG['learning_rate']
+    except ValueError:
+        learning_rate = CONFIG['learning_rate']
+    
+    # Advanced options
+    print("\nAdvanced Options:")
+    use_mixed_precision = input("Use mixed precision training? (y/n, default: y): ").lower() != 'n'
+    save_plots = input("Save training plots? (y/n, default: y): ").lower() != 'n'
+    
+    return {
+        'epochs': epochs,
+        'batch_size': batch_size,
+        'learning_rate': learning_rate,
+        'use_mixed_precision': use_mixed_precision,
+        'plot_latent_space': save_plots,
+        'save_generation_samples': save_plots
+    }
+
+def get_inference_options():
+    """Gets inference configuration options from user."""
+    print("Inference Configuration Options:")
+    print("-" * 33)
+    
+    # Number of sets
+    try:
+        num_sets = int(input("How many number sets would you like to generate? "))
+        if num_sets <= 0:
+            print("Please enter a positive number.")
+            return None
+    except ValueError:
+        print("Invalid input. Please enter a valid number.")
+        return None
+    
+    # Temperature
+    try:
+        temp_input = input("Generation temperature (0.1-2.0, default: 0.8): ")
+        temperature = float(temp_input) if temp_input else 0.8
+        temperature = max(0.1, min(2.0, temperature))  # Clamp between 0.1 and 2.0
+    except ValueError:
+        temperature = 0.8
+    
+    # I-Ching scorer
+    use_iching_input = input("Use the I-Ching scorer? (y/n, default: n): ").lower()
+    use_iching = use_iching_input == 'y'
+    
+    # Verbose output
+    verbose = input("Show detailed generation process? (y/n, default: y): ").lower() != 'n'
+    
+    # Advanced options
+    print("\nAdvanced Options:")
+    print("1. Standard generation (recommended)")
+    print("2. High diversity mode (more creative combinations)")
+    print("3. Conservative mode (closer to historical patterns)")
+    
+    try:
+        mode_choice = int(input("Choose generation mode (1-3, default: 1): ") or "1")
+    except ValueError:
+        mode_choice = 1
+    
+    # Adjust temperature based on mode
+    if mode_choice == 2:  # High diversity
+        temperature *= 1.3
+        print("🎲 High diversity mode selected - more creative combinations")
+    elif mode_choice == 3:  # Conservative
+        temperature *= 0.7
+        print("🎯 Conservative mode selected - closer to historical patterns")
+    else:
+        print("⚖️  Standard mode selected - balanced generation")
+    
+    return {
+        'num_sets': num_sets,
+        'temperature': temperature,
+        'use_i_ching': use_iching,
+        'verbose': verbose,
+        'mode': mode_choice
+    }
+
+
+def display_model_info():
+    """Displays information about trained models."""
+    from src.config import CONFIG
+    
+    print("\nTrained Model Information:")
+    print("-" * 28)
+    
+    # Check if models exist
+    cvae_exists = os.path.exists(CONFIG["model_save_path"])
+    meta_exists = os.path.exists(CONFIG["meta_learner_save_path"])
+    fe_exists = os.path.exists(CONFIG["feature_engineer_path"])
+    
+    print(f"CVAE Model: {'✓' if cvae_exists else '✗'} {CONFIG['model_save_path']}")
+    print(f"Meta-Learner: {'✓' if meta_exists else '✗'} {CONFIG['meta_learner_save_path']}")
+    print(f"Feature Engineer: {'✓' if fe_exists else '✗'} {CONFIG['feature_engineer_path']}")
+    
+    if cvae_exists:
+        try:
+            # Get model file size
+            model_size = os.path.getsize(CONFIG["model_save_path"]) / (1024 * 1024)  # MB
+            print(f"CVAE Model size: {model_size:.1f} MB")
+            
+            # Get modification time
+            import datetime
+            mod_time = os.path.getmtime(CONFIG["model_save_path"])
+            mod_date = datetime.datetime.fromtimestamp(mod_time).strftime("%Y-%m-%d %H:%M")
+            print(f"Last trained: {mod_date}")
+        except Exception:
+            pass
+    
+    print()
+
 
 def main_menu():
     """Displays the main menu and handles user input."""
+    from src.config import CONFIG
     
-    # Display welcome message and system info
-    print("\n" + "="*60)
-    print("           🎯 MARK SIX AI PROJECT HUB 🎯")
-    print("         Advanced Lottery Analysis System")
-    print("="*60)
-    
-    # Check for optimized hyperparameters on startup
-    load_optimized_config()
+    print_banner()
+    check_system_requirements()
     
     while True:
-        print("\n" + "-"*50)
-        print("               MAIN MENU")
-        print("-"*50)
-        print("1. 🧠 Train New Model")
-        print("2. 🎲 Generate Number Sets (Inference)")
-        print("3. 📊 Evaluate Trained Model")
-        print("4. ⚙️  Optimize Hyperparameters (NEW!)")
-        print("5. 💻 System Information")
-        print("6. 🔧 Advanced Options")
-        print("7. 🚪 Exit")
-        print("-"*50)
+        print("\n" + "=" * 50)
+        print("MAIN MENU")
+        print("=" * 50)
+        print("1. Train New CVAE Model")
+        print("2. Generate Number Combinations (Inference)")
+        print("3. Evaluate Trained Model")
+        print("4. View Model Information")
+        print("5. System Diagnostics")
+        print("6. Exit")
+        print("=" * 50)
         
-        choice = input("Enter your choice (1-7): ").strip()
+        choice = input("Enter your choice (1-6): ").strip()
         
         try:
             if choice == '1':
-                print("\n🧠 Starting Model Training...")
-                run_training()
+                print("\n🚀 Starting CVAE Training Pipeline")
+                print("-" * 40)
+                
+                # Get training options
+                training_config = get_training_options()
+                
+                # Update CONFIG with user choices
+                CONFIG.update(training_config)
+                
+                # Confirm training
+                print(f"\nTraining Configuration:")
+                print(f"• Epochs: {CONFIG['epochs']}")
+                print(f"• Batch size: {CONFIG['batch_size']}")
+                print(f"• Learning rate: {CONFIG['learning_rate']}")
+                print(f"• Mixed precision: {CONFIG['use_mixed_precision']}")
+                print(f"• Device: {CONFIG['device']}")
+                
+                confirm = input("\nProceed with training? (y/n): ").lower()
+                if confirm == 'y':
+                    run_training()
+                else:
+                    print("Training cancelled.")
             
             elif choice == '2':
-                print("\n🎲 Number Generation Mode")
-                try:
-                    num_sets = int(input("How many number sets would you like to generate? "))
-                    if num_sets <= 0:
-                        print("❌ Please enter a positive number.")
-                        continue
-                    if num_sets > 50:
-                        print("⚠️  Generating more than 50 sets may take a while...")
-                        if input("Continue? (y/n): ").lower() != 'y':
-                            continue
-                    
-                    use_iching_input = input("Use the optional I-Ching scorer? (y/n): ").lower()
-                    use_iching = use_iching_input == 'y'
-                    if use_iching:
-                        print("✨ I-Ching scorer has been enabled.")
-
-                    run_inference(num_sets, use_i_ching=use_iching)
-                except ValueError:
-                    print("❌ Invalid input. Please enter a valid number.")
+                print("\n🎯 Starting Generative Inference")
+                print("-" * 35)
+                
+                # Check if models exist
+                if not (os.path.exists(CONFIG["model_save_path"]) and 
+                       os.path.exists(CONFIG["meta_learner_save_path"])):
+                    print("❌ Trained models not found!")
+                    print("Please train the model first (Option 1).")
                     continue
-
+                
+                # Get inference options
+                inference_config = get_inference_options()
+                if inference_config is None:
+                    continue
+                
+                print(f"\nInference Configuration:")
+                print(f"• Number of sets: {inference_config['num_sets']}")
+                print(f"• Temperature: {inference_config['temperature']:.2f}")
+                print(f"• I-Ching scorer: {'Yes' if inference_config['use_i_ching'] else 'No'}")
+                print(f"• Verbose output: {'Yes' if inference_config['verbose'] else 'No'}")
+                
+                # Run inference
+                run_inference(
+                    num_sets_to_generate=inference_config['num_sets'],
+                    use_i_ching=inference_config['use_i_ching'],
+                    temperature=inference_config['temperature'],
+                    verbose=inference_config['verbose']
+                )
+            
             elif choice == '3':
-                print("\n📊 Model Evaluation Mode")
+                print("\n📊 Starting Model Evaluation")
+                print("-" * 30)
+                
+                # Check if models exist
+                if not (os.path.exists(CONFIG["model_save_path"]) and 
+                       os.path.exists(CONFIG["meta_learner_save_path"])):
+                    print("❌ Trained models not found!")
+                    print("Please train the model first (Option 1).")
+                    continue
+                
                 print("This will evaluate the model's performance on validation data.")
-                use_iching_input = input("Evaluate with the I-Ching scorer enabled? (y/n): ").lower()
+                print("The evaluation includes:")
+                print("• Generation quality assessment")
+                print("• Ensemble ranking performance")
+                print("• Reconstruction accuracy")
+                print("• Latent space quality analysis")
+                
+                use_iching_input = input("\nEvaluate with I-Ching scorer enabled? (y/n, default: n): ").lower()
                 use_iching = use_iching_input == 'y'
-                if use_iching:
-                    print("✨ Evaluating with I-Ching scorer enabled.")
                 
-                run_evaluation(use_i_ching=use_iching)
-
-            elif choice == '4':
-                print("\n⚙️ Hyperparameter Optimization Mode")
-                print("This will automatically find the best parameters for your model.")
-                print("⏱️  This process can take 15-60 minutes depending on the method chosen.")
-                
-                if input("Continue with hyperparameter optimization? (y/n): ").lower() == 'y':
-                    run_hyperparameter_optimization()
+                confirm = input("Proceed with evaluation? (y/n): ").lower()
+                if confirm == 'y':
+                    run_evaluation(use_i_ching=use_iching)
                 else:
-                    print("Optimization cancelled.")
-
+                    print("Evaluation cancelled.")
+            
+            elif choice == '4':
+                display_model_info()
+            
             elif choice == '5':
-                display_system_info()
-
-            elif choice == '6':
-                advanced_options_menu()
-
-            elif choice == '7':
-                print("\n👋 Thank you for using Mark Six AI!")
-                print("🍀 Good luck with your number selections!")
-                break
+                print("\n🔧 System Diagnostics")
+                print("-" * 20)
                 
+                # Extended system check
+                check_system_requirements()
+                
+                # Check data file
+                data_exists = os.path.exists(CONFIG["data_path"])
+                print(f"Data file: {'✓' if data_exists else '✗'} {CONFIG['data_path']}")
+                
+                if data_exists:
+                    try:
+                        import pandas as pd
+                        # Try to load a few rows
+                        col_names = [
+                            'Draw', 'Date', 'Winning_Num_1', 'Winning_Num_2', 'Winning_Num_3',
+                            'Winning_Num_4', 'Winning_Num_5', 'Winning_Num_6', 'Extra_Num',
+                            'From_Last', 'Low', 'High', 'Odd', 'Even', '1-10', '11-20', '21-30',
+                            '31-40', '41-50', 'Div_1_Winners', 'Div_1_Prize', 'Div_2_Winners',
+                            'Div_2_Prize', 'Div_3_Winners', 'Div_3_Prize', 'Div_4_Winners',
+                            'Div_4_Prize', 'Div_5_Winners', 'Div_5_Prize', 'Div_6_Winners',
+                            'Div_6_Prize', 'Div_7_Winners', 'Div_7_Prize', 'Turnover'
+                        ]
+                        df = pd.read_csv(CONFIG["data_path"], header=None, skiprows=33, names=col_names, nrows=5)
+                        print(f"Data format: ✓ Valid ({len(df)} sample rows loaded)")
+                    except Exception as e:
+                        print(f"Data format: ✗ Error loading data - {str(e)}")
+                
+                # Check output directories
+                for directory in ["models", "outputs"]:
+                    if os.path.exists(directory):
+                        print(f"Directory {directory}/: ✓ Exists")
+                    else:
+                        print(f"Directory {directory}/: ⚠️  Missing (will be created)")
+                
+                # Memory test
+                try:
+                    print("\nPerforming quick GPU memory test...")
+                    if torch.cuda.is_available():
+                        # Try to allocate a small tensor
+                        test_tensor = torch.randn(1000, 1000, device='cuda')
+                        del test_tensor
+                        torch.cuda.empty_cache()
+                        print("GPU memory test: ✓ Passed")
+                    else:
+                        print("GPU memory test: ⚠️  Skipped (no CUDA)")
+                except Exception as e:
+                    print(f"GPU memory test: ✗ Failed - {str(e)}")
+            
+            elif choice == '6':
+                print("\n👋 Thank you for using Mark Six Prediction System!")
+                print("May your numbers bring you luck! 🍀")
+                break
+            
             else:
-                print("❌ Invalid choice. Please enter a number between 1 and 7.")
-
-        except ValueError:
-            print("\n❌ Invalid input. Please enter a valid number.")
+                print("❌ Invalid choice. Please enter a number between 1 and 6.")
+        
         except KeyboardInterrupt:
-            print("\n\n⏸️  Operation cancelled by user.")
+            print("\n\n⚠️  Operation interrupted by user.")
+            print("Returning to main menu...")
         except Exception as e:
             print(f"\n❌ An unexpected error occurred:")
-            print(f"Error: {str(e)}")
-            if input("Show detailed error information? (y/n): ").lower() == 'y':
+            print(f"Error type: {type(e).__name__}")
+            print(f"Error message: {str(e)}")
+            
+            # Ask if user wants to see full traceback
+            show_trace = input("Show detailed error information? (y/n): ").lower() == 'y'
+            if show_trace:
+                print("\nDetailed error information:")
                 traceback.print_exc()
-
-def advanced_options_menu():
-    """Handle advanced options."""
-    while True:
-        print("\n" + "-"*40)
-        print("           ADVANCED OPTIONS")
-        print("-"*40)
-        print("1. 📝 View Current Configuration")
-        print("2. 🔄 Reset to Default Configuration")
-        print("3. 📥 Load Optimized Hyperparameters")
-        print("4. ⚙️  Configuration Manager")
-        print("5. 🗂️  View Optimization History")
-        print("6. 🧹 Clean Up Generated Files")
-        print("7. ⬅️  Back to Main Menu")
-        print("-"*40)
-        
-        choice = input("Enter your choice (1-7): ").strip()
-        
-        if choice == '1':
-            view_current_config()
-        elif choice == '2':
-            reset_to_default_config()
-        elif choice == '3':
-            load_optimized_config()
-        elif choice == '4':
-            run_config_manager()
-        elif choice == '5':
-            view_optimization_history()
-        elif choice == '6':
-            cleanup_files()
-        elif choice == '7':
-            break
-        else:
-            print("❌ Invalid choice. Please enter a number between 1 and 7.")
-
-def view_current_config():
-    """Display the current configuration."""
-    print("\n--- Current Configuration ---")
-    for key, value in sorted(CONFIG.items()):
-        print(f"  {key}: {value}")
-
-def reset_to_default_config():
-    """Reset configuration to defaults."""
-    if input("⚠️  Reset all parameters to default values? (y/n): ").lower() == 'y':
-        # Reload the default config
-        from src.config import CONFIG as DEFAULT_CONFIG
-        CONFIG.clear()
-        CONFIG.update(DEFAULT_CONFIG)
-        print("✅ Configuration reset to default values.")
-
-def view_optimization_history():
-    """View hyperparameter optimization history."""
-    results_dir = "hyperparameter_results"
-    if not os.path.exists(results_dir):
-        print("❌ No optimization history found.")
-        return
-    
-    import glob
-    summary_files = glob.glob(f"{results_dir}/optimization_summary_*.json")
-    
-    if not summary_files:
-        print("❌ No optimization summary files found.")
-        return
-    
-    print(f"\n--- Found {len(summary_files)} Optimization Run(s) ---")
-    
-    for i, file_path in enumerate(sorted(summary_files, key=os.path.getctime, reverse=True)):
-        try:
-            with open(file_path, 'r') as f:
-                summary = json.load(f)
             
-            filename = os.path.basename(file_path)
-            print(f"\n{i+1}. {filename}")
-            print(f"   Method: {summary['method']}")
-            print(f"   Best Score: {summary['best_score']:.4f}")
-            print(f"   Total Trials: {summary['total_trials']}")
-            print(f"   Date: {summary['timestamp'][:19]}")
-            
-        except Exception as e:
-            print(f"   Error reading {file_path}: {e}")
-
-def cleanup_files():
-    """Clean up generated files."""
-    print("\n--- File Cleanup Options ---")
-    print("1. 🗑️  Delete hyperparameter results")
-    print("2. 🗑️  Delete model files")
-    print("3. 🗑️  Delete output logs")
-    print("4. 🗑️  Delete configuration files")
-    print("5. 🗑️  Delete all generated files")
-    print("6. ⬅️  Cancel")
-    
-    choice = input("Choose what to clean up (1-6): ").strip()
-    
-    if choice == '1':
-        cleanup_directory("hyperparameter_results", "hyperparameter optimization results")
-    elif choice == '2':
-        cleanup_directory("models", "trained model files")
-    elif choice == '3':
-        cleanup_directory("outputs", "output logs")
-    elif choice == '4':
-        cleanup_directory("configurations", "configuration files")
-        if os.path.exists("best_hyperparameters.json"):
-            if input("Delete best_hyperparameters.json? (y/n): ").lower() == 'y':
-                os.remove("best_hyperparameters.json")
-                print("✅ Deleted best_hyperparameters.json")
-    elif choice == '5':
-        if input("⚠️  Delete ALL generated files? This cannot be undone! (yes/no): ").lower() == 'yes':
-            cleanup_directory("hyperparameter_results", "hyperparameter results")
-            cleanup_directory("models", "model files")
-            cleanup_directory("outputs", "output logs")
-            cleanup_directory("configurations", "configuration files")
-            if os.path.exists("best_hyperparameters.json"):
-                os.remove("best_hyperparameters.json")
-                print("✅ Deleted best_hyperparameters.json")
-    elif choice == '6':
-        print("Cleanup cancelled.")
-    else:
-        print("❌ Invalid choice.")
-
-def cleanup_directory(directory, description):
-    """Clean up a specific directory."""
-    if os.path.exists(directory):
-        import shutil
-        if input(f"⚠️  Delete all {description}? (y/n): ").lower() == 'y':
-            shutil.rmtree(directory)
-            print(f"✅ Deleted {description}")
-        else:
-            print("Cleanup cancelled.")
-    else:
-        print(f"ℹ️  No {description} found to delete.")
+            print("\nReturning to main menu...")
 
 if __name__ == "__main__":
     # Ensure the directories for saving models and outputs exist
     os.makedirs("models", exist_ok=True)
     os.makedirs("outputs", exist_ok=True)
-    os.makedirs("hyperparameter_results", exist_ok=True)
-    os.makedirs("configurations", exist_ok=True)
+    os.makedirs("outputs/training_plots", exist_ok=True)
+    
+    # Import CONFIG after ensuring directories exist
+    from src.config import CONFIG
     
     try:
         main_menu()
     except KeyboardInterrupt:
-        print("\n\n👋 Goodbye!")
+        print("\n\nProgram terminated by user. Goodbye! 👋")
     except Exception as e:
         print(f"\n❌ Fatal error: {e}")
+        print("Please check your installation and try again.")
         traceback.print_exc()

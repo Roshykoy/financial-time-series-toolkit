@@ -128,4 +128,7 @@ dependencies:
       - threadpoolctl==3.6.0
       - tqdm==4.67.1
       - tzdata==2025.2
+      - scikit-learn==1.7.0
+      - scipy==1.15.3
+      - seaborn
 prefix: /home/rheuks/miniconda3/envs/marksix_ai
