@@ -1,70 +1,99 @@
 # MarkSix AI: A Probabilistic Forecasting System
 
-This project implements a sophisticated, multi-stage pipeline to analyze historical Mark Six lottery data and generate probabilistically-informed number combinations. It leverages a deep learning model, heuristic scorers, intelligent search algorithms, and **automated hyperparameter optimization** to identify high-scoring number sets.
+This project implements a sophisticated, multi-stage pipeline to analyze historical Mark Six lottery data and generate probabilistically-informed number combinations. It leverages a **Conditional Variational Autoencoder (CVAE)** with graph neural networks, temporal context modeling, meta-learning, and **automated hyperparameter optimization** to identify high-scoring number sets through advanced generative modeling.
 
 ## Project Overview
 
-The core of the system is a **Scoring Ensemble** that evaluates the "quality" of a given 6-number combination. This score is not a guarantee of winning, but rather a probabilistic measure based on patterns and trends learned from historical data. The final output is a list of recommended number sets that the system rates most highly.
+The core of the system is a **CVAE-based Generative Model** that learns complex latent representations of lottery number patterns. Combined with graph neural networks for number relationships, LSTM-based temporal modeling, and meta-learning for ensemble optimization, the system generates probabilistically-informed number combinations. This is not a guarantee of winning, but rather a sophisticated probabilistic measure based on multi-dimensional patterns learned from historical data.
 
-The project is structured as a command-line application with four main functionalities:
-1.  **Train:** Trains the core deep learning model on historical data.
-2.  **Generate:** Uses the trained model and ensemble scorers to search for and recommend high-quality number sets.
+The project is structured as a command-line application with seven main functionalities:
+1.  **Train:** Trains the CVAE-based generative model with graph neural networks and temporal context on historical data.
+2.  **Generate:** Uses the trained CVAE and meta-learned ensemble to generate high-quality number combinations.
 3.  **Evaluate:** Measures the performance of the trained model against a validation set of historical data.
-4.  **🆕 Optimize:** Automatically finds the best hyperparameters for optimal model performance.
+4.  **Optimize:** Automatically finds the best hyperparameters for optimal model performance.
+5.  **System Info:** Displays current system configuration and model status.
+6.  **Advanced Options:** Configuration management, diagnostics, and file operations.
+7.  **Exit:** Graceful application termination.
 
 ---
 
-## 🆕 New Features
+## 🆕 Major Architecture Overhaul (Latest Release)
 
-### Hyperparameter Optimization
-- **Automated Parameter Tuning**: Finds optimal learning rates, model sizes, and training settings
-- **Multiple Algorithms**: Grid Search, Random Search, and Bayesian Optimization
-- **Intelligent Configuration Management**: Save, load, and compare parameter presets
-- **Performance Tracking**: Comprehensive evaluation metrics and optimization history
+### CVAE-Based Generative Model
+- **Conditional Variational Autoencoder**: Advanced generative modeling for pattern learning
+- **Latent Space Learning**: Compressed representations of number combination patterns
+- **Multi-Component Loss**: Reconstruction + KL divergence + contrastive learning
+- **Conservative Training**: Stability-focused parameters for reliable convergence
 
-### Enhanced User Experience
-- **Interactive Menus**: Intuitive command-line interface with visual feedback
-- **Configuration Presets**: Pre-defined settings for different use cases (fast, balanced, high-quality)
-- **System Monitoring**: GPU detection, memory management, and performance optimization
-- **Advanced Options**: File management, configuration editing, and system diagnostics
+### Graph Neural Networks & Temporal Modeling
+- **Graph Attention Networks (GAT)**: Models complex number co-occurrence relationships
+- **Temporal Context LSTM**: Processes historical sequence information with attention
+- **Dynamic Pattern Recognition**: Learns temporal dependencies in lottery draws
+
+### Meta-Learning & Ensemble Optimization
+- **Attention-Based Meta-Learner**: Adapts ensemble weights based on input patterns
+- **Confidence Estimation**: Provides uncertainty quantification for predictions
+- **Hard Negative Mining**: Sophisticated contrastive learning with carefully selected negatives
+
+### Enhanced Training Pipeline
+- **Mixed Precision Handling**: Overflow detection and CPU fallback mechanisms
+- **Gradient Management**: Aggressive clipping (0.5) and numerical stability checks
+- **Error Recovery**: Graceful handling of failed batches with detailed logging
+- **Memory Optimization**: CUDA cache clearing and resource management
 
 ---
 
 ## System Architecture
 
-The project is built around several key components that work together in an ensemble.
+The project is built around a sophisticated generative architecture with multiple neural network components.
 
-#### 1. The Scoring Model (`src/model.py`)
--   **Core:** A Transformer-based deep learning model architected with residual blocks.
--   **Function:** Takes a feature vector representing a number combination and outputs a single score.
--   **Training:** Trained using a contrastive learning approach with a ranking loss. It learns to assign higher scores to real historical winning combinations than to random (negative) ones. The training process is enhanced with the Sharpness-Aware Minimization (SAM) optimizer to improve model generalization.
+#### 1. CVAE Core Model (`src/cvae_model.py`)
+-   **Architecture:** Conditional Variational Autoencoder with encoder-decoder structure
+-   **Latent Dimensions:** 64-dimensional compressed representation space (reduced for stability)
+-   **Function:** Learns to reconstruct number combinations while discovering latent patterns
+-   **Training:** Multi-component loss combining reconstruction, KL divergence, and contrastive learning
 
-#### 2. The Feature Engineer (`src/feature_engineering.py`)
--   **Function:** Converts any 6-number set into a rich feature vector.
--   **Features Include:**
-    -   Basic properties (sum, mean, odd/even count).
-    -   Historical frequencies of individual numbers and pairs.
-    -   Delta features (differences between consecutive numbers).
-    -   Distribution across number groups (e.g., 1-10, 11-20).
+#### 2. Graph Neural Network (`src/graph_encoder.py`)
+-   **Architecture:** Graph Attention Network (GAT) for modeling number relationships
+-   **Function:** Captures complex co-occurrence patterns between lottery numbers
+-   **Features:** Multi-head attention mechanism for relationship learning
 
-#### 3. Heuristic Scorers
--   **Temporal Scorer (`src/temporal_scorer.py`):** Scores sets based on the recency of their numbers. It rewards combinations containing numbers that have appeared more recently.
--   **I-Ching Scorer (`src/i_ching_scorer.py`):** An optional, deterministic scorer that assigns a pre-defined "luck" value to each number.
+#### 3. Temporal Context Module (`src/temporal_context.py`)
+-   **Architecture:** LSTM with attention mechanism for sequence modeling
+-   **Function:** Processes historical lottery draw sequences to learn temporal patterns
+-   **Features:** Bidirectional LSTM with attention-based context aggregation
 
-#### 4. The Scorer Ensemble (`src/inference_pipeline.py`)
--   **Function:** Orchestrates the final scoring process. It normalizes the scores from the deep learning model and the heuristic scorers and combines them using a weighted average defined in `src/config.py`.
+#### 4. Meta-Learning Component (`src/meta_learner.py`)
+-   **Architecture:** Attention-based neural network for ensemble weight optimization
+-   **Function:** Dynamically adapts scoring weights based on input patterns
+-   **Features:** Confidence estimation and uncertainty quantification
 
-#### 5. Local Search Algorithm (`src/inference_pipeline.py`)
--   **Function:** Instead of just generating random sets, this algorithm actively searches for high-scoring combinations. It starts with a random set and iteratively makes small changes (swapping one number), always moving towards a higher ensemble score.
+#### 5. Enhanced Feature Engineering (`src/feature_engineering.py`)
+-   **Function:** Converts number combinations into rich multi-dimensional feature vectors
+-   **Enhanced Features:**
+    -   Temporal sequences and graph embeddings
+    -   Statistical properties (sum, mean, variance, odd/even ratios)
+    -   Historical frequencies and pair analysis
+    -   Delta features and number group distributions
+    -   Graph-based relationship features
 
-#### 6. 🆕 Hyperparameter Optimization System (`src/hyperparameter_optimizer.py`)
--   **Function:** Automatically finds the best model parameters through systematic search.
--   **Algorithms:** Grid Search, Random Search, and Bayesian Optimization.
--   **Features:** Early stopping, progress tracking, result persistence, and performance analysis.
+#### 6. Advanced Training Engine (`src/cvae_engine.py`)
+-   **Function:** Orchestrates the complete CVAE training process
+-   **Features:** Conservative training with stability checks, error recovery, and comprehensive logging
 
-#### 7. 🆕 Configuration Manager (`src/config_manager.py`)
--   **Function:** Manages configuration presets and provides interactive parameter editing.
--   **Features:** Preset management, parameter validation, configuration comparison, and interactive editing.
+#### 7. Advanced Inference Pipeline (`src/inference_pipeline.py`)
+-   **Function:** Sophisticated number generation using CVAE sampling and ensemble scoring
+-   **Features:** Meta-learned ensemble weights, confidence-based selection, and iterative refinement
+-   **Search Algorithm:** Local search with CVAE-guided exploration for high-scoring combinations
+
+#### 8. Hyperparameter Optimization System (`src/hyperparameter_optimizer.py`)
+-   **Function:** Automatically finds optimal CVAE and training parameters
+-   **Algorithms:** Grid Search, Random Search, and Bayesian Optimization
+-   **Features:** Early stopping, progress tracking, result persistence, and performance analysis
+
+#### 9. Specialized Data Loading (`src/cvae_data_loader.py`)
+-   **Function:** Custom data loading for CVAE training with negative sampling
+-   **Features:** Hard negative mining, temporal sequence preparation, and graph adjacency matrix generation
 
 ---
 
@@ -97,7 +126,11 @@ The project is built around several key components that work together in an ense
 
 4.  **Test your installation:**
     ```bash
+    # Test hyperparameter optimization functionality
     python test_hyperparameter_optimization.py
+    
+    # Debug and validate model architecture
+    python test_model_debug.py
     ```
 
 ### Usage
@@ -208,28 +241,32 @@ With proper optimization, expect:
 ├── models/                        # Saved model artifacts (generated)
 ├── notebooks/                     # Jupyter notebooks for analysis
 ├── outputs/                       # Output logs and plots (generated)
-├── 🆕 hyperparameter_results/     # Optimization results (generated)
-├── 🆕 configurations/             # Configuration presets (generated)
+├── hyperparameter_results/        # Optimization results (generated)
+├── configurations/                # Configuration presets (generated)
 ├── src/                           # Source code
-│   ├── config.py                  # All project configurations
-│   ├── data_loader.py            # PyTorch dataset/loader classes
-│   ├── engine.py                 # Core training and evaluation loops
-│   ├── evaluation_pipeline.py    # Logic for model evaluation
-│   ├── feature_engineering.py    # Feature creation class
-│   ├── i_ching_scorer.py         # I-Ching heuristic scorer
-│   ├── inference_pipeline.py     # Logic for generating numbers
-│   ├── model.py                  # The deep learning model architecture
-│   ├── sam.py                    # SAM Optimizer implementation
-│   ├── temporal_scorer.py        # Temporal heuristic scorer
-│   ├── training_pipeline.py      # Main training orchestration
-│   ├── 🆕 hyperparameter_optimizer.py  # Automated parameter optimization
-│   └── 🆕 config_manager.py       # Configuration management utility
+│   ├── config.py                  # All project configurations (enhanced)
+│   ├── 🆕 cvae_model.py           # CVAE architecture with graph/temporal encoders
+│   ├── 🆕 cvae_engine.py          # CVAE training and evaluation engines
+│   ├── 🆕 cvae_data_loader.py     # Specialized data loading with negative sampling
+│   ├── 🆕 graph_encoder.py        # Graph Attention Network for number relationships
+│   ├── 🆕 temporal_context.py     # LSTM-based temporal pattern modeling
+│   ├── 🆕 meta_learner.py         # Attention-based ensemble weight optimization
+│   ├── 🆕 debug_utils.py          # Comprehensive debugging utilities
+│   ├── 🆕 model_analysis.py       # Advanced model analysis and visualization
+│   ├── 🆕 visualization.py        # Enhanced plotting and visualization tools
+│   ├── evaluation_pipeline.py    # Logic for model evaluation (enhanced)
+│   ├── feature_engineering.py    # Feature creation class (enhanced)
+│   ├── inference_pipeline.py     # Logic for generating numbers (enhanced)
+│   ├── training_pipeline.py      # Main training orchestration (enhanced)
+│   └── hyperparameter_optimizer.py  # Automated parameter optimization
+├── .gitattributes                 # Git LFS configuration for large files
 ├── .gitignore
-├── environment.yml
-├── main.py                        # Main project hub (entry point)
-├── 🆕 setup.py                    # Automated setup script
-├── 🆕 test_hyperparameter_optimization.py  # Testing script
-├── 🆕 best_hyperparameters.json   # Best found parameters (generated)
+├── environment.yml                # Conda environment (updated dependencies)
+├── main.py                        # Main project hub (completely redesigned)
+├── setup.py                       # Automated setup script
+├── test_hyperparameter_optimization.py  # Testing script
+├── 🆕 test_model_debug.py         # Model architecture validation and debugging
+├── best_hyperparameters.json     # Best found parameters (generated)
 └── README.md
 ```
 
