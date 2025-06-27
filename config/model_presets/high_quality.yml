@@ -1,0 +1,71 @@
+# High quality preset - maximum model capacity and training thoroughness
+
+model:
+  # Increased model complexity for better performance
+  node_embedding_dim: 64
+  graph_hidden_dim: 128
+  num_gat_layers: 3
+  graph_projection_dim: 256
+  
+  temporal_sequence_length: 20
+  temporal_embedding_dim: 32
+  temporal_hidden_dim: 128
+  temporal_lstm_layers: 2
+  temporal_attention_heads: 8
+  temporal_context_dim: 128
+  temporal_projection_dim: 256
+  trend_hidden_dim: 64
+  trend_features: 32
+  
+  latent_dim: 128
+  prior_hidden_dim: 256
+  
+  decoder_hidden_dim: 256
+  decoder_layers: 3
+  decoder_projection_dim: 512
+  number_generation_hidden: 128
+  constraint_hidden_dim: 256
+  
+  combo_embedding_dim: 32
+  pattern_hidden_dim: 128
+  pattern_features: 64
+  stat_hidden_dim: 64
+  stat_features: 32
+  meta_hidden_dim: 256
+  integrated_features: 128
+  meta_attention_heads: 8
+  weight_hidden_dim: 64
+  confidence_hidden_dim: 64
+
+training:
+  epochs: 25
+  batch_size: 4  # Smaller batch size for larger models
+  learning_rate: 0.00002  # Lower learning rate for stability
+  dropout: 0.15
+  gradient_clip_norm: 0.3  # Tighter gradient clipping
+  
+  # More thorough contrastive learning
+  negative_samples: 16
+  hard_negative_ratio: 0.7
+  negative_pool_size: 10000
+  contrastive_margin: 0.5
+  
+  # Enhanced training features
+  use_scheduler: true
+  scheduler_type: "cosine"
+  warmup_epochs: 2
+  ema_decay: 0.999
+  
+  # Detailed monitoring
+  log_interval: 20
+  save_interval: 5
+  validation_frequency: 1
+  plot_latent_space: true
+  save_generation_samples: true
+
+inference:
+  generation_temperature: 0.8
+  num_generation_samples: 20
+  top_k_sampling: 10
+  ensemble_selection_method: "meta_learned"
+  validation_generation_samples: 10

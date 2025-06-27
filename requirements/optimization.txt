@@ -1,0 +1,7 @@
+# Additional dependencies for hyperparameter optimization module
+
+# Advanced Optimization Algorithms
+optuna>=3.0.0  # For state-of-the-art hyperparameter optimization
+
+# Interactive Visualizations (optional)
+plotly>=5.0.0  # For interactive optimization dashboards

@@ -1,0 +1,21 @@
+# Production dependencies
+-r base.txt
+
+# Production Logging
+loguru>=0.7.0  # Enhanced production logging
+
+# Performance Monitoring
+prometheus-client>=0.16.0  # Metrics collection
+
+# Configuration Management
+python-dotenv>=1.0.0  # Environment variable management
+
+# Security
+cryptography>=40.0.0  # For secure model storage
+
+# Resource Management
+resource>=0.2.0  # System resource limits
+
+# Deployment Tools
+gunicorn>=20.1.0  # WSGI server (if web interface added)
+uvicorn>=0.22.0   # ASGI server (if async web interface added)

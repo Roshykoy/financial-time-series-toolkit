@@ -6,6 +6,15 @@ from src.training_pipeline import run_training
 from src.inference_pipeline import run_inference
 from src.evaluation_pipeline import run_evaluation
 
+# Enhanced configuration and logging
+from src.infrastructure.config import get_config_manager
+from src.infrastructure.logging import get_logger, configure_logging
+
+# Initialize enhanced systems
+configure_logging(log_level="INFO", log_file="marksix.log")
+logger = get_logger(__name__)
+
+
 def print_banner():
     """Prints the application banner."""
     print("\n" + "=" * 70)

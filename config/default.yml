@@ -1,0 +1,126 @@
+# Default configuration for MarkSix Probabilistic Forecasting System
+
+model:
+  # Graph Neural Network parameters
+  node_embedding_dim: 32
+  graph_hidden_dim: 64
+  num_gat_layers: 2
+  graph_projection_dim: 128
+  
+  # Temporal Context parameters
+  temporal_sequence_length: 10
+  temporal_embedding_dim: 16
+  temporal_hidden_dim: 64
+  temporal_lstm_layers: 1
+  temporal_attention_heads: 4
+  temporal_context_dim: 64
+  temporal_projection_dim: 128
+  trend_hidden_dim: 32
+  trend_features: 16
+  
+  # VAE Core parameters
+  latent_dim: 64
+  prior_hidden_dim: 128
+  
+  # Decoder parameters
+  decoder_hidden_dim: 128
+  decoder_layers: 2
+  decoder_projection_dim: 256
+  number_generation_hidden: 64
+  constraint_hidden_dim: 128
+  
+  # Meta-learner parameters
+  combo_embedding_dim: 16
+  pattern_hidden_dim: 64
+  pattern_features: 32
+  statistical_features: 13
+  stat_hidden_dim: 32
+  stat_features: 16
+  meta_hidden_dim: 128
+  integrated_features: 64
+  meta_attention_heads: 4
+  weight_hidden_dim: 32
+  confidence_hidden_dim: 32
+
+training:
+  epochs: 10
+  batch_size: 8
+  learning_rate: 0.00005  # 5e-5
+  dropout: 0.1
+  gradient_clip_norm: 0.5
+  weight_decay: 0.000001  # 1e-6
+  
+  # Loss weights
+  reconstruction_weight: 1.0
+  kl_weight: 0.01
+  contrastive_weight: 0.1
+  meta_learning_weight: 0.05
+  
+  # Contrastive learning
+  negative_samples: 8
+  hard_negative_ratio: 0.5
+  negative_pool_size: 5000
+  contrastive_margin: 0.3
+  contrastive_temperature: 0.2
+  
+  # Training options
+  use_mixed_precision: false
+  use_scheduler: false
+  scheduler_type: "none"
+  warmup_epochs: 0
+  ema_decay: 0.0
+  
+  # Early stopping
+  early_stopping: true
+  early_stopping_patience: 3
+  min_improvement: 0.001
+  
+  # Monitoring
+  log_interval: 10
+  save_interval: 2
+  validation_frequency: 2
+  plot_latent_space: false
+  save_generation_samples: false
+
+inference:
+  generation_temperature: 1.0
+  num_generation_samples: 10
+  top_k_sampling: 5
+  ensemble_selection_method: "fixed_weights"
+  evaluation_neg_samples: 49
+  validation_generation_samples: 5
+  
+  # Ensemble weights
+  ensemble_weights:
+    generative: 0.7
+    temporal: 0.2
+    i_ching: 0.1
+
+data:
+  data_path: "data/raw/Mark_Six.csv"
+  num_lotto_numbers: 49
+  scorer_types: ["generative", "temporal", "i_ching"]
+  
+  # Data augmentation (disabled for stability)
+  augment_temporal_noise: 0.0
+  augment_dropout_prob: 0.0
+
+system:
+  device: "auto"  # auto-detect cuda/cpu
+  max_memory_fraction: 0.8
+  clear_cache_frequency: 5
+  fallback_to_cpu: true
+  checkpoint_on_error: true
+  continue_on_batch_fail: true
+  max_failed_batches: 10
+  numerical_stability_eps: 0.00000001  # 1e-8
+  max_grad_norm: 0.5
+  meta_learner_frequency: 20
+
+paths:
+  model_save_path: "models/conservative_cvae_model.pth"
+  meta_learner_save_path: "models/conservative_meta_learner.pth"
+  feature_engineer_path: "models/conservative_feature_engineer.pkl"
+  output_dir: "outputs"
+  models_dir: "models"
+  config_dir: "config"

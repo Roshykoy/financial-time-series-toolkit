@@ -1,0 +1,77 @@
+advanced:
+  batch_size: &id001
+    choices:
+    - 4
+    - 8
+    - 16
+    - 32
+    - 64
+    type: choice
+  contrastive_weight: &id005
+    high: 0.5
+    low: 0.01
+    type: uniform
+  dropout: &id002
+    high: 0.5
+    low: 0.05
+    type: uniform
+  gradient_clip_norm: &id009
+    high: 2.0
+    low: 0.1
+    type: uniform
+  hidden_size: &id003
+    choices:
+    - 64
+    - 128
+    - 256
+    - 512
+    - 768
+    type: choice
+  kl_weight: &id006
+    high: 0.1
+    low: 0.0001
+    type: loguniform
+  latent_dim: &id007
+    choices:
+    - 32
+    - 64
+    - 128
+    - 256
+    type: choice
+  learning_rate: &id004
+    high: 0.01
+    low: 1.0e-06
+    type: loguniform
+  negative_samples:
+    choices:
+    - 4
+    - 8
+    - 16
+    - 32
+    type: choice
+  num_layers: &id008
+    high: 8
+    low: 2
+    type: int
+  weight_decay: &id010
+    high: 0.001
+    low: 1.0e-08
+    type: loguniform
+basic:
+  batch_size: *id001
+  dropout: *id002
+  hidden_size: *id003
+  learning_rate: *id004
+loss_weights:
+  contrastive_weight: *id005
+  kl_weight: *id006
+model_architecture:
+  dropout: *id002
+  hidden_size: *id003
+  latent_dim: *id007
+  num_layers: *id008
+training_params:
+  batch_size: *id001
+  gradient_clip_norm: *id009
+  learning_rate: *id004
+  weight_decay: *id010

@@ -82,5 +82,47 @@ outputs/
 *.log
 
 # IDE settings
-.idea/# Exclude individual trial files but keep summaries
+.idea/
+
+# Exclude individual trial files but keep summaries
 hyperparameter_results/trial_*.json
+
+# Project cleanup and organization specific ignores
+cleanup_backup_*/
+PROJECT_CLEANUP_SUMMARY.md
+
+# Test coverage reports
+htmlcov/
+.coverage
+coverage.xml
+
+# Temporary files
+*.tmp
+*.temp
+*~
+
+# OS specific files
+.DS_Store
+Thumbs.db
+
+# Jupyter notebook outputs (keep notebooks but ignore outputs)
+*/.ipynb_checkpoints/
+notebooks/**/*.ipynb_output
+
+# Optimization results (keep summaries, ignore detailed trial data)
+optimization_results/plots/*.png
+optimization_results/plots/*.jpg
+optimization_results/detailed_trials/
+
+# Training artifacts and logs
+outputs/models/
+outputs/plots/
+outputs/*.txt
+outputs/*.log
+
+# Model checkpoints (keep final models)
+models/checkpoint_*.pth
+
+# Data artifacts
+data/featured_data.csv
+data/processed/*.pkl

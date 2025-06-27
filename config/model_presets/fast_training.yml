@@ -1,0 +1,59 @@
+# Fast training preset - optimized for quick iterations and testing
+
+model:
+  # Reduced model complexity for faster training
+  node_embedding_dim: 16
+  graph_hidden_dim: 32
+  num_gat_layers: 1
+  graph_projection_dim: 64
+  
+  temporal_sequence_length: 5
+  temporal_embedding_dim: 8
+  temporal_hidden_dim: 32
+  temporal_lstm_layers: 1
+  temporal_attention_heads: 2
+  temporal_context_dim: 32
+  temporal_projection_dim: 64
+  trend_hidden_dim: 16
+  trend_features: 8
+  
+  latent_dim: 32
+  prior_hidden_dim: 64
+  
+  decoder_hidden_dim: 64
+  decoder_layers: 1
+  decoder_projection_dim: 128
+  number_generation_hidden: 32
+  constraint_hidden_dim: 64
+  
+  combo_embedding_dim: 8
+  pattern_hidden_dim: 32
+  pattern_features: 16
+  stat_hidden_dim: 16
+  stat_features: 8
+  meta_hidden_dim: 64
+  integrated_features: 32
+  meta_attention_heads: 2
+  weight_hidden_dim: 16
+  confidence_hidden_dim: 16
+
+training:
+  epochs: 5
+  batch_size: 16
+  learning_rate: 0.0001  # Higher learning rate for faster convergence
+  dropout: 0.05  # Lower dropout for faster convergence
+  
+  # Reduced negative sampling for speed
+  negative_samples: 4
+  negative_pool_size: 2000
+  
+  # More frequent validation but less detailed
+  log_interval: 5
+  save_interval: 1
+  validation_frequency: 1
+  plot_latent_space: false
+  save_generation_samples: false
+
+inference:
+  num_generation_samples: 5
+  top_k_sampling: 3

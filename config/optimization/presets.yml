@@ -1,0 +1,188 @@
+presets:
+- algorithm: random_search
+  description: Quick test optimization (5 trials, 2 epochs each)
+  name: quick_test
+  optimization_config:
+    backup_results: true
+    checkpoint_frequency: 5
+    cleanup_frequency: 5
+    cross_validation_folds: 5
+    early_stopping: false
+    early_stopping_patience: 10
+    enable_hardware_monitoring: true
+    gpu_memory_fraction: 0.8
+    max_duration_hours: 0.5
+    max_retries: 2
+    max_trials: 5
+    memory_limit_gb: null
+    min_improvement: 0.001
+    parallel_jobs: 1
+    random_seed: null
+    retry_failed_trials: false
+    save_intermediate_results: true
+    trial_timeout_minutes: 10.0
+    validation_split: 0.2
+    validation_strategy: holdout
+  search_space: &id001
+    batch_size: &id002
+      choices:
+      - 4
+      - 8
+      - 16
+      - 32
+      - 64
+      type: choice
+    dropout: &id003
+      high: 0.5
+      low: 0.05
+      type: uniform
+    hidden_size: &id004
+      choices:
+      - 64
+      - 128
+      - 256
+      - 512
+      - 768
+      type: choice
+    learning_rate: &id005
+      high: 0.01
+      low: 1.0e-06
+      type: loguniform
+- algorithm: random_search
+  description: Fast random search (20 trials, 3 epochs each)
+  name: fast_search
+  optimization_config:
+    backup_results: true
+    checkpoint_frequency: 5
+    cleanup_frequency: 5
+    cross_validation_folds: 5
+    early_stopping: true
+    early_stopping_patience: 5
+    enable_hardware_monitoring: true
+    gpu_memory_fraction: 0.8
+    max_duration_hours: 2.0
+    max_retries: 2
+    max_trials: 20
+    memory_limit_gb: null
+    min_improvement: 0.001
+    parallel_jobs: 1
+    random_seed: null
+    retry_failed_trials: false
+    save_intermediate_results: true
+    trial_timeout_minutes: 15.0
+    validation_split: 0.2
+    validation_strategy: holdout
+  search_space: *id001
+- algorithm: bayesian
+  description: Balanced Bayesian optimization (30 trials, 5 epochs each)
+  name: balanced_search
+  optimization_config:
+    backup_results: true
+    checkpoint_frequency: 5
+    cleanup_frequency: 5
+    cross_validation_folds: 5
+    early_stopping: true
+    early_stopping_patience: 8
+    enable_hardware_monitoring: true
+    gpu_memory_fraction: 0.8
+    max_duration_hours: 4.0
+    max_retries: 2
+    max_trials: 30
+    memory_limit_gb: null
+    min_improvement: 0.001
+    parallel_jobs: 2
+    random_seed: null
+    retry_failed_trials: false
+    save_intermediate_results: true
+    trial_timeout_minutes: 30.0
+    validation_split: 0.2
+    validation_strategy: holdout
+  search_space: &id006
+    batch_size: *id002
+    contrastive_weight:
+      high: 0.5
+      low: 0.01
+      type: uniform
+    dropout: *id003
+    gradient_clip_norm:
+      high: 2.0
+      low: 0.1
+      type: uniform
+    hidden_size: *id004
+    kl_weight:
+      high: 0.1
+      low: 0.0001
+      type: loguniform
+    latent_dim:
+      choices:
+      - 32
+      - 64
+      - 128
+      - 256
+      type: choice
+    learning_rate: *id005
+    negative_samples:
+      choices:
+      - 4
+      - 8
+      - 16
+      - 32
+      type: choice
+    num_layers:
+      high: 8
+      low: 2
+      type: int
+    weight_decay:
+      high: 0.001
+      low: 1.0e-08
+      type: loguniform
+- algorithm: optuna
+  description: Thorough Optuna optimization (50 trials, 8 epochs each)
+  name: thorough_search
+  optimization_config:
+    backup_results: true
+    checkpoint_frequency: 5
+    cleanup_frequency: 5
+    cross_validation_folds: 5
+    early_stopping: true
+    early_stopping_patience: 10
+    enable_hardware_monitoring: true
+    gpu_memory_fraction: 0.8
+    max_duration_hours: 8.0
+    max_retries: 2
+    max_trials: 50
+    memory_limit_gb: null
+    min_improvement: 0.001
+    parallel_jobs: 2
+    random_seed: null
+    retry_failed_trials: false
+    save_intermediate_results: true
+    trial_timeout_minutes: 60.0
+    validation_split: 0.2
+    validation_strategy: holdout
+  search_space: *id006
+- algorithm: grid_search
+  description: Grid search for systematic exploration
+  name: grid_exploration
+  optimization_config:
+    backup_results: true
+    checkpoint_frequency: 5
+    cleanup_frequency: 5
+    cross_validation_folds: 5
+    early_stopping: false
+    early_stopping_patience: 10
+    enable_hardware_monitoring: true
+    gpu_memory_fraction: 0.8
+    max_duration_hours: 6.0
+    max_retries: 2
+    max_trials: 100
+    memory_limit_gb: null
+    min_improvement: 0.001
+    parallel_jobs: 1
+    random_seed: null
+    retry_failed_trials: false
+    save_intermediate_results: true
+    trial_timeout_minutes: 45.0
+    validation_split: 0.2
+    validation_strategy: holdout
+  search_space: *id001
