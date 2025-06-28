@@ -20,6 +20,16 @@ class TestRunner:
     def __init__(self):
         self.project_root = Path(__file__).parent
         self.tests_dir = self.project_root / "tests"
+        self.test_framework = self.detect_test_framework()
+    
+    def detect_test_framework(self) -> str:
+        """Detect available test framework and return preference."""
+        try:
+            import pytest
+            return 'pytest'
+        except ImportError:
+            print("⚠️  pytest not found, falling back to unittest")
+            return 'unittest'
         
     def run_command(self, cmd: List[str], description: str) -> bool:
         """Run a command and return success status."""
@@ -36,8 +46,35 @@ class TestRunner:
             return False
         except FileNotFoundError:
             print(f"❌ Command not found: {cmd[0]}")
-            print("Try installing pytest: pip install pytest pytest-cov")
+            if 'pytest' in cmd:
+                print("💡 pytest not available. Installing dependencies...")
+                return self.handle_missing_pytest(description)
             return False
+    
+    def handle_missing_pytest(self, description: str) -> bool:
+        """Handle missing pytest by providing installation instructions and fallback."""
+        print("\n🔧 DEPENDENCY ISSUE DETECTED")
+        print("=" * 50)
+        print("pytest is required for the test runner.")
+        print("\n📦 To install dependencies:")
+        print("Option 1 (Recommended): conda activate marksix_ai")
+        print("Option 2 (Quick fix): pip install pytest pytest-cov")
+        print("Option 3 (Full setup): pip install -r requirements/dev.txt")
+        
+        user_choice = input("\n❓ Try automatic installation? (y/N): ").strip().lower()
+        if user_choice == 'y':
+            try:
+                print("\n📥 Installing pytest and pytest-cov...")
+                result = subprocess.run([
+                    sys.executable, "-m", "pip", "install", "pytest", "pytest-cov"
+                ], check=True, capture_output=True, text=True)
+                print("✅ Installation successful!")
+                return True
+            except subprocess.CalledProcessError as e:
+                print(f"❌ Installation failed: {e}")
+                print("Please install manually or activate the marksix_ai environment")
+        
+        return False
     
     def run_unit_tests(self) -> bool:
         """Run unit tests."""
@@ -136,14 +173,34 @@ class TestRunner:
         print("6. Run specific test file")
         print("7. Validate optimization module")
         print("8. List available tests")
-        print("9. Exit")
+        print("9. Environment setup help")
+        print("10. Exit")
         print("=" * 50)
+    
+    def show_environment_help(self) -> None:
+        """Show environment setup instructions."""
+        print("\n🔧 ENVIRONMENT SETUP HELP")
+        print("=" * 60)
+        print("This project requires the marksix_ai conda environment.")
+        print("\n📦 Setup Instructions:")
+        print("1. Create environment: conda env create -f environment.yml")
+        print("2. Activate environment: conda activate marksix_ai")
+        print("3. Install dev dependencies: pip install -r requirements/dev.txt")
+        print("\n🚀 Quick Test:")
+        print("conda activate marksix_ai && python run_tests.py --list")
+        print("\n⚡ Quick Fix (current environment):")
+        print("pip install pytest pytest-cov")
     
     def interactive_mode(self) -> None:
         """Run in interactive menu mode."""
+        # Check environment on startup
+        if self.test_framework == 'unittest':
+            print("\n⚠️  WARNING: pytest not available, functionality may be limited")
+            print("Run option 10 for setup help")
+        
         while True:
             self.show_menu()
-            choice = input("\nEnter your choice (1-9): ").strip()
+            choice = input("\nEnter your choice (1-10): ").strip()
             
             if choice == "1":
                 self.run_all_tests()
@@ -164,10 +221,12 @@ class TestRunner:
             elif choice == "8":
                 self.list_available_tests()
             elif choice == "9":
+                self.show_environment_help()
+            elif choice == "10":
                 print("\n👋 Goodbye!")
                 break
             else:
-                print("❌ Invalid choice. Please enter 1-9.")
+                print("❌ Invalid choice. Please enter 1-10.")
             
             input("\nPress Enter to continue...")
 

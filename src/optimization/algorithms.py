@@ -46,12 +46,24 @@ class SearchSpaceHandler:
                     return False
                 param_type = param_config['type']
                 
-                if param_type == 'choice' and 'choices' not in param_config:
-                    return False
-                elif param_type in ['uniform', 'loguniform'] and ('low' not in param_config or 'high' not in param_config):
-                    return False
-                elif param_type == 'int' and ('low' not in param_config or 'high' not in param_config):
-                    return False
+                if param_type == 'choice':
+                    if 'choices' not in param_config:
+                        return False
+                elif param_type in ['uniform', 'loguniform']:
+                    if 'low' not in param_config or 'high' not in param_config:
+                        return False
+                    # Check that low < high
+                    if param_config['low'] >= param_config['high']:
+                        return False
+                    # Check for negative values in loguniform
+                    if param_type == 'loguniform' and (param_config['low'] <= 0 or param_config['high'] <= 0):
+                        return False
+                elif param_type == 'int':
+                    if 'low' not in param_config or 'high' not in param_config:
+                        return False
+                    # Check that low <= high for integers
+                    if param_config['low'] > param_config['high']:
+                        return False
             elif not isinstance(param_config, (list, tuple)):
                 return False
         

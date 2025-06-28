@@ -159,6 +159,72 @@ def get_inference_options():
     }
 
 
+def get_optimization_options():
+    """Gets hyperparameter optimization configuration options from user."""
+    print("Hyperparameter Optimization Configuration:")
+    print("-" * 41)
+    
+    # Show available presets
+    try:
+        from src.optimization.main import OptimizationOrchestrator
+        orchestrator = OptimizationOrchestrator("data/raw/Mark_Six.csv")
+        presets = orchestrator.list_presets()
+        
+        print("Available optimization presets:")
+        for i, preset in enumerate(presets, 1):
+            info = orchestrator.get_preset_info(preset)
+            print(f"{i}. {preset}: {info['description']}")
+            print(f"   Algorithm: {info['algorithm']}, Max Trials: {info['max_trials']}, Duration: {info['max_duration_hours']}h")
+        
+        # Get preset choice
+        try:
+            preset_choice = int(input(f"\nChoose preset (1-{len(presets)}, default: 1): ") or "1")
+            if 1 <= preset_choice <= len(presets):
+                selected_preset = presets[preset_choice - 1]
+            else:
+                print("Invalid choice, using default preset.")
+                selected_preset = presets[0]
+        except ValueError:
+            selected_preset = presets[0]
+            
+    except Exception as e:
+        print(f"Warning: Could not load presets: {e}")
+        print("Using default quick_test preset.")
+        selected_preset = "quick_test"
+    
+    # Get custom parameters
+    print(f"\nSelected preset: {selected_preset}")
+    print("You can customize the following parameters:")
+    
+    # Max trials
+    try:
+        trials_input = input("Maximum number of trials (default: use preset): ")
+        max_trials = int(trials_input) if trials_input else None
+        if max_trials is not None and max_trials <= 0:
+            print("Invalid number of trials, using preset default.")
+            max_trials = None
+    except ValueError:
+        print("Invalid input for trials, using preset default.")
+        max_trials = None
+    
+    # Max duration
+    try:
+        duration_input = input("Maximum duration in hours (default: use preset): ")
+        max_duration = float(duration_input) if duration_input else None
+        if max_duration is not None and max_duration <= 0:
+            print("Invalid duration, using preset default.")
+            max_duration = None
+    except ValueError:
+        print("Invalid input for duration, using preset default.")
+        max_duration = None
+    
+    return {
+        'preset': selected_preset,
+        'max_trials': max_trials,
+        'max_duration': max_duration
+    }
+
+
 def display_model_info():
     """Displays information about trained models."""
     from src.config import CONFIG
@@ -206,12 +272,13 @@ def main_menu():
         print("1. Train New CVAE Model")
         print("2. Generate Number Combinations (Inference)")
         print("3. Evaluate Trained Model")
-        print("4. View Model Information")
-        print("5. System Diagnostics")
-        print("6. Exit")
+        print("4. Optimize Hyperparameters")
+        print("5. View Model Information")
+        print("6. System Diagnostics")
+        print("7. Exit")
         print("=" * 50)
         
-        choice = input("Enter your choice (1-6): ").strip()
+        choice = input("Enter your choice (1-7): ").strip()
         
         try:
             if choice == '1':
@@ -296,9 +363,65 @@ def main_menu():
                     print("Evaluation cancelled.")
             
             elif choice == '4':
-                display_model_info()
+                print("\n⚙️ Starting Hyperparameter Optimization")
+                print("-" * 40)
+                
+                # Import optimization system
+                try:
+                    from src.optimization.main import OptimizationOrchestrator
+                except ImportError as e:
+                    print(f"❌ Optimization system not available: {e}")
+                    print("Please check if the optimization modules are properly installed.")
+                    continue
+                
+                # Get optimization options
+                optimization_config = get_optimization_options()
+                if optimization_config is None:
+                    continue
+                
+                print(f"\nOptimization Configuration:")
+                print(f"• Preset: {optimization_config['preset']}")
+                print(f"• Max trials: {optimization_config['max_trials']}")
+                print(f"• Max duration: {optimization_config['max_duration']} hours")
+                
+                confirm = input("Start hyperparameter optimization? (y/n): ").lower()
+                if confirm == 'y':
+                    print("\n🚀 Starting optimization process...")
+                    print("This may take a while depending on your configuration.")
+                    
+                    try:
+                        # Create orchestrator and run optimization
+                        orchestrator = OptimizationOrchestrator(
+                            data_path=CONFIG["data_path"],
+                            output_dir="optimization_results"
+                        )
+                        
+                        results = orchestrator.run_optimization(
+                            preset_name=optimization_config['preset'],
+                            max_trials=optimization_config['max_trials'],
+                            max_duration_hours=optimization_config['max_duration']
+                        )
+                        
+                        # Display results summary
+                        print("\n✅ Optimization completed successfully!")
+                        best_params = results['optimization_summary']['best_parameters']
+                        best_score = results['optimization_summary']['best_score']
+                        print(f"Best score achieved: {best_score:.4f}")
+                        print(f"Best parameters found:")
+                        for param, value in best_params.items():
+                            print(f"  • {param}: {value}")
+                        print(f"\nDetailed results saved to: optimization_results/")
+                        
+                    except Exception as e:
+                        print(f"❌ Optimization failed: {e}")
+                        print("Check the logs for more details.")
+                else:
+                    print("Optimization cancelled.")
             
             elif choice == '5':
+                display_model_info()
+            
+            elif choice == '6':
                 print("\n🔧 System Diagnostics")
                 print("-" * 20)
                 
@@ -348,13 +471,13 @@ def main_menu():
                 except Exception as e:
                     print(f"GPU memory test: ✗ Failed - {str(e)}")
             
-            elif choice == '6':
+            elif choice == '7':
                 print("\n👋 Thank you for using Mark Six Prediction System!")
                 print("May your numbers bring you luck! 🍀")
                 break
             
             else:
-                print("❌ Invalid choice. Please enter a number between 1 and 6.")
+                print("❌ Invalid choice. Please enter a number between 1 and 7.")
         
         except KeyboardInterrupt:
             print("\n\n⚠️  Operation interrupted by user.")

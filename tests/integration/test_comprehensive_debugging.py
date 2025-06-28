@@ -18,7 +18,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 from utils.input_validation import InputValidator, ValidationError, safe_input, validate_training_config
 from utils.error_handling import (
     ErrorHandler, robust_operation, gpu_error_recovery, 
-    safe_file_operation, safe_model_operation
+    safe_file_operation, safe_model_operation, GPUError
 )
 from utils.safe_math import (
     safe_divide, safe_log, safe_exp, safe_softmax, safe_normalize,
@@ -186,7 +186,7 @@ class TestErrorHandling:
         test_error = ValueError("Test error")
         result = handler.handle_error(test_error, "test_context")
         
-        assert "test_context" in handler.error_counts
+        assert "ValueError:test_context" in handler.error_counts
         assert handler.error_counts["ValueError:test_context"] == 1
     
     def test_robust_operation_decorator(self):
@@ -227,9 +227,10 @@ class TestErrorHandling:
             
             # Test CUDA OOM recovery
             with patch('builtins.print'):  # Suppress prints during test
-                with gpu_error_recovery():
-                    # This should trigger the recovery mechanism
-                    raise RuntimeError("CUDA out of memory")
+                with pytest.raises(GPUError, match="GPU operation failed"):
+                    with gpu_error_recovery():
+                        # This should trigger the recovery mechanism
+                        raise RuntimeError("CUDA out of memory")
     
     def test_safe_file_operation(self):
         """Test safe file operation context manager."""
@@ -242,7 +243,9 @@ class TestErrorHandling:
         # Test file not found
         with pytest.raises(Exception):  # Should raise DataError, but we're testing the wrapper
             with safe_file_operation("/nonexistent/file.txt", "read"):
-                pass
+                # Actually try to open the file to trigger the error
+                with open("/nonexistent/file.txt", "r") as f:
+                    f.read()
     
     def test_safe_model_operation(self):
         """Test safe model operation decorator."""
@@ -282,7 +285,7 @@ class TestSafeMath:
         denominator = torch.tensor([2.0, 0.0, 5.0])
         
         result = safe_divide(numerator, denominator)
-        expected = torch.tensor([5.0, 10.0 / 1e-8, 6.0])
+        expected = torch.tensor([5.0, 20.0 / 1e-8, 6.0])
         assert torch.allclose(result, expected, rtol=1e-3)
     
     def test_safe_log(self):

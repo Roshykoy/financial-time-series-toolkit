@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Dict, Any, Optional, List
 import json
 import time
+import numpy as np
 from datetime import datetime
 
 from .algorithms import create_optimizer

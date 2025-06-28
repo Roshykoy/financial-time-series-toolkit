@@ -78,7 +78,7 @@ def safe_log(
 
 def safe_exp(
     x: Union[torch.Tensor, float], 
-    max_exp: float = 700.0
+    max_exp: float = 80.0
 ) -> Union[torch.Tensor, float]:
     """
     Perform safe exponential with protection against overflow.

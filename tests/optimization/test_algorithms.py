@@ -318,7 +318,7 @@ class TestBayesianOptimizer:
         # Test probability of improvement
         pi = optimizer._probability_of_improvement(means, stds)
         assert len(pi) == 3
-        assert all(0 <= pi <= 1)
+        assert all((pi >= 0) & (pi <= 1))
 
 
 @pytest.mark.skipif(not hasattr(pytest, 'importorskip'), reason="Optuna tests require special handling")

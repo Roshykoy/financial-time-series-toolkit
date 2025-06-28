@@ -207,6 +207,12 @@ class ConfigManager:
         with open(self.config_path, 'w') as f:
             yaml.safe_dump(serializable_config, f, default_flow_style=False, indent=2)
     
+    def _resolve_device(self, device_string: str) -> str:
+        """Resolve device string to valid PyTorch device."""
+        if device_string == "auto":
+            return "cuda" if torch.cuda.is_available() else "cpu"
+        return device_string
+    
     def get_flat_config(self) -> Dict[str, Any]:
         """Get flattened configuration for backward compatibility."""
         config = self.load_config()
@@ -217,6 +223,10 @@ class ConfigManager:
                 flat_config.update(section_config.__dict__)
             else:
                 flat_config.update(section_config)
+        
+        # Resolve device string
+        if 'device' in flat_config:
+            flat_config['device'] = self._resolve_device(flat_config['device'])
         
         return flat_config
     

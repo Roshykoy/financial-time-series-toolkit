@@ -213,9 +213,15 @@ class ConditionalVAE(nn.Module):
         mu_prior, logvar_prior = torch.chunk(prior_params, 2, dim=-1)
         return mu_prior, logvar_prior
     
-    def forward(self, number_sets, pair_counts, df, current_indices):
+    def forward(self, number_sets, pair_counts, temporal_sequences, current_indices):
         """
         Full forward pass for training.
+        
+        Args:
+            number_sets: Batch of number combinations
+            pair_counts: Pair frequency counts
+            temporal_sequences: Pre-computed temporal sequences [batch_size, seq_len, 6]
+            current_indices: Current draw indices
         
         Returns:
             reconstruction_logits: [batch_size, 6, num_numbers]
@@ -226,8 +232,8 @@ class ConditionalVAE(nn.Module):
         # Encode inputs
         mu, logvar = self.encode(number_sets, pair_counts)
         
-        # Get temporal context
-        context, _ = self.get_temporal_context(df, current_indices)
+        # Process pre-computed temporal sequences
+        context, _ = self.temporal_encoder(temporal_sequences)
         
         # Sample from posterior
         z = self.reparameterize(mu, logvar)

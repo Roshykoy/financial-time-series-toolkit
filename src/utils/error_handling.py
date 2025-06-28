@@ -131,9 +131,10 @@ def gpu_error_recovery():
             try:
                 import torch
                 torch.cuda.empty_cache()
-                print("🔄 GPU memory cleared, retrying...")
-                yield
-            except Exception:
+                print("🔄 GPU memory cleared")
+                # Cannot yield again in context manager - raise specific error instead
+                raise GPUError(f"GPU operation failed, memory cleared: {e}")
+            except Exception as fallback_error:
                 print("❌ CPU fallback failed")
                 raise GPUError(f"GPU operation failed and CPU fallback unsuccessful: {e}")
         else:

@@ -1,0 +1,1624 @@
+{
+  "optimization_config": {
+    "max_trials": 30,
+    "max_duration_hours": 4.0,
+    "parallel_jobs": 2,
+    "random_seed": null,
+    "early_stopping": true,
+    "early_stopping_patience": 8,
+    "min_improvement": 0.001,
+    "enable_hardware_monitoring": true,
+    "cleanup_frequency": 5,
+    "memory_limit_gb": null,
+    "gpu_memory_fraction": 0.8,
+    "trial_timeout_minutes": 30.0,
+    "retry_failed_trials": false,
+    "max_retries": 2,
+    "save_intermediate_results": true,
+    "checkpoint_frequency": 5,
+    "backup_results": true,
+    "validation_strategy": "holdout",
+    "validation_split": 0.2,
+    "cross_validation_folds": 5
+  },
+  "search_space": {
+    "batch_size": {
+      "choices": [
+        4,
+        8,
+        16,
+        32,
+        64
+      ],
+      "type": "choice"
+    },
+    "contrastive_weight": {
+      "high": 0.5,
+      "low": 0.01,
+      "type": "uniform"
+    },
+    "dropout": {
+      "high": 0.5,
+      "low": 0.05,
+      "type": "uniform"
+    },
+    "gradient_clip_norm": {
+      "high": 2.0,
+      "low": 0.1,
+      "type": "uniform"
+    },
+    "hidden_size": {
+      "choices": [
+        64,
+        128,
+        256,
+        512,
+        768
+      ],
+      "type": "choice"
+    },
+    "kl_weight": {
+      "high": 0.1,
+      "low": 0.0001,
+      "type": "loguniform"
+    },
+    "latent_dim": {
+      "choices": [
+        32,
+        64,
+        128,
+        256
+      ],
+      "type": "choice"
+    },
+    "learning_rate": {
+      "high": 0.01,
+      "low": 1e-06,
+      "type": "loguniform"
+    },
+    "negative_samples": {
+      "choices": [
+        4,
+        8,
+        16,
+        32
+      ],
+      "type": "choice"
+    },
+    "num_layers": {
+      "high": 8,
+      "low": 2,
+      "type": "int"
+    },
+    "weight_decay": {
+      "high": 0.001,
+      "low": 1e-08,
+      "type": "loguniform"
+    }
+  },
+  "all_trials": [
+    {
+      "trial_id": "trial_0000_1751101176",
+      "parameters": {
+        "batch_size": 16,
+        "contrastive_weight": 0.10151005060997881,
+        "dropout": 0.13430920840422605,
+        "gradient_clip_norm": 1.8906745255973947,
+        "hidden_size": 512,
+        "kl_weight": 0.0001444561567010615,
+        "latent_dim": 256,
+        "learning_rate": 0.00032251534475445057,
+        "negative_samples": 32,
+        "num_layers": 7,
+        "weight_decay": 2.067858822088563e-06,
+        "device": "cuda",
+        "max_memory_fraction": 0.8,
+        "parallel_jobs": 6
+      },
+      "score": -Infinity,
+      "status": "completed",
+      "start_time": "2025-06-28 16:59:36.599090",
+      "end_time": "2025-06-28 16:59:41.819820",
+      "duration_seconds": 5.22073,
+      "error_message": null,
+      "metadata": {},
+      "resource_usage": {
+        "before": {
+          "cpu_usage_percent": 0.1,
+          "memory_usage_percent": 12.4,
+          "memory_available_gb": 13.633220672607422,
+          "memory_used_gb": 1.7131996154785156,
+          "timestamp": 1751101177.6008484,
+          "gpu_status": [
+            {
+              "device_id": 0,
+              "memory_allocated_gb": 0.0,
+              "memory_reserved_gb": 0.0,
+              "memory_free_gb": 9.99951171875,
+              "utilization_percent": 0.0
+            }
+          ]
+        },
+        "after": {
+          "cpu_usage_percent": 0.1,
+          "memory_usage_percent": 13.1,
+          "memory_available_gb": 13.53805160522461,
+          "memory_used_gb": 1.7361297607421875,
+          "timestamp": 1751101181.819602,
+          "gpu_status": [
+            {
+              "device_id": 0,
+              "memory_allocated_gb": 0.0,
+              "memory_reserved_gb": 0.0,
+              "memory_free_gb": 9.99951171875,
+              "utilization_percent": 0.0
+            }
+          ]
+        },
+        "duration_seconds": 4.219653606414795
+      }
+    },
+    {
+      "trial_id": "trial_0001_1751101176",
+      "parameters": {
+        "batch_size": 4,
+        "contrastive_weight": 0.3102376876904567,
+        "dropout": 0.432877863929105,
+        "gradient_clip_norm": 1.663117055601879,
+        "hidden_size": 128,
+        "kl_weight": 0.00014395873507603427,
+        "latent_dim": 256,
+        "learning_rate": 0.007142084711006343,
+        "negative_samples": 8,
+        "num_layers": 6,
+        "weight_decay": 8.80791500766553e-05,
+        "device": "cuda",
+        "max_memory_fraction": 0.8,
+        "parallel_jobs": 6
+      },
+      "score": -Infinity,
+      "status": "completed",
+      "start_time": "2025-06-28 16:59:36.599358",
+      "end_time": "2025-06-28 16:59:41.820586",
+      "duration_seconds": 5.221228,
+      "error_message": null,
+      "metadata": {},
+      "resource_usage": {
+        "before": {
+          "cpu_usage_percent": 0.1,
+          "memory_usage_percent": 12.4,
+          "memory_available_gb": 13.633220672607422,
+          "memory_used_gb": 1.7131996154785156,
+          "timestamp": 1751101177.6013515,
+          "gpu_status": [
+            {
+              "device_id": 0,
+              "memory_allocated_gb": 0.0,
+              "memory_reserved_gb": 0.0,
+              "memory_free_gb": 9.99951171875,
+              "utilization_percent": 0.0
+            }
+          ]
+        },
+        "after": {
+          "cpu_usage_percent": 0.1,
+          "memory_usage_percent": 13.1,
+          "memory_available_gb": 13.53805160522461,
+          "memory_used_gb": 1.7361297607421875,
+          "timestamp": 1751101181.820442,
+          "gpu_status": [
+            {
+              "device_id": 0,
+              "memory_allocated_gb": 0.0,
+              "memory_reserved_gb": 0.0,
+              "memory_free_gb": 9.99951171875,
+              "utilization_percent": 0.0
+            }
+          ]
+        },
+        "duration_seconds": 4.219094276428223
+      }
+    },
+    {
+      "trial_id": "trial_0003_1751101181",
+      "parameters": {
+        "batch_size": 8,
+        "contrastive_weight": 0.09269583290714245,
+        "dropout": 0.129356622895968,
+        "gradient_clip_norm": 0.9052132427996248,
+        "hidden_size": 512,
+        "kl_weight": 0.039175114197642066,
+        "latent_dim": 32,
+        "learning_rate": 0.00014257585123055548,
+        "negative_samples": 8,
+        "num_layers": 5,
+        "weight_decay": 3.7231313664491706e-06,
+        "device": "cuda",
+        "max_memory_fraction": 0.8,
+        "parallel_jobs": 6
+      },
+      "score": -Infinity,
+      "status": "completed",
+      "start_time": "2025-06-28 16:59:41.822121",
+      "end_time": "2025-06-28 16:59:46.285346",
+      "duration_seconds": 4.463225,
+      "error_message": null,
+      "metadata": {},
+      "resource_usage": {
+        "before": {
+          "cpu_usage_percent": 0.5,
+          "memory_usage_percent": 13.1,
+          "memory_available_gb": 13.535064697265625,
+          "memory_used_gb": 1.7390289306640625,
+          "timestamp": 1751101182.8239708,
+          "gpu_status": [
+            {
+              "device_id": 0,
+              "memory_allocated_gb": 0.0,
+              "memory_reserved_gb": 0.0,
+              "memory_free_gb": 9.99951171875,
+              "utilization_percent": 0.0
+            }
+          ]
+        },
+        "after": {
+          "cpu_usage_percent": 0.3,
+          "memory_usage_percent": 13.1,
+          "memory_available_gb": 13.535236358642578,
+          "memory_used_gb": 1.7389144897460938,
+          "timestamp": 1751101186.2851334,
+          "gpu_status": [
+            {
+              "device_id": 0,
+              "memory_allocated_gb": 0.0,
+              "memory_reserved_gb": 0.0,
+              "memory_free_gb": 9.99951171875,
+              "utilization_percent": 0.0
+            }
+          ]
+        },
+        "duration_seconds": 3.461693048477173
+      }
+    },
+    {
+      "trial_id": "trial_0002_1751101181",
+      "parameters": {
+        "batch_size": 8,
+        "contrastive_weight": 0.257264743281294,
+        "dropout": 0.06670267457557816,
+        "gradient_clip_norm": 0.3519102040402823,
+        "hidden_size": 768,
+        "kl_weight": 0.000373664080506191,
+        "latent_dim": 256,
+        "learning_rate": 0.00020975680149943666,
+        "negative_samples": 8,
+        "num_layers": 7,
+        "weight_decay": 1.4739834161568747e-05,
+        "device": "cuda",
+        "max_memory_fraction": 0.8,
+        "parallel_jobs": 6
+      },
+      "score": -Infinity,
+      "status": "completed",
+      "start_time": "2025-06-28 16:59:41.822025",
+      "end_time": "2025-06-28 16:59:46.346171",
+      "duration_seconds": 4.524146,
+      "error_message": null,
+      "metadata": {},
+      "resource_usage": {
+        "before": {
+          "cpu_usage_percent": 0.5,
+          "memory_usage_percent": 13.1,
+          "memory_available_gb": 13.535064697265625,
+          "memory_used_gb": 1.7390289306640625,
+          "timestamp": 1751101182.8231719,
+          "gpu_status": [
+            {
+              "device_id": 0,
+              "memory_allocated_gb": 0.0,
+              "memory_reserved_gb": 0.0,
+              "memory_free_gb": 9.99951171875,
+              "utilization_percent": 0.0
+            }
+          ]
+        },
+        "after": {
+          "cpu_usage_percent": 0.0,
+          "memory_usage_percent": 13.1,
+          "memory_available_gb": 13.535236358642578,
+          "memory_used_gb": 1.7389144897460938,
+          "timestamp": 1751101186.3459406,
+          "gpu_status": [
+            {
+              "device_id": 0,
+              "memory_allocated_gb": 0.0,
+              "memory_reserved_gb": 0.0,
+              "memory_free_gb": 9.99951171875,
+              "utilization_percent": 0.0
+            }
+          ]
+        },
+        "duration_seconds": 3.5226004123687744
+      }
+    },
+    {
+      "trial_id": "trial_0004_1751101186",
+      "parameters": {
+        "batch_size": 32,
+        "contrastive_weight": 0.11460569324561569,
+        "dropout": 0.4774153333397304,
+        "gradient_clip_norm": 1.2047527199911618,
+        "hidden_size": 256,
+        "kl_weight": 0.009822172844433956,
+        "latent_dim": 64,
+        "learning_rate": 1.8768850074261492e-06,
+        "negative_samples": 32,
+        "num_layers": 5,
+        "weight_decay": 1.586373815913406e-05,
+        "device": "cuda",
+        "max_memory_fraction": 0.8,
+        "parallel_jobs": 6
+      },
+      "score": -Infinity,
+      "status": "completed",
+      "start_time": "2025-06-28 16:59:46.347646",
+      "end_time": "2025-06-28 16:59:50.833242",
+      "duration_seconds": 4.485596,
+      "error_message": null,
+      "metadata": {},
+      "resource_usage": {
+        "before": {
+          "cpu_usage_percent": 0.3,
+          "memory_usage_percent": 13.1,
+          "memory_available_gb": 13.535236358642578,
+          "memory_used_gb": 1.7389144897460938,
+          "timestamp": 1751101187.349318,
+          "gpu_status": [
+            {
+              "device_id": 0,
+              "memory_allocated_gb": 0.0,
+              "memory_reserved_gb": 0.0,
+              "memory_free_gb": 9.99951171875,
+              "utilization_percent": 0.0
+            }
+          ]
+        },
+        "after": {
+          "cpu_usage_percent": 0.5,
+          "memory_usage_percent": 13.1,
+          "memory_available_gb": 13.53244400024414,
+          "memory_used_gb": 1.74169921875,
+          "timestamp": 1751101190.8330336,
+          "gpu_status": [
+            {
+              "device_id": 0,
+              "memory_allocated_gb": 0.0,
+              "memory_reserved_gb": 0.0,
+              "memory_free_gb": 9.99951171875,
+              "utilization_percent": 0.0
+            }
+          ]
+        },
+        "duration_seconds": 3.4848248958587646
+      }
+    },
+    {
+      "trial_id": "trial_0005_1751101186",
+      "parameters": {
+        "batch_size": 32,
+        "contrastive_weight": 0.49919587232050355,
+        "dropout": 0.357873957786374,
+        "gradient_clip_norm": 1.2744177568984543,
+        "hidden_size": 512,
+        "kl_weight": 0.00012006900631002686,
+        "latent_dim": 128,
+        "learning_rate": 0.000186126275237397,
+        "negative_samples": 4,
+        "num_layers": 8,
+        "weight_decay": 5.991806252719283e-06,
+        "device": "cuda",
+        "max_memory_fraction": 0.8,
+        "parallel_jobs": 6
+      },
+      "score": -Infinity,
+      "status": "completed",
+      "start_time": "2025-06-28 16:59:46.347746",
+      "end_time": "2025-06-28 16:59:50.894892",
+      "duration_seconds": 4.547146,
+      "error_message": null,
+      "metadata": {},
+      "resource_usage": {
+        "before": {
+          "cpu_usage_percent": 0.3,
+          "memory_usage_percent": 13.1,
+          "memory_available_gb": 13.535236358642578,
+          "memory_used_gb": 1.7389144897460938,
+          "timestamp": 1751101187.3485577,
+          "gpu_status": [
+            {
+              "device_id": 0,
+              "memory_allocated_gb": 0.0,
+              "memory_reserved_gb": 0.0,
+              "memory_free_gb": 9.99951171875,
+              "utilization_percent": 0.0
+            }
+          ]
+        },
+        "after": {
+          "cpu_usage_percent": 0.6,
+          "memory_usage_percent": 13.1,
+          "memory_available_gb": 13.53244400024414,
+          "memory_used_gb": 1.74169921875,
+          "timestamp": 1751101190.8946903,
+          "gpu_status": [
+            {
+              "device_id": 0,
+              "memory_allocated_gb": 0.0,
+              "memory_reserved_gb": 0.0,
+              "memory_free_gb": 9.99951171875,
+              "utilization_percent": 0.0
+            }
+          ]
+        },
+        "duration_seconds": 3.537991762161255
+      }
+    },
+    {
+      "trial_id": "trial_0007_1751101191",
+      "parameters": {
+        "batch_size": 4,
+        "contrastive_weight": 0.47803198739453023,
+        "dropout": 0.16516120655833938,
+        "gradient_clip_norm": 0.5220783909168801,
+        "hidden_size": 768,
+        "kl_weight": 0.006684109522488411,
+        "latent_dim": 32,
+        "learning_rate": 2.4671304600828723e-05,
+        "negative_samples": 16,
+        "num_layers": 7,
+        "weight_decay": 6.724845473015978e-05,
+        "device": "cuda",
+        "max_memory_fraction": 0.8,
+        "parallel_jobs": 6
+      },
+      "score": -Infinity,
+      "status": "completed",
+      "start_time": "2025-06-28 16:59:51.912916",
+      "end_time": "2025-06-28 16:59:56.391894",
+      "duration_seconds": 4.478978,
+      "error_message": null,
+      "metadata": {},
+      "resource_usage": {
+        "before": {
+          "cpu_usage_percent": 0.5,
+          "memory_usage_percent": 13.1,
+          "memory_available_gb": 13.531620025634766,
+          "memory_used_gb": 1.7425193786621094,
+          "timestamp": 1751101192.9139307,
+          "gpu_status": [
+            {
+              "device_id": 0,
+              "memory_allocated_gb": 0.0,
+              "memory_reserved_gb": 0.0,
+              "memory_free_gb": 9.99951171875,
+              "utilization_percent": 0.0
+            }
+          ]
+        },
+        "after": {
+          "cpu_usage_percent": 0.3,
+          "memory_usage_percent": 13.1,
+          "memory_available_gb": 13.534233093261719,
+          "memory_used_gb": 1.739898681640625,
+          "timestamp": 1751101196.3916779,
+          "gpu_status": [
+            {
+              "device_id": 0,
+              "memory_allocated_gb": 0.0,
+              "memory_reserved_gb": 0.0,
+              "memory_free_gb": 9.99951171875,
+              "utilization_percent": 0.0
+            }
+          ]
+        },
+        "duration_seconds": 3.4773759841918945
+      }
+    },
+    {
+      "trial_id": "trial_0006_1751101191",
+      "parameters": {
+        "batch_size": 32,
+        "contrastive_weight": 0.06937688453322964,
+        "dropout": 0.4622568610153706,
+        "gradient_clip_norm": 1.8007616861648774,
+        "hidden_size": 256,
+        "kl_weight": 0.00021145731964125137,
+        "latent_dim": 32,
+        "learning_rate": 0.002046139973551691,
+        "negative_samples": 32,
+        "num_layers": 6,
+        "weight_decay": 0.0006371812908236889,
+        "device": "cuda",
+        "max_memory_fraction": 0.8,
+        "parallel_jobs": 6
+      },
+      "score": -Infinity,
+      "status": "completed",
+      "start_time": "2025-06-28 16:59:51.903522",
+      "end_time": "2025-06-28 16:59:56.449695",
+      "duration_seconds": 4.546173,
+      "error_message": null,
+      "metadata": {},
+      "resource_usage": {
+        "before": {
+          "cpu_usage_percent": 0.5,
+          "memory_usage_percent": 13.1,
+          "memory_available_gb": 13.531620025634766,
+          "memory_used_gb": 1.7425193786621094,
+          "timestamp": 1751101192.9128747,
+          "gpu_status": [
+            {
+              "device_id": 0,
+              "memory_allocated_gb": 0.0,
+              "memory_reserved_gb": 0.0,
+              "memory_free_gb": 9.99951171875,
+              "utilization_percent": 0.0
+            }
+          ]
+        },
+        "after": {
+          "cpu_usage_percent": 0.0,
+          "memory_usage_percent": 13.1,
+          "memory_available_gb": 13.534233093261719,
+          "memory_used_gb": 1.739898681640625,
+          "timestamp": 1751101196.4495118,
+          "gpu_status": [
+            {
+              "device_id": 0,
+              "memory_allocated_gb": 0.0,
+              "memory_reserved_gb": 0.0,
+              "memory_free_gb": 9.99951171875,
+              "utilization_percent": 0.0
+            }
+          ]
+        },
+        "duration_seconds": 3.5448880195617676
+      }
+    },
+    {
+      "trial_id": "trial_0008_1751101196",
+      "parameters": {
+        "batch_size": 16,
+        "contrastive_weight": 0.07982739540083371,
+        "dropout": 0.41121386716518726,
+        "gradient_clip_norm": 1.633830957447468,
+        "hidden_size": 256,
+        "kl_weight": 0.0008439084586466209,
+        "latent_dim": 256,
+        "learning_rate": 8.914887577542189e-05,
+        "negative_samples": 4,
+        "num_layers": 5,
+        "weight_decay": 3.059740738407036e-05,
+        "device": "cuda",
+        "max_memory_fraction": 0.8,
+        "parallel_jobs": 6
+      },
+      "score": -Infinity,
+      "status": "completed",
+      "start_time": "2025-06-28 16:59:56.477257",
+      "end_time": "2025-06-28 17:00:00.922997",
+      "duration_seconds": 4.44574,
+      "error_message": null,
+      "metadata": {},
+      "resource_usage": {
+        "before": {
+          "cpu_usage_percent": 0.3,
+          "memory_usage_percent": 13.1,
+          "memory_available_gb": 13.53427505493164,
+          "memory_used_gb": 1.7398567199707031,
+          "timestamp": 1751101197.478756,
+          "gpu_status": [
+            {
+              "device_id": 0,
+              "memory_allocated_gb": 0.0,
+              "memory_reserved_gb": 0.0,
+              "memory_free_gb": 9.99951171875,
+              "utilization_percent": 0.0
+            }
+          ]
+        },
+        "after": {
+          "cpu_usage_percent": 0.2,
+          "memory_usage_percent": 13.1,
+          "memory_available_gb": 13.528751373291016,
+          "memory_used_gb": 1.7453727722167969,
+          "timestamp": 1751101200.922769,
+          "gpu_status": [
+            {
+              "device_id": 0,
+              "memory_allocated_gb": 0.0,
+              "memory_reserved_gb": 0.0,
+              "memory_free_gb": 9.99951171875,
+              "utilization_percent": 0.0
+            }
+          ]
+        },
+        "duration_seconds": 3.444162130355835
+      }
+    },
+    {
+      "trial_id": "trial_0009_1751101196",
+      "parameters": {
+        "batch_size": 32,
+        "contrastive_weight": 0.3031119028865552,
+        "dropout": 0.41430199450610855,
+        "gradient_clip_norm": 0.18277438899016646,
+        "hidden_size": 128,
+        "kl_weight": 0.003333076887017707,
+        "latent_dim": 256,
+        "learning_rate": 1.938080234797864e-05,
+        "negative_samples": 4,
+        "num_layers": 4,
+        "weight_decay": 8.402095902404108e-08,
+        "device": "cuda",
+        "max_memory_fraction": 0.8,
+        "parallel_jobs": 6
+      },
+      "score": -Infinity,
+      "status": "completed",
+      "start_time": "2025-06-28 16:59:56.477380",
+      "end_time": "2025-06-28 17:00:00.975867",
+      "duration_seconds": 4.498487,
+      "error_message": null,
+      "metadata": {},
+      "resource_usage": {
+        "before": {
+          "cpu_usage_percent": 0.3,
+          "memory_usage_percent": 13.1,
+          "memory_available_gb": 13.53427505493164,
+          "memory_used_gb": 1.7398567199707031,
+          "timestamp": 1751101197.4791496,
+          "gpu_status": [
+            {
+              "device_id": 0,
+              "memory_allocated_gb": 0.0,
+              "memory_reserved_gb": 0.0,
+              "memory_free_gb": 9.99951171875,
+              "utilization_percent": 0.0
+            }
+          ]
+        },
+        "after": {
+          "cpu_usage_percent": 0.1,
+          "memory_usage_percent": 13.1,
+          "memory_available_gb": 13.528751373291016,
+          "memory_used_gb": 1.7453727722167969,
+          "timestamp": 1751101200.9756584,
+          "gpu_status": [
+            {
+              "device_id": 0,
+              "memory_allocated_gb": 0.0,
+              "memory_reserved_gb": 0.0,
+              "memory_free_gb": 9.99951171875,
+              "utilization_percent": 0.0
+            }
+          ]
+        },
+        "duration_seconds": 3.496978282928467
+      }
+    },
+    {
+      "trial_id": "trial_0011_1751101202",
+      "parameters": {
+        "batch_size": 8,
+        "contrastive_weight": 0.09668082648827551,
+        "dropout": 0.3412858361756653,
+        "gradient_clip_norm": 1.2582313741327817,
+        "hidden_size": 256,
+        "kl_weight": 0.0014878310797950506,
+        "latent_dim": 64,
+        "learning_rate": 5.427706459873371e-06,
+        "negative_samples": 32,
+        "num_layers": 4,
+        "weight_decay": 1.8580832839731962e-08,
+        "device": "cuda",
+        "max_memory_fraction": 0.8,
+        "parallel_jobs": 6
+      },
+      "score": -Infinity,
+      "status": "completed",
+      "start_time": "2025-06-28 17:00:02.061820",
+      "end_time": "2025-06-28 17:00:07.032142",
+      "duration_seconds": 4.970322,
+      "error_message": null,
+      "metadata": {},
+      "resource_usage": {
+        "before": {
+          "cpu_usage_percent": 0.4,
+          "memory_usage_percent": 13.1,
+          "memory_available_gb": 13.531898498535156,
+          "memory_used_gb": 1.742218017578125,
+          "timestamp": 1751101203.0622928,
+          "gpu_status": [
+            {
+              "device_id": 0,
+              "memory_allocated_gb": 0.0,
+              "memory_reserved_gb": 0.0,
+              "memory_free_gb": 9.99951171875,
+              "utilization_percent": 0.0
+            }
+          ]
+        },
+        "after": {
+          "cpu_usage_percent": 0.5,
+          "memory_usage_percent": 13.1,
+          "memory_available_gb": 13.531902313232422,
+          "memory_used_gb": 1.7422294616699219,
+          "timestamp": 1751101207.0319273,
+          "gpu_status": [
+            {
+              "device_id": 0,
+              "memory_allocated_gb": 0.0,
+              "memory_reserved_gb": 0.0,
+              "memory_free_gb": 9.99951171875,
+              "utilization_percent": 0.0
+            }
+          ]
+        },
+        "duration_seconds": 3.477015256881714
+      }
+    },
+    {
+      "trial_id": "trial_0010_1751101202",
+      "parameters": {
+        "batch_size": 32,
+        "contrastive_weight": 0.38466340021328327,
+        "dropout": 0.27182484532197304,
+        "gradient_clip_norm": 0.3265174792735841,
+        "hidden_size": 768,
+        "kl_weight": 0.0032585116107235854,
+        "latent_dim": 32,
+        "learning_rate": 0.000990385205971247,
+        "negative_samples": 32,
+        "num_layers": 5,
+        "weight_decay": 6.933770007257396e-05,
+        "device": "cuda",
+        "max_memory_fraction": 0.8,
+        "parallel_jobs": 6
+      },
+      "score": -Infinity,
+      "status": "completed",
+      "start_time": "2025-06-28 17:00:02.061596",
+      "end_time": "2025-06-28 17:00:07.087862",
+      "duration_seconds": 5.026266,
+      "error_message": null,
+      "metadata": {},
+      "resource_usage": {
+        "before": {
+          "cpu_usage_percent": 0.4,
+          "memory_usage_percent": 13.1,
+          "memory_available_gb": 13.531898498535156,
+          "memory_used_gb": 1.742218017578125,
+          "timestamp": 1751101203.0632703,
+          "gpu_status": [
+            {
+              "device_id": 0,
+              "memory_allocated_gb": 0.0,
+              "memory_reserved_gb": 0.0,
+              "memory_free_gb": 9.99951171875,
+              "utilization_percent": 0.0
+            }
+          ]
+        },
+        "after": {
+          "cpu_usage_percent": 0.2,
+          "memory_usage_percent": 13.1,
+          "memory_available_gb": 13.531902313232422,
+          "memory_used_gb": 1.7422294616699219,
+          "timestamp": 1751101207.0875762,
+          "gpu_status": [
+            {
+              "device_id": 0,
+              "memory_allocated_gb": 0.0,
+              "memory_reserved_gb": 0.0,
+              "memory_free_gb": 9.99951171875,
+              "utilization_percent": 0.0
+            }
+          ]
+        },
+        "duration_seconds": 3.5326955318450928
+      }
+    },
+    {
+      "trial_id": "trial_0013_1751101207",
+      "parameters": {
+        "batch_size": 8,
+        "contrastive_weight": 0.3629398232787615,
+        "dropout": 0.48409284418559045,
+        "gradient_clip_norm": 1.94928776486633,
+        "hidden_size": 768,
+        "kl_weight": 0.005250684931046642,
+        "latent_dim": 32,
+        "learning_rate": 2.6619754148669853e-06,
+        "negative_samples": 8,
+        "num_layers": 7,
+        "weight_decay": 1.279549097476697e-07,
+        "device": "cuda",
+        "max_memory_fraction": 0.8,
+        "parallel_jobs": 6
+      },
+      "score": -Infinity,
+      "status": "completed",
+      "start_time": "2025-06-28 17:00:07.115990",
+      "end_time": "2025-06-28 17:00:11.777432",
+      "duration_seconds": 4.661442,
+      "error_message": null,
+      "metadata": {},
+      "resource_usage": {
+        "before": {
+          "cpu_usage_percent": 0.3,
+          "memory_usage_percent": 13.1,
+          "memory_available_gb": 13.530517578125,
+          "memory_used_gb": 1.7436180114746094,
+          "timestamp": 1751101208.1175957,
+          "gpu_status": [
+            {
+              "device_id": 0,
+              "memory_allocated_gb": 0.0,
+              "memory_reserved_gb": 0.0,
+              "memory_free_gb": 9.99951171875,
+              "utilization_percent": 0.0
+            }
+          ]
+        },
+        "after": {
+          "cpu_usage_percent": 0.2,
+          "memory_usage_percent": 13.1,
+          "memory_available_gb": 13.528736114501953,
+          "memory_used_gb": 1.745391845703125,
+          "timestamp": 1751101211.7771673,
+          "gpu_status": [
+            {
+              "device_id": 0,
+              "memory_allocated_gb": 0.0,
+              "memory_reserved_gb": 0.0,
+              "memory_free_gb": 9.99951171875,
+              "utilization_percent": 0.0
+            }
+          ]
+        },
+        "duration_seconds": 3.659696578979492
+      }
+    },
+    {
+      "trial_id": "trial_0012_1751101207",
+      "parameters": {
+        "batch_size": 32,
+        "contrastive_weight": 0.11869648781654844,
+        "dropout": 0.18692496923846746,
+        "gradient_clip_norm": 1.464954147451196,
+        "hidden_size": 64,
+        "kl_weight": 0.002871207306971958,
+        "latent_dim": 32,
+        "learning_rate": 0.0011760234701387448,
+        "negative_samples": 4,
+        "num_layers": 6,
+        "weight_decay": 0.000158105845457519,
+        "device": "cuda",
+        "max_memory_fraction": 0.8,
+        "parallel_jobs": 6
+      },
+      "score": -Infinity,
+      "status": "completed",
+      "start_time": "2025-06-28 17:00:07.115420",
+      "end_time": "2025-06-28 17:00:11.778576",
+      "duration_seconds": 4.663156,
+      "error_message": null,
+      "metadata": {},
+      "resource_usage": {
+        "before": {
+          "cpu_usage_percent": 0.3,
+          "memory_usage_percent": 13.1,
+          "memory_available_gb": 13.530517578125,
+          "memory_used_gb": 1.7436180114746094,
+          "timestamp": 1751101208.1172013,
+          "gpu_status": [
+            {
+              "device_id": 0,
+              "memory_allocated_gb": 0.0,
+              "memory_reserved_gb": 0.0,
+              "memory_free_gb": 9.99951171875,
+              "utilization_percent": 0.0
+            }
+          ]
+        },
+        "after": {
+          "cpu_usage_percent": 0.2,
+          "memory_usage_percent": 13.1,
+          "memory_available_gb": 13.528736114501953,
+          "memory_used_gb": 1.745391845703125,
+          "timestamp": 1751101211.7784119,
+          "gpu_status": [
+            {
+              "device_id": 0,
+              "memory_allocated_gb": 0.0,
+              "memory_reserved_gb": 0.0,
+              "memory_free_gb": 9.99951171875,
+              "utilization_percent": 0.0
+            }
+          ]
+        },
+        "duration_seconds": 3.660006046295166
+      }
+    },
+    {
+      "trial_id": "trial_0014_1751101211",
+      "parameters": {
+        "batch_size": 32,
+        "contrastive_weight": 0.29226050270148535,
+        "dropout": 0.1375170924156237,
+        "gradient_clip_norm": 1.396789946056778,
+        "hidden_size": 128,
+        "kl_weight": 0.001152508954383715,
+        "latent_dim": 32,
+        "learning_rate": 4.53093329151164e-05,
+        "negative_samples": 4,
+        "num_layers": 5,
+        "weight_decay": 7.161579571319287e-06,
+        "device": "cuda",
+        "max_memory_fraction": 0.8,
+        "parallel_jobs": 6
+      },
+      "score": -Infinity,
+      "status": "completed",
+      "start_time": "2025-06-28 17:00:11.807714",
+      "end_time": "2025-06-28 17:00:16.244100",
+      "duration_seconds": 4.436386,
+      "error_message": null,
+      "metadata": {},
+      "resource_usage": {
+        "before": {
+          "cpu_usage_percent": 0.2,
+          "memory_usage_percent": 13.1,
+          "memory_available_gb": 13.529163360595703,
+          "memory_used_gb": 1.744964599609375,
+          "timestamp": 1751101212.809252,
+          "gpu_status": [
+            {
+              "device_id": 0,
+              "memory_allocated_gb": 0.0,
+              "memory_reserved_gb": 0.0,
+              "memory_free_gb": 9.99951171875,
+              "utilization_percent": 0.0
+            }
+          ]
+        },
+        "after": {
+          "cpu_usage_percent": 0.5,
+          "memory_usage_percent": 13.1,
+          "memory_available_gb": 13.530158996582031,
+          "memory_used_gb": 1.7439613342285156,
+          "timestamp": 1751101216.2438784,
+          "gpu_status": [
+            {
+              "device_id": 0,
+              "memory_allocated_gb": 0.0,
+              "memory_reserved_gb": 0.0,
+              "memory_free_gb": 9.99951171875,
+              "utilization_percent": 0.0
+            }
+          ]
+        },
+        "duration_seconds": 3.4350810050964355
+      }
+    },
+    {
+      "trial_id": "trial_0015_1751101211",
+      "parameters": {
+        "batch_size": 32,
+        "contrastive_weight": 0.3273172929947389,
+        "dropout": 0.32320558069620386,
+        "gradient_clip_norm": 0.9896814943302317,
+        "hidden_size": 256,
+        "kl_weight": 0.002835170859609029,
+        "latent_dim": 128,
+        "learning_rate": 6.038331443847005e-06,
+        "negative_samples": 16,
+        "num_layers": 5,
+        "weight_decay": 2.565214307106399e-06,
+        "device": "cuda",
+        "max_memory_fraction": 0.8,
+        "parallel_jobs": 6
+      },
+      "score": -Infinity,
+      "status": "completed",
+      "start_time": "2025-06-28 17:00:11.807850",
+      "end_time": "2025-06-28 17:00:16.304982",
+      "duration_seconds": 4.497132,
+      "error_message": null,
+      "metadata": {},
+      "resource_usage": {
+        "before": {
+          "cpu_usage_percent": 0.2,
+          "memory_usage_percent": 13.1,
+          "memory_available_gb": 13.529163360595703,
+          "memory_used_gb": 1.744964599609375,
+          "timestamp": 1751101212.810109,
+          "gpu_status": [
+            {
+              "device_id": 0,
+              "memory_allocated_gb": 0.0,
+              "memory_reserved_gb": 0.0,
+              "memory_free_gb": 9.99951171875,
+              "utilization_percent": 0.0
+            }
+          ]
+        },
+        "after": {
+          "cpu_usage_percent": 0.5,
+          "memory_usage_percent": 13.1,
+          "memory_available_gb": 13.530158996582031,
+          "memory_used_gb": 1.7439613342285156,
+          "timestamp": 1751101216.30476,
+          "gpu_status": [
+            {
+              "device_id": 0,
+              "memory_allocated_gb": 0.0,
+              "memory_reserved_gb": 0.0,
+              "memory_free_gb": 9.99951171875,
+              "utilization_percent": 0.0
+            }
+          ]
+        },
+        "duration_seconds": 3.4914231300354004
+      }
+    },
+    {
+      "trial_id": "trial_0016_1751101217",
+      "parameters": {
+        "batch_size": 32,
+        "contrastive_weight": 0.3419878596051183,
+        "dropout": 0.055955010742930744,
+        "gradient_clip_norm": 0.7182732896302578,
+        "hidden_size": 128,
+        "kl_weight": 0.015804261620916134,
+        "latent_dim": 64,
+        "learning_rate": 0.0011009317168253288,
+        "negative_samples": 8,
+        "num_layers": 4,
+        "weight_decay": 1.7524790466101497e-08,
+        "device": "cuda",
+        "max_memory_fraction": 0.8,
+        "parallel_jobs": 6
+      },
+      "score": -Infinity,
+      "status": "completed",
+      "start_time": "2025-06-28 17:00:17.335654",
+      "end_time": "2025-06-28 17:00:21.813172",
+      "duration_seconds": 4.477518,
+      "error_message": null,
+      "metadata": {},
+      "resource_usage": {
+        "before": {
+          "cpu_usage_percent": 0.4,
+          "memory_usage_percent": 13.1,
+          "memory_available_gb": 13.528144836425781,
+          "memory_used_gb": 1.7459754943847656,
+          "timestamp": 1751101218.3375835,
+          "gpu_status": [
+            {
+              "device_id": 0,
+              "memory_allocated_gb": 0.0,
+              "memory_reserved_gb": 0.0,
+              "memory_free_gb": 9.99951171875,
+              "utilization_percent": 0.0
+            }
+          ]
+        },
+        "after": {
+          "cpu_usage_percent": 0.3,
+          "memory_usage_percent": 13.1,
+          "memory_available_gb": 13.5311279296875,
+          "memory_used_gb": 1.7429847717285156,
+          "timestamp": 1751101221.812947,
+          "gpu_status": [
+            {
+              "device_id": 0,
+              "memory_allocated_gb": 0.0,
+              "memory_reserved_gb": 0.0,
+              "memory_free_gb": 9.99951171875,
+              "utilization_percent": 0.0
+            }
+          ]
+        },
+        "duration_seconds": 3.475909471511841
+      }
+    },
+    {
+      "trial_id": "trial_0017_1751101217",
+      "parameters": {
+        "batch_size": 32,
+        "contrastive_weight": 0.4514236512054204,
+        "dropout": 0.36821537757626543,
+        "gradient_clip_norm": 0.42557620966024023,
+        "hidden_size": 128,
+        "kl_weight": 0.004679006054703304,
+        "latent_dim": 32,
+        "learning_rate": 1.5051806165834508e-05,
+        "negative_samples": 8,
+        "num_layers": 6,
+        "weight_decay": 2.1754810217699883e-05,
+        "device": "cuda",
+        "max_memory_fraction": 0.8,
+        "parallel_jobs": 6
+      },
+      "score": -Infinity,
+      "status": "completed",
+      "start_time": "2025-06-28 17:00:17.335236",
+      "end_time": "2025-06-28 17:00:21.872057",
+      "duration_seconds": 4.536821,
+      "error_message": null,
+      "metadata": {},
+      "resource_usage": {
+        "before": {
+          "cpu_usage_percent": 0.4,
+          "memory_usage_percent": 13.1,
+          "memory_available_gb": 13.528144836425781,
+          "memory_used_gb": 1.7459754943847656,
+          "timestamp": 1751101218.3371496,
+          "gpu_status": [
+            {
+              "device_id": 0,
+              "memory_allocated_gb": 0.0,
+              "memory_reserved_gb": 0.0,
+              "memory_free_gb": 9.99951171875,
+              "utilization_percent": 0.0
+            }
+          ]
+        },
+        "after": {
+          "cpu_usage_percent": 0.0,
+          "memory_usage_percent": 13.1,
+          "memory_available_gb": 13.530887603759766,
+          "memory_used_gb": 1.74322509765625,
+          "timestamp": 1751101221.871863,
+          "gpu_status": [
+            {
+              "device_id": 0,
+              "memory_allocated_gb": 0.0,
+              "memory_reserved_gb": 0.0,
+              "memory_free_gb": 9.99951171875,
+              "utilization_percent": 0.0
+            }
+          ]
+        },
+        "duration_seconds": 3.5352566242218018
+      }
+    },
+    {
+      "trial_id": "trial_0019_1751101221",
+      "parameters": {
+        "batch_size": 8,
+        "contrastive_weight": 0.09469270811890995,
+        "dropout": 0.33503130406974846,
+        "gradient_clip_norm": 0.31609872435370456,
+        "hidden_size": 64,
+        "kl_weight": 0.007434290766491048,
+        "latent_dim": 256,
+        "learning_rate": 4.386608748144709e-06,
+        "negative_samples": 4,
+        "num_layers": 8,
+        "weight_decay": 3.487503651762529e-08,
+        "device": "cuda",
+        "max_memory_fraction": 0.8,
+        "parallel_jobs": 6
+      },
+      "score": -Infinity,
+      "status": "completed",
+      "start_time": "2025-06-28 17:00:21.900513",
+      "end_time": "2025-06-28 17:00:26.368196",
+      "duration_seconds": 4.467683,
+      "error_message": null,
+      "metadata": {},
+      "resource_usage": {
+        "before": {
+          "cpu_usage_percent": 0.3,
+          "memory_usage_percent": 13.1,
+          "memory_available_gb": 13.530647277832031,
+          "memory_used_gb": 1.7434654235839844,
+          "timestamp": 1751101222.9024875,
+          "gpu_status": [
+            {
+              "device_id": 0,
+              "memory_allocated_gb": 0.0,
+              "memory_reserved_gb": 0.0,
+              "memory_free_gb": 9.99951171875,
+              "utilization_percent": 0.0
+            }
+          ]
+        },
+        "after": {
+          "cpu_usage_percent": 0.6,
+          "memory_usage_percent": 13.1,
+          "memory_available_gb": 13.528541564941406,
+          "memory_used_gb": 1.7455673217773438,
+          "timestamp": 1751101226.3680046,
+          "gpu_status": [
+            {
+              "device_id": 0,
+              "memory_allocated_gb": 0.0,
+              "memory_reserved_gb": 0.0,
+              "memory_free_gb": 9.99951171875,
+              "utilization_percent": 0.0
+            }
+          ]
+        },
+        "duration_seconds": 3.4660871028900146
+      }
+    },
+    {
+      "trial_id": "trial_0018_1751101221",
+      "parameters": {
+        "batch_size": 32,
+        "contrastive_weight": 0.40921118737361245,
+        "dropout": 0.23439922681540298,
+        "gradient_clip_norm": 1.6166710884089328,
+        "hidden_size": 128,
+        "kl_weight": 0.0006794769742566387,
+        "latent_dim": 32,
+        "learning_rate": 0.0007039332633333337,
+        "negative_samples": 4,
+        "num_layers": 5,
+        "weight_decay": 3.7872172608696914e-05,
+        "device": "cuda",
+        "max_memory_fraction": 0.8,
+        "parallel_jobs": 6
+      },
+      "score": -Infinity,
+      "status": "completed",
+      "start_time": "2025-06-28 17:00:21.900399",
+      "end_time": "2025-06-28 17:00:26.428159",
+      "duration_seconds": 4.52776,
+      "error_message": null,
+      "metadata": {},
+      "resource_usage": {
+        "before": {
+          "cpu_usage_percent": 0.3,
+          "memory_usage_percent": 13.1,
+          "memory_available_gb": 13.530647277832031,
+          "memory_used_gb": 1.7434654235839844,
+          "timestamp": 1751101222.9017842,
+          "gpu_status": [
+            {
+              "device_id": 0,
+              "memory_allocated_gb": 0.0,
+              "memory_reserved_gb": 0.0,
+              "memory_free_gb": 9.99951171875,
+              "utilization_percent": 0.0
+            }
+          ]
+        },
+        "after": {
+          "cpu_usage_percent": 0.4,
+          "memory_usage_percent": 13.1,
+          "memory_available_gb": 13.528541564941406,
+          "memory_used_gb": 1.7455673217773438,
+          "timestamp": 1751101226.4278684,
+          "gpu_status": [
+            {
+              "device_id": 0,
+              "memory_allocated_gb": 0.0,
+              "memory_reserved_gb": 0.0,
+              "memory_free_gb": 9.99951171875,
+              "utilization_percent": 0.0
+            }
+          ]
+        },
+        "duration_seconds": 3.526158332824707
+      }
+    },
+    {
+      "trial_id": "trial_0021_1751101227",
+      "parameters": {
+        "batch_size": 32,
+        "contrastive_weight": 0.14043000028636518,
+        "dropout": 0.07626975511719646,
+        "gradient_clip_norm": 0.6760107989376303,
+        "hidden_size": 512,
+        "kl_weight": 0.07855272802906647,
+        "latent_dim": 128,
+        "learning_rate": 1.77325693154982e-05,
+        "negative_samples": 8,
+        "num_layers": 4,
+        "weight_decay": 7.65944403134809e-06,
+        "device": "cuda",
+        "max_memory_fraction": 0.8,
+        "parallel_jobs": 6
+      },
+      "score": -Infinity,
+      "status": "completed",
+      "start_time": "2025-06-28 17:00:27.518014",
+      "end_time": "2025-06-28 17:00:32.008131",
+      "duration_seconds": 4.490117,
+      "error_message": null,
+      "metadata": {},
+      "resource_usage": {
+        "before": {
+          "cpu_usage_percent": 0.4,
+          "memory_usage_percent": 13.1,
+          "memory_available_gb": 13.53084945678711,
+          "memory_used_gb": 1.7432479858398438,
+          "timestamp": 1751101228.518788,
+          "gpu_status": [
+            {
+              "device_id": 0,
+              "memory_allocated_gb": 0.0,
+              "memory_reserved_gb": 0.0,
+              "memory_free_gb": 9.99951171875,
+              "utilization_percent": 0.0
+            }
+          ]
+        },
+        "after": {
+          "cpu_usage_percent": 0.3,
+          "memory_usage_percent": 13.1,
+          "memory_available_gb": 13.529186248779297,
+          "memory_used_gb": 1.7449569702148438,
+          "timestamp": 1751101232.0079198,
+          "gpu_status": [
+            {
+              "device_id": 0,
+              "memory_allocated_gb": 0.0,
+              "memory_reserved_gb": 0.0,
+              "memory_free_gb": 9.99951171875,
+              "utilization_percent": 0.0
+            }
+          ]
+        },
+        "duration_seconds": 3.489285469055176
+      }
+    },
+    {
+      "trial_id": "trial_0020_1751101227",
+      "parameters": {
+        "batch_size": 32,
+        "contrastive_weight": 0.14245043204319816,
+        "dropout": 0.23415917411389847,
+        "gradient_clip_norm": 1.1398295697163798,
+        "hidden_size": 128,
+        "kl_weight": 0.00020105886781121067,
+        "latent_dim": 32,
+        "learning_rate": 9.969011757147543e-06,
+        "negative_samples": 16,
+        "num_layers": 6,
+        "weight_decay": 2.419188571779974e-05,
+        "device": "cuda",
+        "max_memory_fraction": 0.8,
+        "parallel_jobs": 6
+      },
+      "score": -Infinity,
+      "status": "completed",
+      "start_time": "2025-06-28 17:00:27.518123",
+      "end_time": "2025-06-28 17:00:32.067310",
+      "duration_seconds": 4.549187,
+      "error_message": null,
+      "metadata": {},
+      "resource_usage": {
+        "before": {
+          "cpu_usage_percent": 0.4,
+          "memory_usage_percent": 13.1,
+          "memory_available_gb": 13.53084945678711,
+          "memory_used_gb": 1.7432479858398438,
+          "timestamp": 1751101228.5195298,
+          "gpu_status": [
+            {
+              "device_id": 0,
+              "memory_allocated_gb": 0.0,
+              "memory_reserved_gb": 0.0,
+              "memory_free_gb": 9.99951171875,
+              "utilization_percent": 0.0
+            }
+          ]
+        },
+        "after": {
+          "cpu_usage_percent": 0.1,
+          "memory_usage_percent": 13.1,
+          "memory_available_gb": 13.529186248779297,
+          "memory_used_gb": 1.7449569702148438,
+          "timestamp": 1751101232.0671053,
+          "gpu_status": [
+            {
+              "device_id": 0,
+              "memory_allocated_gb": 0.0,
+              "memory_reserved_gb": 0.0,
+              "memory_free_gb": 9.99951171875,
+              "utilization_percent": 0.0
+            }
+          ]
+        },
+        "duration_seconds": 3.548133611679077
+      }
+    }
+  ],
+  "best_trial": {
+    "trial_id": "trial_0000_1751101176",
+    "parameters": {
+      "batch_size": 16,
+      "contrastive_weight": 0.10151005060997881,
+      "dropout": 0.13430920840422605,
+      "gradient_clip_norm": 1.8906745255973947,
+      "hidden_size": 512,
+      "kl_weight": 0.0001444561567010615,
+      "latent_dim": 256,
+      "learning_rate": 0.00032251534475445057,
+      "negative_samples": 32,
+      "num_layers": 7,
+      "weight_decay": 2.067858822088563e-06,
+      "device": "cuda",
+      "max_memory_fraction": 0.8,
+      "parallel_jobs": 6
+    },
+    "score": -Infinity,
+    "status": "completed",
+    "start_time": "2025-06-28 16:59:36.599090",
+    "end_time": "2025-06-28 16:59:41.819820",
+    "duration_seconds": 5.22073,
+    "error_message": null,
+    "metadata": {},
+    "resource_usage": {
+      "before": {
+        "cpu_usage_percent": 0.1,
+        "memory_usage_percent": 12.4,
+        "memory_available_gb": 13.633220672607422,
+        "memory_used_gb": 1.7131996154785156,
+        "timestamp": 1751101177.6008484,
+        "gpu_status": [
+          {
+            "device_id": 0,
+            "memory_allocated_gb": 0.0,
+            "memory_reserved_gb": 0.0,
+            "memory_free_gb": 9.99951171875,
+            "utilization_percent": 0.0
+          }
+        ]
+      },
+      "after": {
+        "cpu_usage_percent": 0.1,
+        "memory_usage_percent": 13.1,
+        "memory_available_gb": 13.53805160522461,
+        "memory_used_gb": 1.7361297607421875,
+        "timestamp": 1751101181.819602,
+        "gpu_status": [
+          {
+            "device_id": 0,
+            "memory_allocated_gb": 0.0,
+            "memory_reserved_gb": 0.0,
+            "memory_free_gb": 9.99951171875,
+            "utilization_percent": 0.0
+          }
+        ]
+      },
+      "duration_seconds": 4.219653606414795
+    }
+  },
+  "optimization_summary": {
+    "total_trials": 22,
+    "completed_trials": 22,
+    "failed_trials": 0,
+    "success_rate": 1.0,
+    "best_score": -Infinity,
+    "algorithm": "BayesianOptimizer",
+    "score_statistics": {
+      "mean": -Infinity,
+      "std": NaN,
+      "min": -Infinity,
+      "max": -Infinity,
+      "median": -Infinity
+    },
+    "duration_statistics": {
+      "mean_seconds": 4.624329045454545,
+      "total_hours": 0.02825978861111111
+    }
+  },
+  "hardware_profile": {
+    "cpu_cores": 12,
+    "cpu_frequency": 3700.039,
+    "total_memory_gb": 15.570480346679688,
+    "available_memory_gb": 13.633220672607422,
+    "gpu_available": true,
+    "gpu_count": 1,
+    "gpu_memory_gb": [
+      9.99951171875
+    ],
+    "gpu_names": [
+      "NVIDIA GeForce RTX 3080"
+    ],
+    "recommended_batch_size": 32,
+    "recommended_workers": 8,
+    "parallel_jobs": 6
+  },
+  "monitoring_data": [
+    {
+      "cpu_usage_percent": 0.1,
+      "memory_usage_percent": 12.4,
+      "memory_available_gb": 13.633220672607422,
+      "memory_used_gb": 1.7131996154785156,
+      "timestamp": 1751101177.598226,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.0,
+          "memory_reserved_gb": 0.0,
+          "memory_free_gb": 9.99951171875,
+          "utilization_percent": 0.0
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 4.8,
+      "memory_usage_percent": 13.1,
+      "memory_available_gb": 13.531036376953125,
+      "memory_used_gb": 1.7431068420410156,
+      "timestamp": 1751101189.6424348,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.0,
+          "memory_reserved_gb": 0.0,
+          "memory_free_gb": 9.99951171875,
+          "utilization_percent": 0.0
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 0.8,
+      "memory_usage_percent": 13.1,
+      "memory_available_gb": 13.528751373291016,
+      "memory_used_gb": 1.7453727722167969,
+      "timestamp": 1751101201.6579566,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.0,
+          "memory_reserved_gb": 0.0,
+          "memory_free_gb": 9.99951171875,
+          "utilization_percent": 0.0
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 4.8,
+      "memory_usage_percent": 13.1,
+      "memory_available_gb": 13.529754638671875,
+      "memory_used_gb": 1.7443733215332031,
+      "timestamp": 1751101214.284005,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.0,
+          "memory_reserved_gb": 0.0,
+          "memory_free_gb": 9.99951171875,
+          "utilization_percent": 0.0
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 0.9,
+      "memory_usage_percent": 13.1,
+      "memory_available_gb": 13.528541564941406,
+      "memory_used_gb": 1.7455673217773438,
+      "timestamp": 1751101226.3105795,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.0,
+          "memory_reserved_gb": 0.0,
+          "memory_free_gb": 9.99951171875,
+          "utilization_percent": 0.0
+        }
+      ]
+    }
+  ],
+  "start_time": "2025-06-28T16:59:36.596836",
+  "end_time": null
+}

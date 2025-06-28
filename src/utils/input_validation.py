@@ -125,10 +125,12 @@ class InputValidator:
         if len(numbers) != 6:
             raise ValidationError(f"Expected 6 numbers, got {len(numbers)}.")
         
-        try:
-            validated_numbers = [int(n) for n in numbers]
-        except (ValueError, TypeError):
-            raise ValidationError("All numbers must be integers.")
+        # Check that all elements are already integers
+        for i, n in enumerate(numbers):
+            if not isinstance(n, int):
+                raise ValidationError("All numbers must be integers.")
+        
+        validated_numbers = list(numbers)
         
         if len(set(validated_numbers)) != 6:
             raise ValidationError("Numbers must be unique.")

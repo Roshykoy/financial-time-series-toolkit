@@ -11,7 +11,12 @@ class CVAELossComputer:
     
     def __init__(self, config):
         self.config = config
-        self.device = config['device']
+        # Handle both device strings and torch.device objects
+        device = config['device']
+        if isinstance(device, torch.device):
+            self.device = device
+        else:
+            self.device = torch.device(device)
         
     def reconstruction_loss(self, reconstruction_logits, target_combinations):
         """
@@ -55,7 +60,7 @@ class CVAELossComputer:
         return kl_div.mean()
     
     def hard_contrastive_loss(self, model, positive_combinations, negative_combinations, 
-                            pair_counts, df, current_indices):
+                            pair_counts, temporal_sequences, current_indices):
         """
         Computes contrastive loss with hard negative mining.
         
@@ -77,7 +82,7 @@ class CVAELossComputer:
         # Sample hard negatives for each positive
         hard_negatives = self._mine_hard_negatives(
             model, positive_combinations, negative_combinations, 
-            pair_counts, df, current_indices
+            pair_counts, temporal_sequences, current_indices
         )
         
         # Get embeddings for hard negatives
@@ -108,7 +113,7 @@ class CVAELossComputer:
         return contrastive_loss.mean()
     
     def _mine_hard_negatives(self, model, positive_combinations, negative_pool, 
-                           pair_counts, df, current_indices):
+                           pair_counts, temporal_sequences, current_indices):
         """
         Mines hard negatives that are most confusing for the current model.
         """
@@ -212,7 +217,19 @@ def train_one_epoch_cvae(model, meta_learner, train_loader, optimizers, device, 
     model.train()
     meta_learner.train()
     
-    loss_computer = CVAELossComputer(config)
+    # Ensure all components are in training mode
+    model.temporal_encoder.train()
+    if hasattr(model, 'graph_encoder'):
+        model.graph_encoder.train()
+    
+    # Create config copy with proper device handling for CVAELossComputer
+    train_config = config.copy()
+    if isinstance(device, torch.device):
+        train_config['device'] = device
+    else:
+        train_config['device'] = torch.device(device)
+    
+    loss_computer = CVAELossComputer(train_config)
     epoch_losses = defaultdict(list)
     
     for batch_idx, batch in enumerate(train_loader):
@@ -220,8 +237,8 @@ def train_one_epoch_cvae(model, meta_learner, train_loader, optimizers, device, 
         positive_combinations = batch['positive_combinations']
         negative_pool = batch['negative_pool']
         pair_counts = batch['pair_counts']
-        df = batch['df']
         current_indices = batch['current_indices']
+        temporal_sequences = batch['temporal_sequences']
         
         # Zero gradients
         for optimizer in optimizers.values():
@@ -229,7 +246,7 @@ def train_one_epoch_cvae(model, meta_learner, train_loader, optimizers, device, 
         
         # Forward pass through CVAE
         reconstruction_logits, mu, logvar, mu_prior, logvar_prior, temporal_context = model(
-            positive_combinations, pair_counts, df, current_indices
+            positive_combinations, pair_counts, temporal_sequences, current_indices
         )
         
         # Convert combinations to tensor for loss computation
@@ -240,7 +257,7 @@ def train_one_epoch_cvae(model, meta_learner, train_loader, optimizers, device, 
         kl_loss = loss_computer.kl_divergence_loss(mu, logvar, mu_prior, logvar_prior)
         contrastive_loss = loss_computer.hard_contrastive_loss(
             model, positive_combinations, negative_pool, 
-            pair_counts, df, current_indices
+            pair_counts, temporal_sequences, current_indices
         )
         
         # Total CVAE loss
@@ -249,7 +266,7 @@ def train_one_epoch_cvae(model, meta_learner, train_loader, optimizers, device, 
                     config['contrastive_weight'] * contrastive_loss)
         
         # Backward pass for CVAE
-        cvae_loss.backward(retain_graph=True)
+        cvae_loss.backward()
         
         # Gradient clipping
         torch.nn.utils.clip_grad_norm_(model.parameters(), config['gradient_clip_norm'])
@@ -259,9 +276,14 @@ def train_one_epoch_cvae(model, meta_learner, train_loader, optimizers, device, 
         
         # Meta-learner training (every few batches to reduce overhead)
         if batch_idx % 3 == 0:
+            # Zero gradients for meta-learner
+            optimizers['meta'].zero_grad()
+            
             # Generate some scores for meta-learning
             with torch.no_grad():
-                generated_combinations, _ = model.generate(temporal_context, num_samples=1)
+                # Use detached temporal context to avoid gradient issues
+                detached_context = temporal_context.detach()
+                generated_combinations, _ = model.generate(detached_context, num_samples=1)
                 generated_combinations = generated_combinations.cpu().numpy().tolist()
             
             # Mock scorer scores for meta-learning training
@@ -271,9 +293,9 @@ def train_one_epoch_cvae(model, meta_learner, train_loader, optimizers, device, 
                 'i_ching': torch.randn(len(positive_combinations), device=device)
             }
             
-            # Meta-learner forward pass
+            # Meta-learner forward pass with detached context
             ensemble_weights, ensemble_scores, confidence = meta_learner(
-                positive_combinations, temporal_context, mock_scores
+                positive_combinations, detached_context, mock_scores
             )
             
             # Simple meta-learning loss (could be more sophisticated)
@@ -283,7 +305,6 @@ def train_one_epoch_cvae(model, meta_learner, train_loader, optimizers, device, 
             # Backward pass for meta-learner
             meta_loss.backward()
             optimizers['meta'].step()
-            optimizers['meta'].zero_grad()
             
             epoch_losses['meta_loss'].append(meta_loss.item())
         
@@ -311,7 +332,14 @@ def evaluate_cvae(model, meta_learner, val_loader, device, config):
     model.eval()
     meta_learner.eval()
     
-    loss_computer = CVAELossComputer(config)
+    # Create config copy with proper device handling for CVAELossComputer
+    eval_config = config.copy()
+    if isinstance(device, torch.device):
+        eval_config['device'] = device
+    else:
+        eval_config['device'] = torch.device(device)
+    
+    loss_computer = CVAELossComputer(eval_config)
     val_losses = defaultdict(list)
     
     with torch.no_grad():
@@ -319,12 +347,12 @@ def evaluate_cvae(model, meta_learner, val_loader, device, config):
             positive_combinations = batch['positive_combinations']
             negative_pool = batch['negative_pool']
             pair_counts = batch['pair_counts']
-            df = batch['df']
             current_indices = batch['current_indices']
+            temporal_sequences = batch['temporal_sequences']
             
             # Forward pass
             reconstruction_logits, mu, logvar, mu_prior, logvar_prior, temporal_context = model(
-                positive_combinations, pair_counts, df, current_indices
+                positive_combinations, pair_counts, temporal_sequences, current_indices
             )
             
             target_tensor = torch.tensor(positive_combinations, device=device)
@@ -337,4 +365,8 @@ def evaluate_cvae(model, meta_learner, val_loader, device, config):
             val_losses['kl_loss'].append(kl_loss.item())
     
     avg_val_losses = {key: np.mean(values) for key, values in val_losses.items()}
-    return avg_val_losses
+    
+    # Return main validation loss and full metrics to match expected signature
+    total_val_loss = avg_val_losses.get('reconstruction_loss', 0.0) + avg_val_losses.get('kl_loss', 0.0)
+    
+    return total_val_loss, avg_val_losses

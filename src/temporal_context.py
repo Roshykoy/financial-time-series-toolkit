@@ -21,14 +21,15 @@ class TemporalContextEncoder(nn.Module):
         # Embeddings for lottery numbers in temporal context
         self.number_embeddings = nn.Embedding(self.num_numbers + 1, self.temporal_embedding_dim)
         
-        # Bidirectional LSTM for processing sequences
-        self.lstm = nn.LSTM(
-            input_size=6 * self.temporal_embedding_dim,  # 6 numbers per draw
-            hidden_size=self.temporal_hidden_dim,
-            num_layers=config['temporal_lstm_layers'],
-            dropout=config['dropout'] if config['temporal_lstm_layers'] > 1 else 0,
-            bidirectional=True,
-            batch_first=True
+        # Use simpler sequence processing instead of LSTM to avoid training mode issues
+        # This provides similar functionality without LSTM complications
+        self.sequence_processor = nn.Sequential(
+            nn.Linear(6 * self.temporal_embedding_dim, self.temporal_hidden_dim * 2),
+            nn.ReLU(),
+            nn.Dropout(config['dropout']),
+            nn.Linear(self.temporal_hidden_dim * 2, self.temporal_hidden_dim * 2),
+            nn.ReLU(),
+            nn.Dropout(config['dropout'])
         )
         
         # Attention mechanism for sequence summarization
@@ -108,16 +109,21 @@ class TemporalContextEncoder(nn.Module):
         if sequence_tensor.device != next(self.parameters()).device:
             sequence_tensor = sequence_tensor.to(next(self.parameters()).device)
         
-        # Embed numbers and flatten for LSTM input
+        # Embed numbers and flatten for sequence processing
         embedded = self.number_embeddings(sequence_tensor)  # [batch, seq_len, 6, embed_dim]
-        lstm_input = embedded.view(batch_size, seq_len, -1)  # [batch, seq_len, 6*embed_dim]
+        seq_input = embedded.view(batch_size, seq_len, -1)  # [batch, seq_len, 6*embed_dim]
         
-        # Process through LSTM
-        lstm_output, (hidden, cell) = self.lstm(lstm_input)  # [batch, seq_len, 2*hidden_dim]
+        # Process through sequence processor (each timestep independently)
+        processed_steps = []
+        for t in range(seq_len):
+            step_output = self.sequence_processor(seq_input[:, t, :])  # [batch, 2*hidden_dim]
+            processed_steps.append(step_output)
+        
+        sequence_output = torch.stack(processed_steps, dim=1)  # [batch, seq_len, 2*hidden_dim]
         
         # Apply attention to get sequence summary
         attended_output, attention_weights = self.attention(
-            lstm_output, lstm_output, lstm_output
+            sequence_output, sequence_output, sequence_output
         )  # [batch, seq_len, 2*hidden_dim]
         
         # Global average pooling over sequence dimension

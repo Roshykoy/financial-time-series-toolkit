@@ -1,0 +1,95 @@
+{
+  "optimization_summary": {
+    "algorithm": "random_search",
+    "best_score": -Infinity,
+    "best_parameters": {},
+    "total_trials": 0,
+    "successful_trials": 0,
+    "failed_trials": 0,
+    "success_rate": 0,
+    "total_duration": "0:40:52.193232",
+    "start_time": "2025-06-28T17:59:15.592779",
+    "end_time": "2025-06-28T18:40:07.786011"
+  },
+  "configuration": {
+    "algorithm": "random_search",
+    "optimization_config": {
+      "max_trials": 5,
+      "max_duration_hours": 0.5,
+      "parallel_jobs": 1,
+      "random_seed": null,
+      "early_stopping": false,
+      "early_stopping_patience": 10,
+      "min_improvement": 0.001,
+      "enable_hardware_monitoring": true,
+      "cleanup_frequency": 5,
+      "memory_limit_gb": null,
+      "gpu_memory_fraction": 0.8,
+      "trial_timeout_minutes": 10.0,
+      "retry_failed_trials": false,
+      "max_retries": 2,
+      "save_intermediate_results": true,
+      "checkpoint_frequency": 5,
+      "backup_results": true,
+      "validation_strategy": "holdout",
+      "validation_split": 0.2,
+      "cross_validation_folds": 5
+    },
+    "search_space": {
+      "batch_size": {
+        "choices": [
+          4,
+          8,
+          16,
+          32,
+          64
+        ],
+        "type": "choice"
+      },
+      "dropout": {
+        "high": 0.5,
+        "low": 0.05,
+        "type": "uniform"
+      },
+      "hidden_size": {
+        "choices": [
+          64,
+          128,
+          256,
+          512,
+          768
+        ],
+        "type": "choice"
+      },
+      "learning_rate": {
+        "high": 0.01,
+        "low": 1e-06,
+        "type": "loguniform"
+      }
+    }
+  },
+  "performance_metrics": {
+    "average_trial_duration": 0,
+    "total_compute_hours": 0,
+    "trials_per_hour": 0.0,
+    "objective_calls": 1,
+    "objective_total_time": 2445.187196969986
+  },
+  "hardware_profile": {
+    "cpu_cores": 12,
+    "total_memory_gb": 15.570480346679688,
+    "gpu_available": true,
+    "gpu_count": 1,
+    "recommended_batch_size": 32
+  },
+  "parameter_analysis": {
+    "message": "Not enough trials for parameter analysis"
+  },
+  "recommendations": {
+    "next_steps": [
+      "Run more trials (at least 20) for better parameter analysis"
+    ],
+    "parameter_adjustments": {},
+    "search_space_refinements": {}
+  }
+}

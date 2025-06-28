@@ -1,0 +1,208 @@
+{
+  "optimization_summary": {
+    "algorithm": "bayesian",
+    "best_score": -Infinity,
+    "best_parameters": {
+      "batch_size": 32,
+      "contrastive_weight": 0.4818305352471151,
+      "dropout": 0.4420675842608406,
+      "gradient_clip_norm": 1.9507576705767136,
+      "hidden_size": 64,
+      "kl_weight": 0.008816181460520845,
+      "latent_dim": 256,
+      "learning_rate": 5.939923134751572e-06,
+      "negative_samples": 8,
+      "num_layers": 4,
+      "weight_decay": 1.7332643376956974e-08,
+      "device": "cuda",
+      "max_memory_fraction": 0.8,
+      "parallel_jobs": 6
+    },
+    "total_trials": 0,
+    "successful_trials": 0,
+    "failed_trials": 0,
+    "success_rate": 0,
+    "total_duration": "0:01:16.605565",
+    "start_time": "2025-06-28T17:13:47.423036",
+    "end_time": "2025-06-28T17:15:04.028601"
+  },
+  "configuration": {
+    "algorithm": "bayesian",
+    "optimization_config": {
+      "max_trials": 30,
+      "max_duration_hours": 4.0,
+      "parallel_jobs": 2,
+      "random_seed": null,
+      "early_stopping": true,
+      "early_stopping_patience": 8,
+      "min_improvement": 0.001,
+      "enable_hardware_monitoring": true,
+      "cleanup_frequency": 5,
+      "memory_limit_gb": null,
+      "gpu_memory_fraction": 0.8,
+      "trial_timeout_minutes": 30.0,
+      "retry_failed_trials": false,
+      "max_retries": 2,
+      "save_intermediate_results": true,
+      "checkpoint_frequency": 5,
+      "backup_results": true,
+      "validation_strategy": "holdout",
+      "validation_split": 0.2,
+      "cross_validation_folds": 5
+    },
+    "search_space": {
+      "batch_size": {
+        "choices": [
+          4,
+          8,
+          16,
+          32,
+          64
+        ],
+        "type": "choice"
+      },
+      "contrastive_weight": {
+        "high": 0.5,
+        "low": 0.01,
+        "type": "uniform"
+      },
+      "dropout": {
+        "high": 0.5,
+        "low": 0.05,
+        "type": "uniform"
+      },
+      "gradient_clip_norm": {
+        "high": 2.0,
+        "low": 0.1,
+        "type": "uniform"
+      },
+      "hidden_size": {
+        "choices": [
+          64,
+          128,
+          256,
+          512,
+          768
+        ],
+        "type": "choice"
+      },
+      "kl_weight": {
+        "high": 0.1,
+        "low": 0.0001,
+        "type": "loguniform"
+      },
+      "latent_dim": {
+        "choices": [
+          32,
+          64,
+          128,
+          256
+        ],
+        "type": "choice"
+      },
+      "learning_rate": {
+        "high": 0.01,
+        "low": 1e-06,
+        "type": "loguniform"
+      },
+      "negative_samples": {
+        "choices": [
+          4,
+          8,
+          16,
+          32
+        ],
+        "type": "choice"
+      },
+      "num_layers": {
+        "high": 8,
+        "low": 2,
+        "type": "int"
+      },
+      "weight_decay": {
+        "high": 0.001,
+        "low": 1e-08,
+        "type": "loguniform"
+      }
+    }
+  },
+  "performance_metrics": {
+    "average_trial_duration": 0,
+    "total_compute_hours": 0,
+    "trials_per_hour": 0.0,
+    "objective_calls": 30,
+    "objective_total_time": 0.0
+  },
+  "hardware_profile": {
+    "cpu_cores": 12,
+    "total_memory_gb": 15.570480346679688,
+    "gpu_available": true,
+    "gpu_count": 1,
+    "recommended_batch_size": 32
+  },
+  "parameter_analysis": {
+    "parameter_importance": {},
+    "suggested_bounds": {
+      "batch_size": [
+        "8",
+        "32"
+      ],
+      "contrastive_weight": [
+        0.03992797211938713,
+        0.47143648746283556
+      ],
+      "dropout": [
+        0.27287264790383375,
+        0.48318937882986973
+      ],
+      "gradient_clip_norm": [
+        0.10661996804224516,
+        1.6693742416571689
+      ],
+      "hidden_size": [
+        "64",
+        "768"
+      ],
+      "kl_weight": [
+        0.00019221698975346334,
+        0.016053089735170202
+      ],
+      "latent_dim": [
+        "32",
+        "256"
+      ],
+      "learning_rate": [
+        1.1474943330746527e-06,
+        0.000147714774999597
+      ],
+      "negative_samples": [
+        "4",
+        "32"
+      ],
+      "num_layers": [
+        "3",
+        "8"
+      ],
+      "weight_decay": [
+        3.339026099367665e-07,
+        0.0008910218970025776
+      ],
+      "max_memory_fraction": [
+        0.8,
+        0.8
+      ],
+      "parallel_jobs": [
+        "6",
+        "6"
+      ]
+    },
+    "total_analyzed_trials": 30
+  },
+  "recommendations": {
+    "next_steps": [
+      "All trials have same score - check objective function and search space"
+    ],
+    "parameter_adjustments": {},
+    "search_space_refinements": {}
+  }
+}

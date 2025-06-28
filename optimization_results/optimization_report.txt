@@ -1,0 +1,23 @@
+================================================================================
+HYPERPARAMETER OPTIMIZATION REPORT
+================================================================================
+
+Algorithm: RandomSearchOptimizer
+Start Time: 2025-06-28 17:59:15.593630
+End Time: 2025-06-28 18:40:01.785278
+Total Duration: 0:40:46.191648
+
+TRIAL SUMMARY
+----------------------------------------
+Total Trials: 1
+Completed: 0
+Failed: 1
+Success Rate: 0.00%
+
+HARDWARE PROFILE
+----------------------------------------
+CPU Cores: 12
+Total Memory: 15.6 GB
+GPU Available: True
+GPU Count: 1
+  GPU 0: NVIDIA GeForce RTX 3080 (10.0 GB)

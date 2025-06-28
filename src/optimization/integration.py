@@ -71,9 +71,12 @@ class ModelTrainingInterface:
                 self.feature_engineer.fit(df)
             
             # Create data loaders with current config
-            train_loader, val_loader, test_loader = create_cvae_data_loaders(
+            train_loader, val_loader = create_cvae_data_loaders(
                 df, self.feature_engineer, config
             )
+            
+            # For optimization, we use validation as test set
+            test_loader = val_loader
             
             # Cache the results
             data_tuple = (train_loader, val_loader, test_loader)
@@ -168,9 +171,11 @@ class ModelTrainingInterface:
             cvae_model, meta_learner = self.create_model(config)
             device = self._get_device(config)
             
-            # Create optimizers
-            cvae_optimizer = self._create_optimizer(cvae_model, config)
-            meta_optimizer = self._create_optimizer(meta_learner, config)
+            # Create optimizers dictionary
+            optimizers = {
+                'cvae': self._create_optimizer(cvae_model, config),
+                'meta': self._create_optimizer(meta_learner, config)
+            }
             
             # Training configuration
             epochs = config.get('epochs', 5)  # Reduced for optimization
@@ -186,15 +191,28 @@ class ModelTrainingInterface:
                     break
                 
                 # Train for one epoch
-                train_loss = train_one_epoch_cvae(
+                train_losses = train_one_epoch_cvae(
                     cvae_model, meta_learner, train_loader,
-                    cvae_optimizer, meta_optimizer, device, config
+                    optimizers, device, config, epoch
                 )
+                
+                # Extract main loss from dictionary
+                train_loss = train_losses.get('total_cvae_loss', 0.0)
+                
+                # Check for invalid training loss
+                if not np.isfinite(train_loss) or np.isnan(train_loss):
+                    logger.warning(f"Invalid training loss: {train_loss}, stopping training")
+                    break
                 
                 # Validate
                 val_loss, val_metrics = evaluate_cvae(
                     cvae_model, meta_learner, val_loader, device, config
                 )
+                
+                # Check for invalid validation loss
+                if not np.isfinite(val_loss) or np.isnan(val_loss):
+                    logger.warning(f"Invalid validation loss: {val_loss}, stopping training")
+                    break
                 
                 logger.debug(f"Epoch {epoch+1}/{epochs}: train_loss={train_loss:.4f}, val_loss={val_loss:.4f}")
                 
@@ -213,7 +231,13 @@ class ModelTrainingInterface:
                     self._cleanup_resources()
             
             # Return negative validation loss as score (higher is better)
-            score = -best_val_loss
+            if np.isfinite(best_val_loss) and not np.isnan(best_val_loss):
+                score = -best_val_loss
+                # Clamp extremely large scores to prevent overflow
+                score = max(score, -1e6)
+            else:
+                logger.warning(f"Invalid best validation loss: {best_val_loss}, returning minimum score")
+                score = -1e6
             
             # Cleanup
             self._cleanup_resources()
