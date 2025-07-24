@@ -19,6 +19,7 @@ from .hardware_manager import create_hardware_manager
 from .integration import create_training_interface, create_objective_function
 from .monitoring import create_monitor, create_visualizer
 from .utils import OptimizationUtils, ConfigTemplate
+from .pareto_interface import create_pareto_interface
 from ..infrastructure.logging.logger import get_logger
 from ..config_legacy import CONFIG
 
@@ -41,6 +42,7 @@ class OptimizationOrchestrator:
         )
         self.monitor = create_monitor()
         self.visualizer = create_visualizer(self.output_dir / "plots")
+        self.pareto_interface = create_pareto_interface(self.training_interface, CONFIG)
         
         logger.info(f"Optimization orchestrator initialized for {data_path}")
     
@@ -90,9 +92,13 @@ class OptimizationOrchestrator:
             if not is_valid:
                 raise ValueError(f"Invalid search space: {errors}")
             
+            # Create base config with trial timeout
+            base_config = CONFIG.copy()
+            base_config['max_training_duration_minutes'] = opt_config.trial_timeout_minutes
+            
             # Create objective function
             objective = create_objective_function(
-                self.training_interface, CONFIG, opt_config.validation_strategy
+                self.training_interface, base_config, opt_config.validation_strategy
             )
             
             # Get hardware recommendations
@@ -336,6 +342,79 @@ class OptimizationOrchestrator:
             'max_duration_hours': preset.optimization_config.max_duration_hours,
             'search_space_size': len(preset.search_space)
         }
+    
+    def run_pareto_optimization(
+        self,
+        search_space: Optional[Dict[str, Any]] = None
+    ) -> Optional[Dict[str, Any]]:
+        """Run Pareto Front multi-objective optimization."""
+        
+        logger.info("Starting Pareto Front optimization")
+        
+        try:
+            # Show algorithm selection menu
+            choice = self.pareto_interface.show_algorithm_selection()
+            
+            if choice == '1':
+                algorithm = "nsga2"
+                algorithm_name = "NSGA-II"
+            elif choice == '2':
+                algorithm = "tpe"
+                algorithm_name = "TPE/Optuna"
+            elif choice == '3':
+                # Show saved results
+                result = self.pareto_interface.show_saved_results_menu()
+                if result:
+                    self.pareto_interface.display_pareto_results(result)
+                    
+                    # Allow selection from Pareto Front
+                    pareto_front = result.get_pareto_front()
+                    selected_params = self.pareto_interface.select_pareto_solution(pareto_front)
+                    
+                    if selected_params:
+                        return {
+                            'type': 'pareto_selection',
+                            'algorithm': result.algorithm,
+                            'selected_parameters': selected_params,
+                            'pareto_front_size': len(pareto_front)
+                        }
+                return None
+            elif choice == '4':
+                logger.info("Pareto Front optimization cancelled")
+                return None
+            else:
+                logger.error("Invalid choice for Pareto Front optimization")
+                return None
+            
+            # Get optimization parameters
+            search_space = search_space or self.training_interface.get_search_space()
+            config, kwargs = self.pareto_interface.get_optimization_parameters(algorithm_name)
+            
+            # Run Pareto Front optimization
+            result = self.pareto_interface.run_pareto_optimization(
+                algorithm, search_space, config, **kwargs
+            )
+            
+            # Display results
+            self.pareto_interface.display_pareto_results(result)
+            
+            # Allow user to select solution from Pareto Front
+            pareto_front = result.get_pareto_front()
+            selected_params = self.pareto_interface.select_pareto_solution(pareto_front)
+            
+            return {
+                'type': 'pareto_optimization',
+                'algorithm': result.algorithm,
+                'total_evaluations': result.total_evaluations,
+                'computation_time': result.computation_time,
+                'pareto_front_size': len(pareto_front),
+                'selected_parameters': selected_params,
+                'result': result
+            }
+            
+        except Exception as e:
+            logger.error(f"Pareto Front optimization failed: {e}")
+            raise
 
 
 def create_cli_parser() -> argparse.ArgumentParser:

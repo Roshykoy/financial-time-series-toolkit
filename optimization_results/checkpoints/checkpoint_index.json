@@ -1,0 +1,16 @@
+{
+  "last_updated": "2025-07-02T04:55:47.366569",
+  "total_checkpoints": 1,
+  "checkpoints": [
+    {
+      "checkpoint_id": "checkpoint_20250702_045547_0000",
+      "file_path": "optimization_results/checkpoints/checkpoint_20250702_045547_0000.json.gz",
+      "file_size_mb": 0.013891220092773438,
+      "created_at": "2025-07-02T04:55:47.343377",
+      "trials_completed": 0,
+      "total_trials_planned": 50,
+      "best_score": null,
+      "algorithm": "OptunaOptimizer"
+    }
+  ]
+}

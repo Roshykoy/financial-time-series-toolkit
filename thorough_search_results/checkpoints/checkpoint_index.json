@@ -1,0 +1,56 @@
+{
+  "last_updated": "2025-07-08T15:40:30.968897",
+  "total_checkpoints": 5,
+  "checkpoints": [
+    {
+      "checkpoint_id": "checkpoint_index",
+      "file_path": "thorough_search_results/checkpoints/checkpoint_index.json",
+      "file_size_mb": 0.0015325546264648438,
+      "created_at": "",
+      "trials_completed": 0,
+      "total_trials_planned": 0,
+      "best_score": null,
+      "algorithm": ""
+    },
+    {
+      "checkpoint_id": "checkpoint_20250701_063808_0002",
+      "file_path": "thorough_search_results/checkpoints/checkpoint_20250701_063808_0002.json.gz",
+      "file_size_mb": 0.014829635620117188,
+      "created_at": "2025-07-01T06:38:08.859660",
+      "trials_completed": 2,
+      "total_trials_planned": 50,
+      "best_score": -3.2769826451664446,
+      "algorithm": "OptunaOptimizer"
+    },
+    {
+      "checkpoint_id": "checkpoint_20250701_195829_0000",
+      "file_path": "thorough_search_results/checkpoints/checkpoint_20250701_195829_0000.json.gz",
+      "file_size_mb": 0.014316558837890625,
+      "created_at": "2025-07-01T19:58:29.823930",
+      "trials_completed": 0,
+      "total_trials_planned": 50,
+      "best_score": null,
+      "algorithm": "OptunaOptimizer"
+    },
+    {
+      "checkpoint_id": "checkpoint_20250702_042729_0001",
+      "file_path": "thorough_search_results/checkpoints/checkpoint_20250702_042729_0001.json.gz",
+      "file_size_mb": 0.0147552490234375,
+      "created_at": "2025-07-02T04:27:29.202704",
+      "trials_completed": 1,
+      "total_trials_planned": 50,
+      "best_score": -3.2750343581580594,
+      "algorithm": "OptunaOptimizer"
+    },
+    {
+      "checkpoint_id": "checkpoint_20250708_154030_0002",
+      "file_path": "thorough_search_results/checkpoints/checkpoint_20250708_154030_0002.json.gz",
+      "file_size_mb": 0.014773368835449219,
+      "created_at": "2025-07-08T15:40:30.945325",
+      "trials_completed": 2,
+      "total_trials_planned": 50,
+      "best_score": -3.322224004173672,
+      "algorithm": "OptunaOptimizer"
+    }
+  ]
+}

@@ -217,7 +217,7 @@ class OptimizationConfigManager:
                     max_duration_hours=8.0,
                     early_stopping=True,
                     early_stopping_patience=10,
-                    trial_timeout_minutes=60.0,
+                    trial_timeout_minutes=180.0,
                     parallel_jobs=2
                 ),
                 search_space=advanced_search_space,

@@ -330,9 +330,20 @@ def run_training():
                 ema_cvae.apply_shadow()
                 ema_meta.apply_shadow()
             
-            # Save models
+            # Save models with complete data (config + state_dict)
             os.makedirs(os.path.dirname(CONFIG["model_save_path"]), exist_ok=True)
-            torch.save(cvae_model.state_dict(), CONFIG["model_save_path"])
+            
+            # Save CVAE with config for proper loading
+            cvae_save_data = {
+                'cvae_state_dict': cvae_model.state_dict(),
+                'meta_learner_state_dict': meta_learner.state_dict(),
+                'config': CONFIG.copy(),
+                'epoch': epoch + 1,
+                'best_val_loss': best_val_loss if 'best_val_loss' in locals() else 0.0
+            }
+            torch.save(cvae_save_data, CONFIG["model_save_path"])
+            
+            # Save meta-learner separately for compatibility
             torch.save(meta_learner.state_dict(), CONFIG["meta_learner_save_path"])
             
             # Restore original parameters
@@ -404,6 +415,7 @@ def train_one_epoch_cvae_debug(model, meta_learner, train_loader, optimizers, de
                 negative_pool = batch_dict['negative_pool']
                 pair_counts = batch_dict['pair_counts']
                 current_indices = batch_dict['current_indices']
+                temporal_sequences = batch_dict['temporal_sequences']
                 
                 # Validate combinations
                 for i, combo in enumerate(positive_combinations):
@@ -418,7 +430,7 @@ def train_one_epoch_cvae_debug(model, meta_learner, train_loader, optimizers, de
                 
                 # Forward pass
                 reconstruction_logits, mu, logvar, mu_prior, logvar_prior, temporal_context = model(
-                    positive_combinations, pair_counts, df, current_indices
+                    positive_combinations, pair_counts, temporal_sequences, current_indices
                 )
                 
                 # Check tensor health after forward pass
@@ -545,6 +557,7 @@ def train_one_epoch_cvae_modified(model, meta_learner, train_loader, optimizers,
             negative_pool = batch_dict['negative_pool']
             pair_counts = batch_dict['pair_counts']
             current_indices = batch_dict['current_indices']
+            temporal_sequences = batch_dict['temporal_sequences']
             
             # Validate combinations
             for i, combo in enumerate(positive_combinations):
@@ -563,7 +576,7 @@ def train_one_epoch_cvae_modified(model, meta_learner, train_loader, optimizers,
                 with torch.amp.autocast('cuda', dtype=torch.float16):
                     try:
                         reconstruction_logits, mu, logvar, mu_prior, logvar_prior, temporal_context = model(
-                            positive_combinations, pair_counts, df, current_indices
+                            positive_combinations, pair_counts, temporal_sequences, current_indices
                         )
                         
                         # Check for overflow in model outputs BEFORE loss computation
@@ -655,7 +668,7 @@ def train_one_epoch_cvae_modified(model, meta_learner, train_loader, optimizers,
             else:
                 # Standard precision training (safer)
                 reconstruction_logits, mu, logvar, mu_prior, logvar_prior, temporal_context = model(
-                    positive_combinations, pair_counts, df, current_indices
+                    positive_combinations, pair_counts, temporal_sequences, current_indices
                 )
                 
                 # Convert combinations to tensor for loss computation
@@ -796,10 +809,11 @@ def evaluate_cvae_modified(model, meta_learner, val_loader, device, config, df):
             positive_combinations = batch_dict['positive_combinations']
             pair_counts = batch_dict['pair_counts']
             current_indices = batch_dict['current_indices']
+            temporal_sequences = batch_dict['temporal_sequences']
             
             # Forward pass
             reconstruction_logits, mu, logvar, mu_prior, logvar_prior, temporal_context = model(
-                positive_combinations, pair_counts, df, current_indices
+                positive_combinations, pair_counts, temporal_sequences, current_indices
             )
             
             target_tensor = torch.tensor(positive_combinations, device=device)
@@ -878,10 +892,11 @@ def validate_one_epoch_cvae_modified(model, meta_learner, val_loader, device, co
                 negative_pool = batch_dict['negative_pool']
                 pair_counts = batch_dict['pair_counts']
                 current_indices = batch_dict['current_indices']
+                temporal_sequences = batch_dict['temporal_sequences']
                 
                 # Forward pass
                 reconstruction_logits, mu, logvar, mu_prior, logvar_prior, temporal_context = model(
-                    positive_combinations, pair_counts, df, current_indices
+                    positive_combinations, pair_counts, temporal_sequences, current_indices
                 )
                 
                 # Convert combinations to tensor
@@ -941,10 +956,11 @@ def train_meta_learner_epoch(meta_learner, cvae_model, train_loader, optimizer, 
                 positive_combinations = batch_dict['positive_combinations']
                 pair_counts = batch_dict['pair_counts']
                 current_indices = batch_dict['current_indices']
+                temporal_sequences = batch_dict['temporal_sequences']
                 
                 # Get temporal context from frozen CVAE
                 _, _, _, _, _, temporal_context = cvae_model(
-                    positive_combinations, pair_counts, df, current_indices
+                    positive_combinations, pair_counts, temporal_sequences, current_indices
                 )
                 
                 # Generate dummy scorer scores (in real scenario, these would come from actual scorers)
@@ -979,4 +995,52 @@ def train_meta_learner_epoch(meta_learner, cvae_model, train_loader, optimizer, 
                 print(f"Warning: Meta-learner batch failed: {e}")
                 continue
     
-    return np.mean(epoch_losses) if epoch_losses else 0.0
+
+def get_pareto_parameters():
+    """Get the latest Pareto Front optimization parameters for training integration."""
+    import json
+    from pathlib import Path
+    
+    best_params_dir = Path("models/best_parameters")
+    if not best_params_dir.exists():
+        return None
+    
+    # Find latest Pareto parameter file
+    pareto_files = list(best_params_dir.glob("pareto_selected_*.json"))
+    if not pareto_files:
+        return None
+    
+    latest_file = max(pareto_files, key=lambda x: x.stat().st_mtime)
+    
+    try:
+        with open(latest_file, 'r') as f:
+            params = json.load(f)
+        return params
+    except Exception as e:
+        print(f"Warning: Could not load Pareto parameters: {e}")
+        return None
+
+
+def apply_pareto_parameters(config, pareto_params):
+    """Apply Pareto Front parameters to training configuration."""
+    if not pareto_params or 'best_parameters' not in pareto_params:
+        return config
+    
+    best_params = pareto_params['best_parameters']
+    updated_config = config.copy()
+    
+    # Map Pareto parameters to training config
+    param_mapping = {
+        'learning_rate': 'learning_rate',
+        'batch_size': 'batch_size',
+        'hidden_dim': 'hidden_size',
+        'dropout_rate': 'dropout_rate',
+        'weight_decay': 'weight_decay'
+    }
+    
+    for pareto_key, config_key in param_mapping.items():
+        if pareto_key in best_params:
+            updated_config[config_key] = best_params[pareto_key]
+            print(f"🎯 Applied Pareto parameter: {config_key} = {best_params[pareto_key]}")
+    
+    return updated_config

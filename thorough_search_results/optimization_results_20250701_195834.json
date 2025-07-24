@@ -1,0 +1,138 @@
+{
+  "optimization_summary": {
+    "algorithm": "optuna",
+    "best_score": -Infinity,
+    "best_parameters": {},
+    "total_trials": 0,
+    "successful_trials": 0,
+    "failed_trials": 0,
+    "success_rate": 0,
+    "total_duration": "1:16:54.782750",
+    "start_time": "2025-07-01T18:41:39.720111",
+    "end_time": "2025-07-01T19:58:34.502861"
+  },
+  "configuration": {
+    "algorithm": "optuna",
+    "optimization_config": {
+      "max_trials": 50,
+      "max_duration_hours": 8.0,
+      "parallel_jobs": 2,
+      "random_seed": null,
+      "early_stopping": true,
+      "early_stopping_patience": 10,
+      "min_improvement": 0.001,
+      "enable_hardware_monitoring": true,
+      "cleanup_frequency": 5,
+      "memory_limit_gb": null,
+      "gpu_memory_fraction": 0.8,
+      "trial_timeout_minutes": 60.0,
+      "retry_failed_trials": false,
+      "max_retries": 2,
+      "save_intermediate_results": true,
+      "checkpoint_frequency": 5,
+      "backup_results": true,
+      "validation_strategy": "holdout",
+      "validation_split": 0.2,
+      "cross_validation_folds": 5
+    },
+    "search_space": {
+      "batch_size": {
+        "choices": [
+          4,
+          8,
+          16,
+          32,
+          64
+        ],
+        "type": "choice"
+      },
+      "contrastive_weight": {
+        "high": 0.5,
+        "low": 0.01,
+        "type": "uniform"
+      },
+      "dropout": {
+        "high": 0.5,
+        "low": 0.05,
+        "type": "uniform"
+      },
+      "gradient_clip_norm": {
+        "high": 2.0,
+        "low": 0.1,
+        "type": "uniform"
+      },
+      "hidden_size": {
+        "choices": [
+          64,
+          128,
+          256,
+          512,
+          768
+        ],
+        "type": "choice"
+      },
+      "kl_weight": {
+        "high": 0.1,
+        "low": 0.0001,
+        "type": "loguniform"
+      },
+      "latent_dim": {
+        "choices": [
+          32,
+          64,
+          128,
+          256
+        ],
+        "type": "choice"
+      },
+      "learning_rate": {
+        "high": 0.01,
+        "low": 1e-06,
+        "type": "loguniform"
+      },
+      "negative_samples": {
+        "choices": [
+          4,
+          8,
+          16,
+          32
+        ],
+        "type": "choice"
+      },
+      "num_layers": {
+        "high": 8,
+        "low": 2,
+        "type": "int"
+      },
+      "weight_decay": {
+        "high": 0.001,
+        "low": 1e-08,
+        "type": "loguniform"
+      }
+    }
+  },
+  "performance_metrics": {
+    "average_trial_duration": 0,
+    "total_compute_hours": 0,
+    "trials_per_hour": 0.0,
+    "objective_calls": 2,
+    "objective_total_time": 8905.20783495903
+  },
+  "hardware_profile": {
+    "cpu_cores": 12,
+    "total_memory_gb": 15.570484161376953,
+    "gpu_available": true,
+    "gpu_count": 1,
+    "recommended_batch_size": 32
+  },
+  "parameter_analysis": {
+    "message": "Not enough trials for parameter analysis"
+  },
+  "recommendations": {
+    "next_steps": [
+      "Run more trials (at least 20) for better parameter analysis"
+    ],
+    "parameter_adjustments": {},
+    "search_space_refinements": {}
+  }
+}

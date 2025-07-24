@@ -8,7 +8,7 @@ import os
 from collections import defaultdict
 import random
 
-from src.config import CONFIG
+from src.config_legacy import CONFIG
 from src.cvae_model import ConditionalVAE
 from src.meta_learner import AttentionMetaLearner
 from src.feature_engineering import FeatureEngineer
@@ -387,6 +387,87 @@ class GenerativeEnsemble:
             
             return recommendations, detailed_results
 
+def find_latest_model():
+    """
+    Find the most recently trained model by checking file timestamps.
+    
+    Returns:
+        tuple: (cvae_model_path, meta_learner_path, feature_engineer_path, model_type)
+    """
+    # Define all possible model paths with their corresponding artifacts
+    # PRIORITY ORDER: Standard CONFIG paths first (from latest training), then backups
+    model_candidates = [
+        # (cvae_path, meta_learner_path, feature_engineer_path, model_type)
+        # 1. Standard CONFIG paths (used by optimized training and should be preferred)
+        ("models/conservative_cvae_model.pth", "models/conservative_meta_learner.pth", "models/conservative_feature_engineer.pkl", "standard_optimized"),
+        # 2. Thorough search results (high-quality optimized models)
+        ("thorough_search_results/best_cvae_model.pth", "thorough_search_results/best_meta_learner.pth", "thorough_search_results/best_feature_engineer.pkl", "thorough_search_optimized"),
+        # 3. Backup models from recent training
+        ("models/best_cvae_model.pth", "models/best_meta_learner.pth", "models/best_feature_engineer.pkl", "best_backup"),
+        # 4. Quick training models
+        ("models/quick_cvae_model.pth", "models/quick_meta_learner.pth", "models/quick_feature_engineer.pkl", "quick"),
+        # 5. Other potential model locations
+        ("models/optimized_cvae_model.pth", "models/optimized_meta_learner.pth", "models/optimized_feature_engineer.pkl", "optimized"),
+        ("models/ultra_quick_model.pth", "models/ultra_quick_meta_learner.pth", "models/ultra_quick_feature_engineer.pkl", "ultra_quick"),
+        ("models/cvae_model.pth", "models/meta_learner.pth", "models/feature_engineer.pkl", "legacy_standard"),
+    ]
+    
+    # First, check if the standard CONFIG paths exist (highest priority)
+    from src.config import CONFIG
+    standard_paths = [
+        (CONFIG["model_save_path"], CONFIG["meta_learner_save_path"], CONFIG["feature_engineer_path"], "current_optimized")
+    ]
+    
+    # Check if standard CONFIG models exist and are complete
+    for cvae_path, meta_path, fe_path, model_type in standard_paths:
+        if os.path.exists(cvae_path) and os.path.exists(meta_path) and os.path.exists(fe_path):
+            print(f"🎯 Using current optimized models from CONFIG paths")
+            return cvae_path, meta_path, fe_path, model_type
+    
+    # If standard CONFIG paths don't have complete models, fall back to discovery
+    existing_models = []
+    for cvae_path, meta_path, fe_path, model_type in model_candidates:
+        if os.path.exists(cvae_path):
+            # Get the timestamp of the CVAE model file
+            cvae_mtime = os.path.getmtime(cvae_path)
+            
+            # Check if meta-learner exists (if not, use a fallback)
+            if not os.path.exists(meta_path):
+                # Look for alternative meta-learner paths
+                alt_meta_paths = [
+                    "models/best_meta_learner.pth",
+                    "models/meta_learner.pth",
+                    "thorough_search_results/best_meta_learner.pth"
+                ]
+                for alt_meta in alt_meta_paths:
+                    if os.path.exists(alt_meta):
+                        meta_path = alt_meta
+                        break
+            
+            # Check if feature engineer exists (if not, use a fallback)
+            if not os.path.exists(fe_path):
+                # Look for alternative feature engineer paths
+                alt_fe_paths = [
+                    "models/best_feature_engineer.pkl",
+                    "models/feature_engineer.pkl",
+                    "thorough_search_results/best_feature_engineer.pkl"
+                ]
+                for alt_fe in alt_fe_paths:
+                    if os.path.exists(alt_fe):
+                        fe_path = alt_fe
+                        break
+            
+            existing_models.append((cvae_path, meta_path, fe_path, model_type, cvae_mtime))
+    
+    if not existing_models:
+        return None, None, None, None
+    
+    # Sort by modification time (newest first)
+    existing_models.sort(key=lambda x: x[4], reverse=True)
+    
+    # Return the most recent model
+    return existing_models[0][:4]  # Exclude timestamp from return
+
 def run_inference(num_sets_to_generate, use_i_ching=False, temperature=0.8, verbose=True):
     """
     Main inference pipeline using the new generative approach.
@@ -400,13 +481,19 @@ def run_inference(num_sets_to_generate, use_i_ching=False, temperature=0.8, verb
     print("\n--- Starting Generative Inference Pipeline ---")
     print("Architecture: CVAE + Meta-Learner + Ensemble Scoring")
     
-    # Check if models exist
-    if not os.path.exists(CONFIG["model_save_path"]) or not os.path.exists(CONFIG["meta_learner_save_path"]):
-        print(f"\n[ERROR] Model files not found!")
-        print(f"CVAE model: {CONFIG['model_save_path']}")
-        print(f"Meta-learner: {CONFIG['meta_learner_save_path']}")
-        print("Please train the models first (Main Menu -> Option 1).")
+    # Use dynamic model discovery
+    print("\n🔍 Searching for latest trained model...")
+    cvae_path, meta_path, fe_path, model_type = find_latest_model()
+    
+    if cvae_path is None:
+        print(f"\n[ERROR] No trained models found!")
+        print("Please train a model first (Main Menu -> Option 1).")
         return None, None
+    
+    print(f"✅ Found latest model: {model_type}")
+    print(f"📁 CVAE model: {cvae_path}")
+    print(f"📁 Meta-learner: {meta_path}")
+    print(f"📁 Feature engineer: {fe_path}")
     
     device = torch.device(CONFIG['device'])
     print(f"Running inference on: {device}")
@@ -427,20 +514,80 @@ def run_inference(num_sets_to_generate, use_i_ching=False, temperature=0.8, verb
         df['Date'] = pd.to_datetime(df['Date'])
         df = df.sort_values(by='Date').reset_index(drop=True)
         
-        # Load models
+        # Load models using dynamic discovery
         print("Loading trained models...")
         
         # Load feature engineer
-        feature_engineer = joblib.load(CONFIG["feature_engineer_path"])
+        feature_engineer = None
+        if os.path.exists(fe_path):
+            try:
+                feature_engineer = joblib.load(fe_path)
+                print(f"✅ Loaded feature engineer from: {fe_path}")
+            except Exception as e:
+                print(f"⚠️ Failed to load feature engineer from {fe_path}: {e}")
         
-        # Load CVAE
-        cvae_model = ConditionalVAE(CONFIG).to(device)
-        cvae_model.load_state_dict(torch.load(CONFIG["model_save_path"], map_location=device))
+        if feature_engineer is None:
+            print("⚠️ No feature engineer found, creating new one...")
+            from src.feature_engineering import FeatureEngineer
+            feature_engineer = FeatureEngineer()
+            feature_engineer.fit(df)
+            print("✅ Created and fitted new feature engineer")
+        
+        # Load CVAE model
+        print(f"Loading CVAE model: {cvae_path}")
+        model_data = torch.load(cvae_path, map_location=device, weights_only=False)
+        
+        if 'cvae_state_dict' in model_data:
+            # New format with config
+            if 'config' in model_data:
+                model_config = model_data['config']
+                print(f"✅ Using saved training configuration")
+                print(f"   Hidden size: {model_config.get('hidden_size', 'unknown')}")
+                print(f"   Latent dim: {model_config.get('latent_dim', 'unknown')}")
+            else:
+                model_config = CONFIG
+                print("⚠️ No saved config found, using default")
+            
+            # Create model with correct configuration
+            cvae_model = ConditionalVAE(model_config).to(device)
+            cvae_model.load_state_dict(model_data['cvae_state_dict'])
+            print("✅ Loaded CVAE from model (new format)")
+            
+            # Load meta-learner from same file if available
+            meta_learner = AttentionMetaLearner(model_config).to(device)
+            if 'meta_learner_state_dict' in model_data:
+                meta_learner.load_state_dict(model_data['meta_learner_state_dict'])
+                print("✅ Loaded meta-learner from same model file")
+            else:
+                # Load meta-learner from separate file
+                if os.path.exists(meta_path):
+                    try:
+                        meta_learner.load_state_dict(torch.load(meta_path, map_location=device, weights_only=False))
+                        print(f"✅ Loaded meta-learner from: {meta_path}")
+                    except Exception as e:
+                        print(f"⚠️ Failed to load meta-learner from {meta_path}: {e}")
+                        print("⚠️ Using default meta-learner")
+                else:
+                    print("⚠️ Meta-learner file not found, using default")
+        else:
+            # Old format - single state dict, use default config
+            cvae_model = ConditionalVAE(CONFIG).to(device)
+            cvae_model.load_state_dict(model_data)
+            print("✅ Loaded CVAE from model (old format)")
+            
+            # Load meta-learner from separate file
+            meta_learner = AttentionMetaLearner(CONFIG).to(device)
+            if os.path.exists(meta_path):
+                try:
+                    meta_learner.load_state_dict(torch.load(meta_path, map_location=device, weights_only=False))
+                    print(f"✅ Loaded meta-learner from: {meta_path}")
+                except Exception as e:
+                    print(f"⚠️ Failed to load meta-learner from {meta_path}: {e}")
+                    print("⚠️ Using default meta-learner")
+            else:
+                print("⚠️ Meta-learner file not found, using default")
+        
         cvae_model.eval()
-        
-        # Load meta-learner
-        meta_learner = AttentionMetaLearner(CONFIG).to(device)
-        meta_learner.load_state_dict(torch.load(CONFIG["meta_learner_save_path"], map_location=device))
         meta_learner.eval()
         
         # Initialize heuristic scorers

@@ -5,12 +5,14 @@ Implements Grid Search, Random Search, Bayesian Optimization, and Optuna integra
 
 import random
 import itertools
+import time
 import numpy as np
 from typing import Dict, Any, List, Optional, Tuple, Union
 from abc import ABC, abstractmethod
 import logging
 
-from .base_optimizer import BaseHyperparameterOptimizer, OptimizationConfig, OptimizationTrial
+from .base_optimizer import BaseHyperparameterOptimizer
+from .data_structures import OptimizationConfig, OptimizationTrial
 from ..infrastructure.logging.logger import get_logger
 
 logger = get_logger(__name__)
@@ -176,6 +178,18 @@ class GridSearchOptimizer(BaseHyperparameterOptimizer):
         """Update algorithm state after trial completion."""
         # Grid search doesn't need to update state
         pass
+    
+    def _get_algorithm_state(self) -> Dict[str, Any]:
+        """Get algorithm-specific state for checkpointing."""
+        return {
+            'grid_index': self.grid_index,
+            'parameter_grid': self.parameter_grid
+        }
+    
+    def _restore_algorithm_state(self, state: Dict[str, Any]) -> None:
+        """Restore algorithm-specific state from checkpoint."""
+        self.grid_index = state.get('grid_index', 0)
+        self.parameter_grid = state.get('parameter_grid', self.parameter_grid)
 
 
 class RandomSearchOptimizer(BaseHyperparameterOptimizer):
@@ -200,6 +214,14 @@ class RandomSearchOptimizer(BaseHyperparameterOptimizer):
         """Update algorithm state after trial completion."""
         # Random search doesn't need to update state
         pass
+    
+    def _get_algorithm_state(self) -> Dict[str, Any]:
+        """Get algorithm-specific state for checkpointing."""
+        return {}  # Random search is stateless
+    
+    def _restore_algorithm_state(self, state: Dict[str, Any]) -> None:
+        """Restore algorithm-specific state from checkpoint."""
+        pass  # Random search is stateless
 
 
 class BayesianOptimizer(BaseHyperparameterOptimizer):
@@ -347,6 +369,41 @@ class BayesianOptimizer(BaseHyperparameterOptimizer):
                 
             except Exception as e:
                 logger.warning(f"Failed to update GP model: {e}")
+    
+    def _get_algorithm_state(self) -> Dict[str, Any]:
+        """Get algorithm-specific state for checkpointing."""
+        return {
+            'X_observed': self.X_observed,
+            'y_observed': self.y_observed,
+            'exploration_trials': self.exploration_trials,
+            'acquisition_function': self.acquisition_function
+        }
+    
+    def _restore_algorithm_state(self, state: Dict[str, Any]) -> None:
+        """Restore algorithm-specific state from checkpoint."""
+        self.X_observed = state.get('X_observed', [])
+        self.y_observed = state.get('y_observed', [])
+        self.exploration_trials = state.get('exploration_trials', self.exploration_trials)
+        self.acquisition_function = state.get('acquisition_function', self.acquisition_function)
+        
+        # Rebuild GP model if we have data
+        if SKLEARN_AVAILABLE and len(self.y_observed) >= 2:
+            try:
+                from sklearn.gaussian_process.kernels import RBF, WhiteKernel
+                kernel = RBF(length_scale=1.0) + WhiteKernel(noise_level=0.1)
+                self.gp_model = GaussianProcessRegressor(
+                    kernel=kernel,
+                    alpha=1e-6,
+                    normalize_y=True,
+                    n_restarts_optimizer=5
+                )
+                X = np.array(self.X_observed)
+                y = np.array(self.y_observed)
+                self.gp_model.fit(X, y)
+                logger.info("Restored GP model from checkpoint")
+            except Exception as e:
+                logger.warning(f"Failed to restore GP model: {e}")
+                self.gp_model = None
 
 
 class OptunaOptimizer(BaseHyperparameterOptimizer):
@@ -424,6 +481,34 @@ class OptunaOptimizer(BaseHyperparameterOptimizer):
                 self.study.tell(self._current_optuna_trial, float('-inf'))
             
             delattr(self, '_current_optuna_trial')
+    
+    def _get_algorithm_state(self) -> Dict[str, Any]:
+        """Get algorithm-specific state for checkpointing."""
+        # Note: Optuna study state is complex and tied to the database
+        # For checkpoint compatibility, we save basic state
+        return {
+            'sampler_type': self.sampler_type,
+            'study_name': self.study.study_name if hasattr(self.study, 'study_name') else None,
+            'trials_completed': len(self.study.trials) if hasattr(self.study, 'trials') else 0
+        }
+    
+    def _restore_algorithm_state(self, state: Dict[str, Any]) -> None:
+        """Restore algorithm-specific state from checkpoint."""
+        # Optuna restoration is limited due to study complexity
+        # We recreate the study and sampler
+        self.sampler_type = state.get('sampler_type', self.sampler_type)
+        
+        # Create new study with same configuration
+        sampler = self._create_sampler()
+        study_name = state.get('study_name', f"marksix_optimization_{int(time.time())}")
+        
+        self.study = optuna.create_study(
+            direction="maximize",
+            sampler=sampler,
+            study_name=study_name
+        )
+        
+        logger.info(f"Recreated Optuna study for checkpoint restoration: {study_name}")
 
 
 def create_optimizer(

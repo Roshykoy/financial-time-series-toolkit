@@ -485,11 +485,11 @@ def run_evaluation(use_i_ching=False):
     feature_engineer = joblib.load(CONFIG["feature_engineer_path"])
     
     cvae_model = ConditionalVAE(CONFIG).to(device)
-    cvae_model.load_state_dict(torch.load(CONFIG["model_save_path"], map_location=device))
+    cvae_model.load_state_dict(torch.load(CONFIG["model_save_path"], map_location=device, weights_only=False))
     cvae_model.eval()
     
     meta_learner = AttentionMetaLearner(CONFIG).to(device)
-    meta_learner.load_state_dict(torch.load(CONFIG["meta_learner_save_path"], map_location=device))
+    meta_learner.load_state_dict(torch.load(CONFIG["meta_learner_save_path"], map_location=device, weights_only=False))
     meta_learner.eval()
     
     # Create evaluator

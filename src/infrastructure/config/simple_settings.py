@@ -25,6 +25,9 @@ def get_flat_config() -> Dict[str, Any]:
             "learning_rate": 5e-5,
             "epochs": 10,
             "latent_dim": 64,
+            "hidden_dim": 128,
+            "meta_hidden_dim": 64,
+            "num_scorers": 3,
             "model_save_path": "models/conservative_cvae_model.pth",
             "meta_learner_save_path": "models/conservative_meta_learner.pth",
             "feature_engineer_path": "models/conservative_feature_engineer.pkl"

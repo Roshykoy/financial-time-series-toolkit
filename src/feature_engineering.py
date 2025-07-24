@@ -89,3 +89,26 @@ class FeatureEngineer:
         features.extend([tens, twenties, thirties, forties])
 
         return np.array(features, dtype=np.float32)
+
+    def get_feature_names(self) -> list[str]:
+        """
+        Returns the names of all features created by the transform method.
+        """
+        return [
+            'sum',
+            'mean',
+            'even_count',
+            'low_count',
+            'avg_frequency',
+            'min_frequency',
+            'max_frequency',
+            'pair_frequency',
+            'delta_mean',
+            'delta_std',
+            'delta_min',
+            'delta_max',
+            'tens_count',
+            'twenties_count',
+            'thirties_count',
+            'forties_count'
+        ]

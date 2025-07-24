@@ -271,8 +271,8 @@ class ModelTrainingInterface:
     
     def _should_stop_training(self, start_time: float, config: Dict[str, Any]) -> bool:
         """Check if training should be stopped early."""
-        # Check time limit
-        max_duration = config.get('max_training_duration_minutes', 30) * 60
+        # Check time limit - allow much longer for thorough search
+        max_duration = config.get('max_training_duration_minutes', 180) * 60  # 3 hours default
         elapsed = time.time() - start_time
         
         if elapsed > max_duration:

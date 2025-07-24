@@ -8,6 +8,7 @@ import time
 import json
 import pickle
 import logging
+import random
 from abc import ABC, abstractmethod
 from datetime import datetime, timedelta
 from typing import Dict, Any, List, Optional, Tuple, Callable, Union
@@ -21,6 +22,7 @@ import numpy as np
 from tqdm import tqdm
 
 from .hardware_manager import HardwareResourceManager, create_hardware_manager
+from .checkpoint_manager import CheckpointManager, CheckpointMetadata, OptimizationRecovery, create_checkpoint_manager
 from ..infrastructure.logging.logger import get_logger
 from ..utils.error_handling import safe_execute
 from ..utils.performance_monitor import PerformanceMonitor
@@ -28,61 +30,7 @@ from ..utils.performance_monitor import PerformanceMonitor
 logger = get_logger(__name__)
 
 
-@dataclass
-class OptimizationTrial:
-    """Represents a single optimization trial."""
-    trial_id: str
-    parameters: Dict[str, Any]
-    score: Optional[float] = None
-    status: str = "pending"  # pending, running, completed, failed
-    start_time: Optional[datetime] = None
-    end_time: Optional[datetime] = None
-    duration_seconds: Optional[float] = None
-    error_message: Optional[str] = None
-    metadata: Dict[str, Any] = None
-    resource_usage: Dict[str, Any] = None
-    
-    def __post_init__(self):
-        if self.metadata is None:
-            self.metadata = {}
-        if self.resource_usage is None:
-            self.resource_usage = {}
-
-
-@dataclass
-class OptimizationConfig:
-    """Configuration for optimization process."""
-    # General settings
-    max_trials: int = 50
-    max_duration_hours: float = 12.0
-    parallel_jobs: int = 1
-    random_seed: Optional[int] = None
-    
-    # Early stopping
-    early_stopping: bool = True
-    early_stopping_patience: int = 10
-    min_improvement: float = 0.001
-    
-    # Resource management
-    enable_hardware_monitoring: bool = True
-    cleanup_frequency: int = 5
-    memory_limit_gb: Optional[float] = None
-    gpu_memory_fraction: float = 0.8
-    
-    # Trial management
-    trial_timeout_minutes: float = 60.0
-    retry_failed_trials: bool = False
-    max_retries: int = 2
-    
-    # Checkpointing
-    save_intermediate_results: bool = True
-    checkpoint_frequency: int = 5
-    backup_results: bool = True
-    
-    # Validation
-    validation_strategy: str = "holdout"  # holdout, kfold, timeseries
-    validation_split: float = 0.2
-    cross_validation_folds: int = 5
+from .data_structures import OptimizationTrial, OptimizationConfig
 
 
 class BaseHyperparameterOptimizer(ABC):
@@ -102,7 +50,9 @@ class BaseHyperparameterOptimizer(ABC):
         search_space: Dict[str, Any],
         config: OptimizationConfig,
         results_dir: Union[str, Path] = "optimization_results",
-        hardware_manager: Optional[HardwareResourceManager] = None
+        hardware_manager: Optional[HardwareResourceManager] = None,
+        enable_checkpointing: bool = True,
+        checkpoint_frequency: int = 5
     ):
         self.objective_function = objective_function
         self.search_space = search_space
@@ -114,11 +64,28 @@ class BaseHyperparameterOptimizer(ABC):
         self.hardware_manager = hardware_manager or create_hardware_manager()
         self.performance_monitor = PerformanceMonitor()
         
+        # Checkpoint management
+        self.enable_checkpointing = enable_checkpointing
+        self.checkpoint_manager: Optional[CheckpointManager] = None
+        self.recovery_manager: Optional[OptimizationRecovery] = None
+        
+        if enable_checkpointing:
+            self.checkpoint_manager = create_checkpoint_manager(
+                str(self.results_dir),
+                save_frequency=checkpoint_frequency,
+                max_checkpoints=10
+            )
+            self.recovery_manager = OptimizationRecovery(self.checkpoint_manager)
+        
         # Trial tracking
         self.trials: List[OptimizationTrial] = []
         self.best_trial: Optional[OptimizationTrial] = None
         self.optimization_start_time: Optional[datetime] = None
         self.optimization_end_time: Optional[datetime] = None
+        
+        # Resume state
+        self._resumed_from_checkpoint = False
+        self._starting_trial_number = 0
         
         # State management
         self._is_running = False
@@ -142,15 +109,165 @@ class BaseHyperparameterOptimizer(ABC):
         """Update algorithm-specific state after trial completion."""
         pass
     
+    @abstractmethod
+    def _get_algorithm_state(self) -> Dict[str, Any]:
+        """Get algorithm-specific state for checkpointing."""
+        pass
+    
+    @abstractmethod
+    def _restore_algorithm_state(self, state: Dict[str, Any]) -> None:
+        """Restore algorithm-specific state from checkpoint."""
+        pass
+    
+    def can_resume_from_checkpoint(self) -> bool:
+        """Check if optimization can be resumed from checkpoint."""
+        if not self.enable_checkpointing or not self.recovery_manager:
+            return False
+        return self.recovery_manager.can_resume_optimization()
+    
+    def get_resume_options(self) -> Dict[str, Any]:
+        """Get available resume options."""
+        if not self.enable_checkpointing or not self.recovery_manager:
+            return {'can_resume': False, 'message': 'Checkpointing not enabled'}
+        return self.recovery_manager.get_resume_options()
+    
+    def resume_from_checkpoint(self, checkpoint_id: Optional[str] = None) -> bool:
+        """Resume optimization from checkpoint."""
+        if not self.enable_checkpointing or not self.recovery_manager:
+            logger.warning("Checkpointing not enabled, cannot resume")
+            return False
+        
+        try:
+            # Load checkpoint
+            if checkpoint_id:
+                checkpoint = self.recovery_manager.resume_from_checkpoint(checkpoint_id)
+            else:
+                checkpoint = self.recovery_manager.resume_from_latest()
+            
+            if not checkpoint:
+                logger.error("Failed to load checkpoint")
+                return False
+            
+            # Validate checkpoint integrity
+            is_valid, issues = self.recovery_manager.validate_checkpoint_integrity(checkpoint)
+            if not is_valid:
+                logger.error(f"Checkpoint validation failed: {issues}")
+                return False
+            
+            # Restore state
+            self.trials = checkpoint.completed_trials
+            self.best_trial = checkpoint.best_trial
+            self.optimization_start_time = datetime.fromisoformat(checkpoint.metadata.optimization_start_time)
+            self._starting_trial_number = checkpoint.metadata.trials_completed
+            self._resumed_from_checkpoint = True
+            
+            # Restore algorithm-specific state
+            self._restore_algorithm_state(checkpoint.algorithm_state)
+            
+            logger.info(f"Resumed from checkpoint: {checkpoint.metadata.trials_completed} trials completed")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Error resuming from checkpoint: {e}")
+            return False
+    
+    def _save_checkpoint(self, force: bool = False) -> bool:
+        """Save current optimization state to checkpoint."""
+        if not self.enable_checkpointing or not self.checkpoint_manager:
+            return False
+        
+        try:
+            # Check if we should save
+            trials_completed = len([t for t in self.trials if t.status == "completed"])
+            
+            if not force and not self.checkpoint_manager.should_save_checkpoint(trials_completed):
+                return False
+            
+            # Create metadata
+            metadata = CheckpointMetadata(
+                optimization_start_time=self.optimization_start_time.isoformat() if self.optimization_start_time else "",
+                algorithm=self.__class__.__name__,
+                total_trials_planned=self.config.max_trials,
+                trials_completed=trials_completed,
+                trials_failed=len([t for t in self.trials if t.status == "failed"]),
+                best_score=self.best_trial.score if self.best_trial else None,
+                best_trial_id=self.best_trial.trial_id if self.best_trial else None
+            )
+            
+            # Calculate ETA
+            if self.optimization_start_time and trials_completed > 0:
+                elapsed = datetime.now() - self.optimization_start_time
+                trials_remaining = self.config.max_trials - trials_completed
+                avg_time_per_trial = elapsed.total_seconds() / trials_completed
+                eta = datetime.now() + timedelta(seconds=avg_time_per_trial * trials_remaining)
+                metadata.estimated_completion_time = eta.isoformat()
+            
+            # Get algorithm state
+            algorithm_state = self._get_algorithm_state()
+            
+            # Get hardware profile
+            hardware_profile = asdict(self.hardware_manager.profile) if self.hardware_manager else {}
+            
+            # Save checkpoint
+            checkpoint_id = self.checkpoint_manager.create_checkpoint(
+                metadata=metadata,
+                optimization_config=self.config,
+                search_space=self.search_space,
+                completed_trials=self.trials,
+                best_trial=self.best_trial,
+                algorithm_state=algorithm_state,
+                hardware_profile=hardware_profile,
+                random_state=self._get_random_state()
+            )
+            
+            logger.info(f"Checkpoint saved: {checkpoint_id}")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Error saving checkpoint: {e}")
+            return False
+    
+    def _get_random_state(self) -> Dict[str, Any]:
+        """Get current random state for reproducibility."""
+        try:
+            return {
+                'numpy_state': np.random.get_state(),
+                'torch_state': torch.get_rng_state().tolist() if torch.is_tensor(torch.get_rng_state()) else None,
+                'python_state': random.getstate()
+            }
+        except Exception:
+            return {}
+    
+    def _restore_random_state(self, random_state: Dict[str, Any]) -> None:
+        """Restore random state for reproducibility."""
+        try:
+            if 'numpy_state' in random_state:
+                np.random.set_state(random_state['numpy_state'])
+            if 'torch_state' in random_state and random_state['torch_state']:
+                torch.set_rng_state(torch.tensor(random_state['torch_state']))
+            if 'python_state' in random_state:
+                random.setstate(random_state['python_state'])
+        except Exception as e:
+            logger.warning(f"Could not restore random state: {e}")
+
     def optimize(self) -> Tuple[Dict[str, Any], float]:
         """
-        Main optimization loop.
+        Main optimization loop with checkpoint support.
         
         Returns:
             Tuple of (best_parameters, best_score)
         """
         logger.info("Starting hyperparameter optimization")
-        self.optimization_start_time = datetime.now()
+        
+        # Check for resume opportunity
+        if not self._resumed_from_checkpoint and self.can_resume_from_checkpoint():
+            resume_options = self.get_resume_options()
+            logger.info(f"Found existing checkpoint with {resume_options.get('latest_checkpoint', {}).get('trials_completed', 0)} completed trials")
+            logger.info("To resume, use resume_from_checkpoint() before calling optimize()")
+        
+        if not self.optimization_start_time:
+            self.optimization_start_time = datetime.now()
+        
         self._is_running = True
         self._should_stop = False
         
@@ -168,6 +285,10 @@ class BaseHyperparameterOptimizer(ABC):
             self.optimization_end_time = datetime.now()
             self._is_running = False
             
+            # Save final checkpoint
+            if self.enable_checkpointing:
+                self._save_checkpoint(force=True)
+            
             # Final cleanup and reporting
             self._cleanup_and_finalize()
             
@@ -181,11 +302,19 @@ class BaseHyperparameterOptimizer(ABC):
         except KeyboardInterrupt:
             logger.info("Optimization interrupted by user")
             self._should_stop = True
+            # Save emergency checkpoint
+            if self.enable_checkpointing:
+                logger.info("Saving emergency checkpoint...")
+                self._save_checkpoint(force=True)
             return self._handle_early_termination()
             
         except Exception as e:
             logger.error(f"Optimization failed with error: {e}")
             self._should_stop = True
+            # Save emergency checkpoint
+            if self.enable_checkpointing:
+                logger.info("Saving emergency checkpoint...")
+                self._save_checkpoint(force=True)
             return self._handle_early_termination()
         
         finally:
@@ -194,21 +323,35 @@ class BaseHyperparameterOptimizer(ABC):
                 self.hardware_manager.stop_monitoring()
     
     def _run_sequential_optimization(self) -> None:
-        """Run optimization trials sequentially."""
-        with tqdm(total=self.config.max_trials, desc="Optimization Progress") as pbar:
-            for trial_num in range(self.config.max_trials):
+        """Run optimization trials sequentially with checkpoint support."""
+        # Adjust progress bar for resumed optimization
+        completed_trials = len([t for t in self.trials if t.status == "completed"])
+        start_trial = self._starting_trial_number if self._resumed_from_checkpoint else 0
+        
+        with tqdm(
+            total=self.config.max_trials, 
+            initial=completed_trials,
+            desc="Optimization Progress"
+        ) as pbar:
+            
+            for trial_num in range(start_trial, self.config.max_trials):
                 if self._should_stop or self._check_termination_conditions():
                     break
                 
                 # Generate and execute trial
                 trial = self._create_and_execute_trial(trial_num)
-                pbar.update(1)
                 
-                # Update progress bar with current best
-                if self.best_trial:
-                    pbar.set_postfix(best_score=f"{self.best_trial.score:.6f}")
+                # Update progress bar
+                if trial.status == "completed":
+                    pbar.update(1)
+                    if self.best_trial:
+                        pbar.set_postfix(best_score=f"{self.best_trial.score:.6f}")
                 
-                # Periodic cleanup and checkpointing
+                # Checkpoint saving
+                if self.enable_checkpointing:
+                    self._save_checkpoint()
+                
+                # Periodic cleanup
                 if (trial_num + 1) % self.config.cleanup_frequency == 0:
                     self._periodic_maintenance(trial_num + 1)
     

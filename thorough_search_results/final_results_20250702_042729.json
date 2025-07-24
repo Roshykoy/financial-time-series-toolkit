@@ -1,0 +1,5183 @@
+{
+  "optimization_config": {
+    "max_trials": 50,
+    "max_duration_hours": 8.0,
+    "parallel_jobs": 2,
+    "random_seed": null,
+    "early_stopping": true,
+    "early_stopping_patience": 10,
+    "min_improvement": 0.001,
+    "enable_hardware_monitoring": true,
+    "cleanup_frequency": 5,
+    "memory_limit_gb": null,
+    "gpu_memory_fraction": 0.8,
+    "trial_timeout_minutes": 60.0,
+    "retry_failed_trials": false,
+    "max_retries": 2,
+    "save_intermediate_results": true,
+    "checkpoint_frequency": 5,
+    "backup_results": true,
+    "validation_strategy": "holdout",
+    "validation_split": 0.2,
+    "cross_validation_folds": 5
+  },
+  "search_space": {
+    "batch_size": {
+      "choices": [
+        4,
+        8,
+        16,
+        32,
+        64
+      ],
+      "type": "choice"
+    },
+    "contrastive_weight": {
+      "high": 0.5,
+      "low": 0.01,
+      "type": "uniform"
+    },
+    "dropout": {
+      "high": 0.5,
+      "low": 0.05,
+      "type": "uniform"
+    },
+    "gradient_clip_norm": {
+      "high": 2.0,
+      "low": 0.1,
+      "type": "uniform"
+    },
+    "hidden_size": {
+      "choices": [
+        64,
+        128,
+        256,
+        512,
+        768
+      ],
+      "type": "choice"
+    },
+    "kl_weight": {
+      "high": 0.1,
+      "low": 0.0001,
+      "type": "loguniform"
+    },
+    "latent_dim": {
+      "choices": [
+        32,
+        64,
+        128,
+        256
+      ],
+      "type": "choice"
+    },
+    "learning_rate": {
+      "high": 0.01,
+      "low": 1e-06,
+      "type": "loguniform"
+    },
+    "negative_samples": {
+      "choices": [
+        4,
+        8,
+        16,
+        32
+      ],
+      "type": "choice"
+    },
+    "num_layers": {
+      "high": 8,
+      "low": 2,
+      "type": "int"
+    },
+    "weight_decay": {
+      "high": 0.001,
+      "low": 1e-08,
+      "type": "loguniform"
+    }
+  },
+  "all_trials": [
+    {
+      "trial_id": "trial_0000_1751397918",
+      "parameters": {
+        "batch_size": 8,
+        "contrastive_weight": 0.09834109892051372,
+        "dropout": 0.2061105466832473,
+        "gradient_clip_norm": 1.868570441111369,
+        "hidden_size": 768,
+        "kl_weight": 0.029880762541684737,
+        "latent_dim": 128,
+        "learning_rate": 0.0007789543513070881,
+        "negative_samples": 8,
+        "num_layers": 6,
+        "weight_decay": 1.3803312144873335e-06,
+        "device": "cuda",
+        "max_memory_fraction": 0.8,
+        "parallel_jobs": 6
+      },
+      "score": -3.2750343581580594,
+      "status": "completed",
+      "start_time": "2025-07-02 03:25:18.979880",
+      "end_time": "2025-07-02 04:00:01.887568",
+      "duration_seconds": 2082.907688,
+      "error_message": null,
+      "metadata": {},
+      "resource_usage": {
+        "before": {
+          "cpu_usage_percent": 0.1,
+          "memory_usage_percent": 11.3,
+          "memory_available_gb": 13.814720153808594,
+          "memory_used_gb": 1.5417976379394531,
+          "timestamp": 1751397919.9830232,
+          "gpu_status": [
+            {
+              "device_id": 0,
+              "memory_allocated_gb": 0.0,
+              "memory_reserved_gb": 0.0,
+              "memory_free_gb": 9.99951171875,
+              "utilization_percent": 0.0
+            }
+          ]
+        },
+        "after": {
+          "cpu_usage_percent": 4.2,
+          "memory_usage_percent": 16.8,
+          "memory_available_gb": 12.954723358154297,
+          "memory_used_gb": 2.311420440673828,
+          "timestamp": 1751400001.887329,
+          "gpu_status": [
+            {
+              "device_id": 0,
+              "memory_allocated_gb": 0.03208017349243164,
+              "memory_reserved_gb": 0.056640625,
+              "memory_free_gb": 9.94287109375,
+              "utilization_percent": 0.5664339079056595
+            }
+          ]
+        },
+        "duration_seconds": 2081.9059641361237
+      }
+    },
+    {
+      "trial_id": "trial_0001_1751397918",
+      "parameters": {
+        "batch_size": 16,
+        "contrastive_weight": 0.37453716944127463,
+        "dropout": 0.4086783251926892,
+        "gradient_clip_norm": 1.412908257391883,
+        "hidden_size": 64,
+        "kl_weight": 0.00016953404810898852,
+        "latent_dim": 64,
+        "learning_rate": 9.154888384990193e-06,
+        "negative_samples": 32,
+        "num_layers": 6,
+        "weight_decay": 5.759777893837447e-06
+      },
+      "score": null,
+      "status": "failed",
+      "start_time": "2025-07-02 03:25:18.981555",
+      "end_time": "2025-07-02 04:27:29.202264",
+      "duration_seconds": null,
+      "error_message": "Trial exceeded timeout of 3600.0s",
+      "metadata": {},
+      "resource_usage": {}
+    }
+  ],
+  "best_trial": {
+    "trial_id": "trial_0000_1751397918",
+    "parameters": {
+      "batch_size": 8,
+      "contrastive_weight": 0.09834109892051372,
+      "dropout": 0.2061105466832473,
+      "gradient_clip_norm": 1.868570441111369,
+      "hidden_size": 768,
+      "kl_weight": 0.029880762541684737,
+      "latent_dim": 128,
+      "learning_rate": 0.0007789543513070881,
+      "negative_samples": 8,
+      "num_layers": 6,
+      "weight_decay": 1.3803312144873335e-06,
+      "device": "cuda",
+      "max_memory_fraction": 0.8,
+      "parallel_jobs": 6
+    },
+    "score": -3.2750343581580594,
+    "status": "completed",
+    "start_time": "2025-07-02 03:25:18.979880",
+    "end_time": "2025-07-02 04:00:01.887568",
+    "duration_seconds": 2082.907688,
+    "error_message": null,
+    "metadata": {},
+    "resource_usage": {
+      "before": {
+        "cpu_usage_percent": 0.1,
+        "memory_usage_percent": 11.3,
+        "memory_available_gb": 13.814720153808594,
+        "memory_used_gb": 1.5417976379394531,
+        "timestamp": 1751397919.9830232,
+        "gpu_status": [
+          {
+            "device_id": 0,
+            "memory_allocated_gb": 0.0,
+            "memory_reserved_gb": 0.0,
+            "memory_free_gb": 9.99951171875,
+            "utilization_percent": 0.0
+          }
+        ]
+      },
+      "after": {
+        "cpu_usage_percent": 4.2,
+        "memory_usage_percent": 16.8,
+        "memory_available_gb": 12.954723358154297,
+        "memory_used_gb": 2.311420440673828,
+        "timestamp": 1751400001.887329,
+        "gpu_status": [
+          {
+            "device_id": 0,
+            "memory_allocated_gb": 0.03208017349243164,
+            "memory_reserved_gb": 0.056640625,
+            "memory_free_gb": 9.94287109375,
+            "utilization_percent": 0.5664339079056595
+          }
+        ]
+      },
+      "duration_seconds": 2081.9059641361237
+    }
+  },
+  "optimization_summary": {
+    "total_trials": 2,
+    "completed_trials": 1,
+    "failed_trials": 1,
+    "success_rate": 0.5,
+    "best_score": -3.2750343581580594,
+    "algorithm": "OptunaOptimizer",
+    "score_statistics": {
+      "mean": -3.2750343581580594,
+      "std": 0.0,
+      "min": -3.2750343581580594,
+      "max": -3.2750343581580594,
+      "median": -3.2750343581580594
+    },
+    "duration_statistics": {
+      "mean_seconds": 2082.907688,
+      "total_hours": 0.5785854688888888
+    }
+  },
+  "hardware_profile": {
+    "cpu_cores": 12,
+    "cpu_frequency": 3700.040999999999,
+    "total_memory_gb": 15.570476531982422,
+    "available_memory_gb": 13.815200805664062,
+    "gpu_available": true,
+    "gpu_count": 1,
+    "gpu_memory_gb": [
+      9.99951171875
+    ],
+    "gpu_names": [
+      "NVIDIA GeForce RTX 3080"
+    ],
+    "recommended_batch_size": 32,
+    "recommended_workers": 8,
+    "parallel_jobs": 6
+  },
+  "monitoring_data": [
+    {
+      "cpu_usage_percent": 0.1,
+      "memory_usage_percent": 11.3,
+      "memory_available_gb": 13.814720153808594,
+      "memory_used_gb": 1.5417976379394531,
+      "timestamp": 1751397919.9789956,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.0,
+          "memory_reserved_gb": 0.0,
+          "memory_free_gb": 9.99951171875,
+          "utilization_percent": 0.0
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 8.4,
+      "memory_usage_percent": 16.2,
+      "memory_available_gb": 13.044910430908203,
+      "memory_used_gb": 2.229442596435547,
+      "timestamp": 1751397932.0351684,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.03609895706176758,
+          "memory_reserved_gb": 0.0546875,
+          "memory_free_gb": 9.94482421875,
+          "utilization_percent": 0.5469017041847746
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 8.1,
+      "memory_usage_percent": 16.2,
+      "memory_available_gb": 13.041328430175781,
+      "memory_used_gb": 2.2329940795898438,
+      "timestamp": 1751397944.0467224,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.039544105529785156,
+          "memory_reserved_gb": 0.078125,
+          "memory_free_gb": 9.92138671875,
+          "utilization_percent": 0.7812881488353924
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 7.6,
+      "memory_usage_percent": 16.2,
+      "memory_available_gb": 13.04299545288086,
+      "memory_used_gb": 2.2312850952148438,
+      "timestamp": 1751397956.631134,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.039637088775634766,
+          "memory_reserved_gb": 0.08203125,
+          "memory_free_gb": 9.91748046875,
+          "utilization_percent": 0.8203525562771619
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 7.1,
+      "memory_usage_percent": 16.2,
+      "memory_available_gb": 13.04172134399414,
+      "memory_used_gb": 2.2325363159179688,
+      "timestamp": 1751397968.643878,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.03953266143798828,
+          "memory_reserved_gb": 0.08203125,
+          "memory_free_gb": 9.91748046875,
+          "utilization_percent": 0.8203525562771619
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 8.0,
+      "memory_usage_percent": 16.2,
+      "memory_available_gb": 13.040966033935547,
+      "memory_used_gb": 2.2332763671875,
+      "timestamp": 1751397980.656446,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.039637088775634766,
+          "memory_reserved_gb": 0.08203125,
+          "memory_free_gb": 9.91748046875,
+          "utilization_percent": 0.8203525562771619
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 8.3,
+      "memory_usage_percent": 16.3,
+      "memory_available_gb": 13.037117004394531,
+      "memory_used_gb": 2.2371139526367188,
+      "timestamp": 1751397993.2361403,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.039637088775634766,
+          "memory_reserved_gb": 0.08203125,
+          "memory_free_gb": 9.91748046875,
+          "utilization_percent": 0.8203525562771619
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 8.2,
+      "memory_usage_percent": 16.3,
+      "memory_available_gb": 13.036834716796875,
+      "memory_used_gb": 2.237396240234375,
+      "timestamp": 1751398005.2496476,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.039637088775634766,
+          "memory_reserved_gb": 0.08203125,
+          "memory_free_gb": 9.91748046875,
+          "utilization_percent": 0.8203525562771619
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 8.2,
+      "memory_usage_percent": 16.3,
+      "memory_available_gb": 13.038158416748047,
+      "memory_used_gb": 2.2360801696777344,
+      "timestamp": 1751398017.823926,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.039637088775634766,
+          "memory_reserved_gb": 0.08203125,
+          "memory_free_gb": 9.91748046875,
+          "utilization_percent": 0.8203525562771619
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 8.3,
+      "memory_usage_percent": 16.3,
+      "memory_available_gb": 13.037044525146484,
+      "memory_used_gb": 2.2371826171875,
+      "timestamp": 1751398029.832133,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.039637088775634766,
+          "memory_reserved_gb": 0.08203125,
+          "memory_free_gb": 9.91748046875,
+          "utilization_percent": 0.8203525562771619
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 8.1,
+      "memory_usage_percent": 16.3,
+      "memory_available_gb": 13.035037994384766,
+      "memory_used_gb": 2.239208221435547,
+      "timestamp": 1751398041.846162,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.039759159088134766,
+          "memory_reserved_gb": 0.08203125,
+          "memory_free_gb": 9.91748046875,
+          "utilization_percent": 0.8203525562771619
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 8.4,
+      "memory_usage_percent": 16.3,
+      "memory_available_gb": 13.037776947021484,
+      "memory_used_gb": 2.2364578247070312,
+      "timestamp": 1751398054.4837222,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.03953266143798828,
+          "memory_reserved_gb": 0.08203125,
+          "memory_free_gb": 9.91748046875,
+          "utilization_percent": 0.8203525562771619
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 8.3,
+      "memory_usage_percent": 16.3,
+      "memory_available_gb": 13.032722473144531,
+      "memory_used_gb": 2.2415084838867188,
+      "timestamp": 1751398066.4942858,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.039637088775634766,
+          "memory_reserved_gb": 0.08203125,
+          "memory_free_gb": 9.91748046875,
+          "utilization_percent": 0.8203525562771619
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 7.6,
+      "memory_usage_percent": 16.3,
+      "memory_available_gb": 13.035572052001953,
+      "memory_used_gb": 2.2386207580566406,
+      "timestamp": 1751398078.5072768,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.03953266143798828,
+          "memory_reserved_gb": 0.08203125,
+          "memory_free_gb": 9.91748046875,
+          "utilization_percent": 0.8203525562771619
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 8.3,
+      "memory_usage_percent": 16.3,
+      "memory_available_gb": 13.038078308105469,
+      "memory_used_gb": 2.2361488342285156,
+      "timestamp": 1751398090.5185158,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.039637088775634766,
+          "memory_reserved_gb": 0.08203125,
+          "memory_free_gb": 9.91748046875,
+          "utilization_percent": 0.8203525562771619
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 7.7,
+      "memory_usage_percent": 16.3,
+      "memory_available_gb": 13.03470230102539,
+      "memory_used_gb": 2.239513397216797,
+      "timestamp": 1751398103.335802,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.040218353271484375,
+          "memory_reserved_gb": 0.08203125,
+          "memory_free_gb": 9.91748046875,
+          "utilization_percent": 0.8203525562771619
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 7.7,
+      "memory_usage_percent": 16.3,
+      "memory_available_gb": 13.035736083984375,
+      "memory_used_gb": 2.2384262084960938,
+      "timestamp": 1751398115.3491318,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.039637088775634766,
+          "memory_reserved_gb": 0.08203125,
+          "memory_free_gb": 9.91748046875,
+          "utilization_percent": 0.8203525562771619
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 7.7,
+      "memory_usage_percent": 16.3,
+      "memory_available_gb": 13.037715911865234,
+      "memory_used_gb": 2.2364654541015625,
+      "timestamp": 1751398127.3630488,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.040825843811035156,
+          "memory_reserved_gb": 0.08203125,
+          "memory_free_gb": 9.91748046875,
+          "utilization_percent": 0.8203525562771619
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 8.0,
+      "memory_usage_percent": 16.3,
+      "memory_available_gb": 13.03369140625,
+      "memory_used_gb": 2.240478515625,
+      "timestamp": 1751398140.030566,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.039637088775634766,
+          "memory_reserved_gb": 0.08203125,
+          "memory_free_gb": 9.91748046875,
+          "utilization_percent": 0.8203525562771619
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 7.9,
+      "memory_usage_percent": 16.3,
+      "memory_available_gb": 13.034706115722656,
+      "memory_used_gb": 2.239471435546875,
+      "timestamp": 1751398152.043021,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.0396728515625,
+          "memory_reserved_gb": 0.08203125,
+          "memory_free_gb": 9.91748046875,
+          "utilization_percent": 0.8203525562771619
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 7.4,
+      "memory_usage_percent": 16.3,
+      "memory_available_gb": 13.033519744873047,
+      "memory_used_gb": 2.2406539916992188,
+      "timestamp": 1751398164.6239226,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.039637088775634766,
+          "memory_reserved_gb": 0.08203125,
+          "memory_free_gb": 9.91748046875,
+          "utilization_percent": 0.8203525562771619
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 7.4,
+      "memory_usage_percent": 16.3,
+      "memory_available_gb": 13.032772064208984,
+      "memory_used_gb": 2.2413902282714844,
+      "timestamp": 1751398176.6374419,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.039637088775634766,
+          "memory_reserved_gb": 0.08203125,
+          "memory_free_gb": 9.91748046875,
+          "utilization_percent": 0.8203525562771619
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 7.5,
+      "memory_usage_percent": 16.3,
+      "memory_available_gb": 13.033332824707031,
+      "memory_used_gb": 2.240825653076172,
+      "timestamp": 1751398188.6497524,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.039637088775634766,
+          "memory_reserved_gb": 0.08203125,
+          "memory_free_gb": 9.91748046875,
+          "utilization_percent": 0.8203525562771619
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 7.7,
+      "memory_usage_percent": 16.3,
+      "memory_available_gb": 13.032493591308594,
+      "memory_used_gb": 2.2416725158691406,
+      "timestamp": 1751398201.253932,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.0383458137512207,
+          "memory_reserved_gb": 0.08203125,
+          "memory_free_gb": 9.91748046875,
+          "utilization_percent": 0.8203525562771619
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 7.6,
+      "memory_usage_percent": 16.3,
+      "memory_available_gb": 13.031440734863281,
+      "memory_used_gb": 2.242706298828125,
+      "timestamp": 1751398213.2623916,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.039637088775634766,
+          "memory_reserved_gb": 0.08203125,
+          "memory_free_gb": 9.91748046875,
+          "utilization_percent": 0.8203525562771619
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 7.8,
+      "memory_usage_percent": 16.3,
+      "memory_available_gb": 13.030807495117188,
+      "memory_used_gb": 2.2433395385742188,
+      "timestamp": 1751398225.2702572,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.03953266143798828,
+          "memory_reserved_gb": 0.08203125,
+          "memory_free_gb": 9.91748046875,
+          "utilization_percent": 0.8203525562771619
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 7.6,
+      "memory_usage_percent": 16.3,
+      "memory_available_gb": 13.029823303222656,
+      "memory_used_gb": 2.2443466186523438,
+      "timestamp": 1751398237.8610356,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.039637088775634766,
+          "memory_reserved_gb": 0.08203125,
+          "memory_free_gb": 9.91748046875,
+          "utilization_percent": 0.8203525562771619
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 7.3,
+      "memory_usage_percent": 16.3,
+      "memory_available_gb": 13.025951385498047,
+      "memory_used_gb": 2.248210906982422,
+      "timestamp": 1751398249.8723128,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.03953266143798828,
+          "memory_reserved_gb": 0.08203125,
+          "memory_free_gb": 9.91748046875,
+          "utilization_percent": 0.8203525562771619
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 7.3,
+      "memory_usage_percent": 16.3,
+      "memory_available_gb": 13.025012969970703,
+      "memory_used_gb": 2.2491378784179688,
+      "timestamp": 1751398262.4939914,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.039637088775634766,
+          "memory_reserved_gb": 0.08203125,
+          "memory_free_gb": 9.91748046875,
+          "utilization_percent": 0.8203525562771619
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 7.3,
+      "memory_usage_percent": 16.4,
+      "memory_available_gb": 13.022529602050781,
+      "memory_used_gb": 2.2516403198242188,
+      "timestamp": 1751398274.506942,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.03953266143798828,
+          "memory_reserved_gb": 0.08203125,
+          "memory_free_gb": 9.91748046875,
+          "utilization_percent": 0.8203525562771619
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 7.7,
+      "memory_usage_percent": 16.3,
+      "memory_available_gb": 13.024967193603516,
+      "memory_used_gb": 2.249195098876953,
+      "timestamp": 1751398286.5199733,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.039637088775634766,
+          "memory_reserved_gb": 0.08203125,
+          "memory_free_gb": 9.91748046875,
+          "utilization_percent": 0.8203525562771619
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 7.6,
+      "memory_usage_percent": 16.4,
+      "memory_available_gb": 13.021930694580078,
+      "memory_used_gb": 2.252227783203125,
+      "timestamp": 1751398299.1224449,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.039637088775634766,
+          "memory_reserved_gb": 0.08203125,
+          "memory_free_gb": 9.91748046875,
+          "utilization_percent": 0.8203525562771619
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 7.6,
+      "memory_usage_percent": 16.8,
+      "memory_available_gb": 12.94974136352539,
+      "memory_used_gb": 2.3243980407714844,
+      "timestamp": 1751398311.1363864,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.039637088775634766,
+          "memory_reserved_gb": 0.08203125,
+          "memory_free_gb": 9.91748046875,
+          "utilization_percent": 0.8203525562771619
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 7.3,
+      "memory_usage_percent": 16.8,
+      "memory_available_gb": 12.947200775146484,
+      "memory_used_gb": 2.3269271850585938,
+      "timestamp": 1751398323.144514,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.039637088775634766,
+          "memory_reserved_gb": 0.08203125,
+          "memory_free_gb": 9.91748046875,
+          "utilization_percent": 0.8203525562771619
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 7.4,
+      "memory_usage_percent": 16.9,
+      "memory_available_gb": 12.944969177246094,
+      "memory_used_gb": 2.3291397094726562,
+      "timestamp": 1751398335.1581554,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.039637088775634766,
+          "memory_reserved_gb": 0.08203125,
+          "memory_free_gb": 9.91748046875,
+          "utilization_percent": 0.8203525562771619
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 7.2,
+      "memory_usage_percent": 16.9,
+      "memory_available_gb": 12.94588851928711,
+      "memory_used_gb": 2.3282127380371094,
+      "timestamp": 1751398348.0127852,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.039637088775634766,
+          "memory_reserved_gb": 0.08203125,
+          "memory_free_gb": 9.91748046875,
+          "utilization_percent": 0.8203525562771619
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 7.3,
+      "memory_usage_percent": 16.9,
+      "memory_available_gb": 12.941547393798828,
+      "memory_used_gb": 2.3325157165527344,
+      "timestamp": 1751398360.0267024,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.039637088775634766,
+          "memory_reserved_gb": 0.08203125,
+          "memory_free_gb": 9.91748046875,
+          "utilization_percent": 0.8203525562771619
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 7.8,
+      "memory_usage_percent": 16.9,
+      "memory_available_gb": 12.94671630859375,
+      "memory_used_gb": 2.3273582458496094,
+      "timestamp": 1751398372.038702,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.039637088775634766,
+          "memory_reserved_gb": 0.08203125,
+          "memory_free_gb": 9.91748046875,
+          "utilization_percent": 0.8203525562771619
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 7.4,
+      "memory_usage_percent": 16.9,
+      "memory_available_gb": 12.94272232055664,
+      "memory_used_gb": 2.3313140869140625,
+      "timestamp": 1751398384.6125498,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.04053449630737305,
+          "memory_reserved_gb": 0.08203125,
+          "memory_free_gb": 9.91748046875,
+          "utilization_percent": 0.8203525562771619
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 7.6,
+      "memory_usage_percent": 16.8,
+      "memory_available_gb": 12.948509216308594,
+      "memory_used_gb": 2.3255348205566406,
+      "timestamp": 1751398396.621081,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.039637088775634766,
+          "memory_reserved_gb": 0.08203125,
+          "memory_free_gb": 9.91748046875,
+          "utilization_percent": 0.8203525562771619
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 7.4,
+      "memory_usage_percent": 16.9,
+      "memory_available_gb": 12.94049072265625,
+      "memory_used_gb": 2.3335533142089844,
+      "timestamp": 1751398409.239756,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.039637088775634766,
+          "memory_reserved_gb": 0.08203125,
+          "memory_free_gb": 9.91748046875,
+          "utilization_percent": 0.8203525562771619
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 7.3,
+      "memory_usage_percent": 16.9,
+      "memory_available_gb": 12.943660736083984,
+      "memory_used_gb": 2.3303756713867188,
+      "timestamp": 1751398421.2477946,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.039637088775634766,
+          "memory_reserved_gb": 0.08203125,
+          "memory_free_gb": 9.91748046875,
+          "utilization_percent": 0.8203525562771619
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 7.6,
+      "memory_usage_percent": 16.9,
+      "memory_available_gb": 12.945388793945312,
+      "memory_used_gb": 2.328643798828125,
+      "timestamp": 1751398433.260918,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.03953266143798828,
+          "memory_reserved_gb": 0.08203125,
+          "memory_free_gb": 9.91748046875,
+          "utilization_percent": 0.8203525562771619
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 4.7,
+      "memory_usage_percent": 16.9,
+      "memory_available_gb": 12.939067840576172,
+      "memory_used_gb": 2.3349380493164062,
+      "timestamp": 1751398445.8725345,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.040366172790527344,
+          "memory_reserved_gb": 0.08203125,
+          "memory_free_gb": 9.91748046875,
+          "utilization_percent": 0.8203525562771619
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 7.8,
+      "memory_usage_percent": 16.9,
+      "memory_available_gb": 12.933097839355469,
+      "memory_used_gb": 2.3409042358398438,
+      "timestamp": 1751398457.8779671,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.039637088775634766,
+          "memory_reserved_gb": 0.08203125,
+          "memory_free_gb": 9.91748046875,
+          "utilization_percent": 0.8203525562771619
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 7.7,
+      "memory_usage_percent": 16.9,
+      "memory_available_gb": 12.931522369384766,
+      "memory_used_gb": 2.3424720764160156,
+      "timestamp": 1751398469.888339,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.039637088775634766,
+          "memory_reserved_gb": 0.08203125,
+          "memory_free_gb": 9.91748046875,
+          "utilization_percent": 0.8203525562771619
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 7.7,
+      "memory_usage_percent": 16.9,
+      "memory_available_gb": 12.932979583740234,
+      "memory_used_gb": 2.3410072326660156,
+      "timestamp": 1751398481.8944185,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.03912687301635742,
+          "memory_reserved_gb": 0.08203125,
+          "memory_free_gb": 9.91748046875,
+          "utilization_percent": 0.8203525562771619
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 7.5,
+      "memory_usage_percent": 17.0,
+      "memory_available_gb": 12.930587768554688,
+      "memory_used_gb": 2.3433685302734375,
+      "timestamp": 1751398494.7421358,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.03981924057006836,
+          "memory_reserved_gb": 0.08203125,
+          "memory_free_gb": 9.91748046875,
+          "utilization_percent": 0.8203525562771619
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 7.5,
+      "memory_usage_percent": 17.0,
+      "memory_available_gb": 12.930858612060547,
+      "memory_used_gb": 2.3430938720703125,
+      "timestamp": 1751398506.7493355,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.039637088775634766,
+          "memory_reserved_gb": 0.08203125,
+          "memory_free_gb": 9.91748046875,
+          "utilization_percent": 0.8203525562771619
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 7.7,
+      "memory_usage_percent": 17.0,
+      "memory_available_gb": 12.930534362792969,
+      "memory_used_gb": 2.343425750732422,
+      "timestamp": 1751398518.7612538,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.039637088775634766,
+          "memory_reserved_gb": 0.08203125,
+          "memory_free_gb": 9.91748046875,
+          "utilization_percent": 0.8203525562771619
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 8.0,
+      "memory_usage_percent": 17.0,
+      "memory_available_gb": 12.9310302734375,
+      "memory_used_gb": 2.342906951904297,
+      "timestamp": 1751398531.3367832,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.03953266143798828,
+          "memory_reserved_gb": 0.08203125,
+          "memory_free_gb": 9.91748046875,
+          "utilization_percent": 0.8203525562771619
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 7.7,
+      "memory_usage_percent": 16.9,
+      "memory_available_gb": 12.931324005126953,
+      "memory_used_gb": 2.342601776123047,
+      "timestamp": 1751398543.3503752,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.039637088775634766,
+          "memory_reserved_gb": 0.08203125,
+          "memory_free_gb": 9.91748046875,
+          "utilization_percent": 0.8203525562771619
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 7.8,
+      "memory_usage_percent": 16.9,
+      "memory_available_gb": 12.93179702758789,
+      "memory_used_gb": 2.3421287536621094,
+      "timestamp": 1751398555.9567168,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.039637088775634766,
+          "memory_reserved_gb": 0.08203125,
+          "memory_free_gb": 9.91748046875,
+          "utilization_percent": 0.8203525562771619
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 7.3,
+      "memory_usage_percent": 17.0,
+      "memory_available_gb": 12.929622650146484,
+      "memory_used_gb": 2.3443222045898438,
+      "timestamp": 1751398567.9702315,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.039637088775634766,
+          "memory_reserved_gb": 0.08203125,
+          "memory_free_gb": 9.91748046875,
+          "utilization_percent": 0.8203525562771619
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 7.4,
+      "memory_usage_percent": 16.9,
+      "memory_available_gb": 12.931388854980469,
+      "memory_used_gb": 2.342540740966797,
+      "timestamp": 1751398579.9794607,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.039637088775634766,
+          "memory_reserved_gb": 0.08203125,
+          "memory_free_gb": 9.91748046875,
+          "utilization_percent": 0.8203525562771619
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 12.0,
+      "memory_usage_percent": 17.6,
+      "memory_available_gb": 12.832599639892578,
+      "memory_used_gb": 2.440013885498047,
+      "timestamp": 1751398592.5870912,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.039637088775634766,
+          "memory_reserved_gb": 0.08203125,
+          "memory_free_gb": 9.91748046875,
+          "utilization_percent": 0.8203525562771619
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 7.7,
+      "memory_usage_percent": 17.0,
+      "memory_available_gb": 12.921958923339844,
+      "memory_used_gb": 2.3489532470703125,
+      "timestamp": 1751398604.5997248,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.039637088775634766,
+          "memory_reserved_gb": 0.08203125,
+          "memory_free_gb": 9.91748046875,
+          "utilization_percent": 0.8203525562771619
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 7.6,
+      "memory_usage_percent": 17.0,
+      "memory_available_gb": 12.923362731933594,
+      "memory_used_gb": 2.347522735595703,
+      "timestamp": 1751398616.6134717,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.039637088775634766,
+          "memory_reserved_gb": 0.08203125,
+          "memory_free_gb": 9.91748046875,
+          "utilization_percent": 0.8203525562771619
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 7.9,
+      "memory_usage_percent": 17.0,
+      "memory_available_gb": 12.921512603759766,
+      "memory_used_gb": 2.3493614196777344,
+      "timestamp": 1751398629.208993,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.03834390640258789,
+          "memory_reserved_gb": 0.08203125,
+          "memory_free_gb": 9.91748046875,
+          "utilization_percent": 0.8203525562771619
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 7.5,
+      "memory_usage_percent": 17.0,
+      "memory_available_gb": 12.9210205078125,
+      "memory_used_gb": 2.349864959716797,
+      "timestamp": 1751398641.2211053,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.039637088775634766,
+          "memory_reserved_gb": 0.08203125,
+          "memory_free_gb": 9.91748046875,
+          "utilization_percent": 0.8203525562771619
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 7.3,
+      "memory_usage_percent": 17.0,
+      "memory_available_gb": 12.919059753417969,
+      "memory_used_gb": 2.3518142700195312,
+      "timestamp": 1751398653.8135307,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.039637088775634766,
+          "memory_reserved_gb": 0.08203125,
+          "memory_free_gb": 9.91748046875,
+          "utilization_percent": 0.8203525562771619
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 7.4,
+      "memory_usage_percent": 17.0,
+      "memory_available_gb": 12.916473388671875,
+      "memory_used_gb": 2.354381561279297,
+      "timestamp": 1751398665.8186185,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.039637088775634766,
+          "memory_reserved_gb": 0.08203125,
+          "memory_free_gb": 9.91748046875,
+          "utilization_percent": 0.8203525562771619
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 7.3,
+      "memory_usage_percent": 17.0,
+      "memory_available_gb": 12.919654846191406,
+      "memory_used_gb": 2.3511886596679688,
+      "timestamp": 1751398677.831776,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.039637088775634766,
+          "memory_reserved_gb": 0.08203125,
+          "memory_free_gb": 9.91748046875,
+          "utilization_percent": 0.8203525562771619
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 8.0,
+      "memory_usage_percent": 17.0,
+      "memory_available_gb": 12.917804718017578,
+      "memory_used_gb": 2.3530426025390625,
+      "timestamp": 1751398690.4141788,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.039637088775634766,
+          "memory_reserved_gb": 0.08203125,
+          "memory_free_gb": 9.91748046875,
+          "utilization_percent": 0.8203525562771619
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 7.9,
+      "memory_usage_percent": 17.0,
+      "memory_available_gb": 12.918380737304688,
+      "memory_used_gb": 2.3524742126464844,
+      "timestamp": 1751398702.4264283,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.039637088775634766,
+          "memory_reserved_gb": 0.08203125,
+          "memory_free_gb": 9.91748046875,
+          "utilization_percent": 0.8203525562771619
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 7.6,
+      "memory_usage_percent": 17.0,
+      "memory_available_gb": 12.918815612792969,
+      "memory_used_gb": 2.352008819580078,
+      "timestamp": 1751398714.4393961,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.03953266143798828,
+          "memory_reserved_gb": 0.08203125,
+          "memory_free_gb": 9.91748046875,
+          "utilization_percent": 0.8203525562771619
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 7.6,
+      "memory_usage_percent": 17.1,
+      "memory_available_gb": 12.915691375732422,
+      "memory_used_gb": 2.355152130126953,
+      "timestamp": 1751398727.037951,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.039637088775634766,
+          "memory_reserved_gb": 0.08203125,
+          "memory_free_gb": 9.91748046875,
+          "utilization_percent": 0.8203525562771619
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 7.2,
+      "memory_usage_percent": 17.1,
+      "memory_available_gb": 12.913932800292969,
+      "memory_used_gb": 2.3569183349609375,
+      "timestamp": 1751398739.0506506,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.039637088775634766,
+          "memory_reserved_gb": 0.08203125,
+          "memory_free_gb": 9.91748046875,
+          "utilization_percent": 0.8203525562771619
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 7.6,
+      "memory_usage_percent": 17.1,
+      "memory_available_gb": 12.913528442382812,
+      "memory_used_gb": 2.357341766357422,
+      "timestamp": 1751398751.654291,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.039637088775634766,
+          "memory_reserved_gb": 0.08203125,
+          "memory_free_gb": 9.91748046875,
+          "utilization_percent": 0.8203525562771619
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 7.5,
+      "memory_usage_percent": 17.1,
+      "memory_available_gb": 12.914432525634766,
+      "memory_used_gb": 2.3564453125,
+      "timestamp": 1751398763.6664712,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.03953266143798828,
+          "memory_reserved_gb": 0.08203125,
+          "memory_free_gb": 9.91748046875,
+          "utilization_percent": 0.8203525562771619
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 7.6,
+      "memory_usage_percent": 17.1,
+      "memory_available_gb": 12.91290283203125,
+      "memory_used_gb": 2.357830047607422,
+      "timestamp": 1751398775.669782,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.039544105529785156,
+          "memory_reserved_gb": 0.08203125,
+          "memory_free_gb": 9.91748046875,
+          "utilization_percent": 0.8203525562771619
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 7.9,
+      "memory_usage_percent": 17.1,
+      "memory_available_gb": 12.915340423583984,
+      "memory_used_gb": 2.3554115295410156,
+      "timestamp": 1751398788.2785022,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.039637088775634766,
+          "memory_reserved_gb": 0.08203125,
+          "memory_free_gb": 9.91748046875,
+          "utilization_percent": 0.8203525562771619
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 7.8,
+      "memory_usage_percent": 17.1,
+      "memory_available_gb": 12.914306640625,
+      "memory_used_gb": 2.3564414978027344,
+      "timestamp": 1751398800.2871678,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.039759159088134766,
+          "memory_reserved_gb": 0.08203125,
+          "memory_free_gb": 9.91748046875,
+          "utilization_percent": 0.8203525562771619
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 7.4,
+      "memory_usage_percent": 17.1,
+      "memory_available_gb": 12.91091537475586,
+      "memory_used_gb": 2.3598289489746094,
+      "timestamp": 1751398812.3012054,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.03862476348876953,
+          "memory_reserved_gb": 0.08203125,
+          "memory_free_gb": 9.91748046875,
+          "utilization_percent": 0.8203525562771619
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 7.3,
+      "memory_usage_percent": 17.1,
+      "memory_available_gb": 12.91183090209961,
+      "memory_used_gb": 2.3588790893554688,
+      "timestamp": 1751398824.9070358,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.039338111877441406,
+          "memory_reserved_gb": 0.08203125,
+          "memory_free_gb": 9.91748046875,
+          "utilization_percent": 0.8203525562771619
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 7.1,
+      "memory_usage_percent": 17.1,
+      "memory_available_gb": 12.912040710449219,
+      "memory_used_gb": 2.358661651611328,
+      "timestamp": 1751398836.9187849,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.06124448776245117,
+          "memory_reserved_gb": 0.08203125,
+          "memory_free_gb": 9.91748046875,
+          "utilization_percent": 0.8203525562771619
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 7.4,
+      "memory_usage_percent": 17.1,
+      "memory_available_gb": 12.912025451660156,
+      "memory_used_gb": 2.3586769104003906,
+      "timestamp": 1751398848.9299777,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.039637088775634766,
+          "memory_reserved_gb": 0.08203125,
+          "memory_free_gb": 9.91748046875,
+          "utilization_percent": 0.8203525562771619
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 7.7,
+      "memory_usage_percent": 17.1,
+      "memory_available_gb": 12.913860321044922,
+      "memory_used_gb": 2.3568344116210938,
+      "timestamp": 1751398861.5671046,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.039637088775634766,
+          "memory_reserved_gb": 0.08203125,
+          "memory_free_gb": 9.91748046875,
+          "utilization_percent": 0.8203525562771619
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 7.4,
+      "memory_usage_percent": 17.1,
+      "memory_available_gb": 12.910808563232422,
+      "memory_used_gb": 2.3598594665527344,
+      "timestamp": 1751398873.5798852,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.039637088775634766,
+          "memory_reserved_gb": 0.08203125,
+          "memory_free_gb": 9.91748046875,
+          "utilization_percent": 0.8203525562771619
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 7.5,
+      "memory_usage_percent": 17.0,
+      "memory_available_gb": 12.915817260742188,
+      "memory_used_gb": 2.3548622131347656,
+      "timestamp": 1751398886.1717372,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.03938770294189453,
+          "memory_reserved_gb": 0.08203125,
+          "memory_free_gb": 9.91748046875,
+          "utilization_percent": 0.8203525562771619
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 7.3,
+      "memory_usage_percent": 17.0,
+      "memory_available_gb": 12.917034149169922,
+      "memory_used_gb": 2.3536376953125,
+      "timestamp": 1751398898.1855307,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.039637088775634766,
+          "memory_reserved_gb": 0.08203125,
+          "memory_free_gb": 9.91748046875,
+          "utilization_percent": 0.8203525562771619
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 7.7,
+      "memory_usage_percent": 17.0,
+      "memory_available_gb": 12.917789459228516,
+      "memory_used_gb": 2.3528671264648438,
+      "timestamp": 1751398910.2001765,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.039637088775634766,
+          "memory_reserved_gb": 0.08203125,
+          "memory_free_gb": 9.91748046875,
+          "utilization_percent": 0.8203525562771619
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 7.5,
+      "memory_usage_percent": 17.0,
+      "memory_available_gb": 12.917289733886719,
+      "memory_used_gb": 2.3533782958984375,
+      "timestamp": 1751398922.8051333,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.039637088775634766,
+          "memory_reserved_gb": 0.08203125,
+          "memory_free_gb": 9.91748046875,
+          "utilization_percent": 0.8203525562771619
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 7.4,
+      "memory_usage_percent": 17.1,
+      "memory_available_gb": 12.915302276611328,
+      "memory_used_gb": 2.3553504943847656,
+      "timestamp": 1751398934.8181598,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.039637088775634766,
+          "memory_reserved_gb": 0.08203125,
+          "memory_free_gb": 9.91748046875,
+          "utilization_percent": 0.8203525562771619
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 7.4,
+      "memory_usage_percent": 17.1,
+      "memory_available_gb": 12.914295196533203,
+      "memory_used_gb": 2.356334686279297,
+      "timestamp": 1751398946.831599,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.039637088775634766,
+          "memory_reserved_gb": 0.08203125,
+          "memory_free_gb": 9.91748046875,
+          "utilization_percent": 0.8203525562771619
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 7.8,
+      "memory_usage_percent": 17.0,
+      "memory_available_gb": 12.924179077148438,
+      "memory_used_gb": 2.3464584350585938,
+      "timestamp": 1751398959.4639592,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.039759159088134766,
+          "memory_reserved_gb": 0.05859375,
+          "memory_free_gb": 9.94091796875,
+          "utilization_percent": 0.5859661116265443
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 7.8,
+      "memory_usage_percent": 17.0,
+      "memory_available_gb": 12.920402526855469,
+      "memory_used_gb": 2.350208282470703,
+      "timestamp": 1751398971.474136,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.039759159088134766,
+          "memory_reserved_gb": 0.08203125,
+          "memory_free_gb": 9.91748046875,
+          "utilization_percent": 0.8203525562771619
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 7.4,
+      "memory_usage_percent": 17.0,
+      "memory_available_gb": 12.919872283935547,
+      "memory_used_gb": 2.3507118225097656,
+      "timestamp": 1751398984.09881,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.03953266143798828,
+          "memory_reserved_gb": 0.08203125,
+          "memory_free_gb": 9.91748046875,
+          "utilization_percent": 0.8203525562771619
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 7.3,
+      "memory_usage_percent": 17.0,
+      "memory_available_gb": 12.919036865234375,
+      "memory_used_gb": 2.351581573486328,
+      "timestamp": 1751398996.1034453,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.0383458137512207,
+          "memory_reserved_gb": 0.08203125,
+          "memory_free_gb": 9.91748046875,
+          "utilization_percent": 0.8203525562771619
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 7.4,
+      "memory_usage_percent": 17.0,
+      "memory_available_gb": 12.916435241699219,
+      "memory_used_gb": 2.3541717529296875,
+      "timestamp": 1751399008.107068,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.039637088775634766,
+          "memory_reserved_gb": 0.08203125,
+          "memory_free_gb": 9.91748046875,
+          "utilization_percent": 0.8203525562771619
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 7.3,
+      "memory_usage_percent": 17.1,
+      "memory_available_gb": 12.911388397216797,
+      "memory_used_gb": 2.359203338623047,
+      "timestamp": 1751399020.757431,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.039637088775634766,
+          "memory_reserved_gb": 0.08203125,
+          "memory_free_gb": 9.91748046875,
+          "utilization_percent": 0.8203525562771619
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 7.7,
+      "memory_usage_percent": 17.1,
+      "memory_available_gb": 12.915706634521484,
+      "memory_used_gb": 2.3548965454101562,
+      "timestamp": 1751399032.7695987,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.039637088775634766,
+          "memory_reserved_gb": 0.08203125,
+          "memory_free_gb": 9.91748046875,
+          "utilization_percent": 0.8203525562771619
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 7.3,
+      "memory_usage_percent": 17.1,
+      "memory_available_gb": 12.913616180419922,
+      "memory_used_gb": 2.3569984436035156,
+      "timestamp": 1751399044.7832859,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.039637088775634766,
+          "memory_reserved_gb": 0.08203125,
+          "memory_free_gb": 9.91748046875,
+          "utilization_percent": 0.8203525562771619
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 7.7,
+      "memory_usage_percent": 17.0,
+      "memory_available_gb": 12.916301727294922,
+      "memory_used_gb": 2.354328155517578,
+      "timestamp": 1751399057.43381,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.039544105529785156,
+          "memory_reserved_gb": 0.08203125,
+          "memory_free_gb": 9.91748046875,
+          "utilization_percent": 0.8203525562771619
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 7.5,
+      "memory_usage_percent": 17.1,
+      "memory_available_gb": 12.914657592773438,
+      "memory_used_gb": 2.355976104736328,
+      "timestamp": 1751399069.4452631,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.039544105529785156,
+          "memory_reserved_gb": 0.08203125,
+          "memory_free_gb": 9.91748046875,
+          "utilization_percent": 0.8203525562771619
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 7.5,
+      "memory_usage_percent": 17.1,
+      "memory_available_gb": 12.9151611328125,
+      "memory_used_gb": 2.3554153442382812,
+      "timestamp": 1751399082.092011,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.03953266143798828,
+          "memory_reserved_gb": 0.08203125,
+          "memory_free_gb": 9.91748046875,
+          "utilization_percent": 0.8203525562771619
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 7.2,
+      "memory_usage_percent": 17.1,
+      "memory_available_gb": 12.915096282958984,
+      "memory_used_gb": 2.3555221557617188,
+      "timestamp": 1751399094.1064525,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.03953266143798828,
+          "memory_reserved_gb": 0.08203125,
+          "memory_free_gb": 9.91748046875,
+          "utilization_percent": 0.8203525562771619
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 7.3,
+      "memory_usage_percent": 17.1,
+      "memory_available_gb": 12.915485382080078,
+      "memory_used_gb": 2.3551025390625,
+      "timestamp": 1751399106.1180568,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.039637088775634766,
+          "memory_reserved_gb": 0.08203125,
+          "memory_free_gb": 9.91748046875,
+          "utilization_percent": 0.8203525562771619
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 7.7,
+      "memory_usage_percent": 17.1,
+      "memory_available_gb": 12.909904479980469,
+      "memory_used_gb": 2.356243133544922,
+      "timestamp": 1751399118.770791,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.039637088775634766,
+          "memory_reserved_gb": 0.08203125,
+          "memory_free_gb": 9.91748046875,
+          "utilization_percent": 0.8203525562771619
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 7.9,
+      "memory_usage_percent": 17.1,
+      "memory_available_gb": 12.909088134765625,
+      "memory_used_gb": 2.3570518493652344,
+      "timestamp": 1751399130.7815058,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.039637088775634766,
+          "memory_reserved_gb": 0.08203125,
+          "memory_free_gb": 9.91748046875,
+          "utilization_percent": 0.8203525562771619
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 7.9,
+      "memory_usage_percent": 17.1,
+      "memory_available_gb": 12.904853820800781,
+      "memory_used_gb": 2.361217498779297,
+      "timestamp": 1751399142.795707,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.039637088775634766,
+          "memory_reserved_gb": 0.08203125,
+          "memory_free_gb": 9.91748046875,
+          "utilization_percent": 0.8203525562771619
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 7.7,
+      "memory_usage_percent": 17.1,
+      "memory_available_gb": 12.907268524169922,
+      "memory_used_gb": 2.3587684631347656,
+      "timestamp": 1751399155.4415894,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.039637088775634766,
+          "memory_reserved_gb": 0.08203125,
+          "memory_free_gb": 9.91748046875,
+          "utilization_percent": 0.8203525562771619
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 7.0,
+      "memory_usage_percent": 17.1,
+      "memory_available_gb": 12.905643463134766,
+      "memory_used_gb": 2.360401153564453,
+      "timestamp": 1751399167.4548166,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.039637088775634766,
+          "memory_reserved_gb": 0.08203125,
+          "memory_free_gb": 9.91748046875,
+          "utilization_percent": 0.8203525562771619
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 7.4,
+      "memory_usage_percent": 17.1,
+      "memory_available_gb": 12.908649444580078,
+      "memory_used_gb": 2.3573760986328125,
+      "timestamp": 1751399180.0819247,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.039637088775634766,
+          "memory_reserved_gb": 0.08203125,
+          "memory_free_gb": 9.91748046875,
+          "utilization_percent": 0.8203525562771619
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 7.5,
+      "memory_usage_percent": 17.1,
+      "memory_available_gb": 12.906112670898438,
+      "memory_used_gb": 2.3599090576171875,
+      "timestamp": 1751399192.0916808,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.039637088775634766,
+          "memory_reserved_gb": 0.08203125,
+          "memory_free_gb": 9.91748046875,
+          "utilization_percent": 0.8203525562771619
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 7.4,
+      "memory_usage_percent": 17.1,
+      "memory_available_gb": 12.905021667480469,
+      "memory_used_gb": 2.3609886169433594,
+      "timestamp": 1751399204.1047902,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.039637088775634766,
+          "memory_reserved_gb": 0.08203125,
+          "memory_free_gb": 9.91748046875,
+          "utilization_percent": 0.8203525562771619
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 7.6,
+      "memory_usage_percent": 17.1,
+      "memory_available_gb": 12.909748077392578,
+      "memory_used_gb": 2.35626220703125,
+      "timestamp": 1751399216.7364182,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.039637088775634766,
+          "memory_reserved_gb": 0.08203125,
+          "memory_free_gb": 9.91748046875,
+          "utilization_percent": 0.8203525562771619
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 7.4,
+      "memory_usage_percent": 17.1,
+      "memory_available_gb": 12.902896881103516,
+      "memory_used_gb": 2.3631134033203125,
+      "timestamp": 1751399228.7492898,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.039637088775634766,
+          "memory_reserved_gb": 0.08203125,
+          "memory_free_gb": 9.91748046875,
+          "utilization_percent": 0.8203525562771619
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 7.5,
+      "memory_usage_percent": 17.1,
+      "memory_available_gb": 12.905624389648438,
+      "memory_used_gb": 2.3603973388671875,
+      "timestamp": 1751399240.762757,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.03953266143798828,
+          "memory_reserved_gb": 0.08203125,
+          "memory_free_gb": 9.91748046875,
+          "utilization_percent": 0.8203525562771619
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 7.1,
+      "memory_usage_percent": 17.1,
+      "memory_available_gb": 12.908504486083984,
+      "memory_used_gb": 2.3575401306152344,
+      "timestamp": 1751399253.4242954,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.03953266143798828,
+          "memory_reserved_gb": 0.08203125,
+          "memory_free_gb": 9.91748046875,
+          "utilization_percent": 0.8203525562771619
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 7.6,
+      "memory_usage_percent": 17.1,
+      "memory_available_gb": 12.913326263427734,
+      "memory_used_gb": 2.3527297973632812,
+      "timestamp": 1751399265.4376197,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.039637088775634766,
+          "memory_reserved_gb": 0.08203125,
+          "memory_free_gb": 9.91748046875,
+          "utilization_percent": 0.8203525562771619
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 7.3,
+      "memory_usage_percent": 17.1,
+      "memory_available_gb": 12.909721374511719,
+      "memory_used_gb": 2.356353759765625,
+      "timestamp": 1751399278.0860589,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.039637088775634766,
+          "memory_reserved_gb": 0.08203125,
+          "memory_free_gb": 9.91748046875,
+          "utilization_percent": 0.8203525562771619
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 8.0,
+      "memory_usage_percent": 17.1,
+      "memory_available_gb": 12.905025482177734,
+      "memory_used_gb": 2.3610191345214844,
+      "timestamp": 1751399290.0971966,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.039637088775634766,
+          "memory_reserved_gb": 0.08203125,
+          "memory_free_gb": 9.91748046875,
+          "utilization_percent": 0.8203525562771619
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 8.0,
+      "memory_usage_percent": 17.1,
+      "memory_available_gb": 12.905776977539062,
+      "memory_used_gb": 2.360271453857422,
+      "timestamp": 1751399302.1079314,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.039637088775634766,
+          "memory_reserved_gb": 0.08203125,
+          "memory_free_gb": 9.91748046875,
+          "utilization_percent": 0.8203525562771619
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 7.6,
+      "memory_usage_percent": 17.1,
+      "memory_available_gb": 12.903873443603516,
+      "memory_used_gb": 2.362194061279297,
+      "timestamp": 1751399314.687143,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.039637088775634766,
+          "memory_reserved_gb": 0.08203125,
+          "memory_free_gb": 9.91748046875,
+          "utilization_percent": 0.8203525562771619
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 7.7,
+      "memory_usage_percent": 17.1,
+      "memory_available_gb": 12.906299591064453,
+      "memory_used_gb": 2.3597564697265625,
+      "timestamp": 1751399326.6971724,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.039637088775634766,
+          "memory_reserved_gb": 0.08203125,
+          "memory_free_gb": 9.91748046875,
+          "utilization_percent": 0.8203525562771619
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 7.4,
+      "memory_usage_percent": 17.1,
+      "memory_available_gb": 12.90291976928711,
+      "memory_used_gb": 2.3631362915039062,
+      "timestamp": 1751399338.707845,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.039637088775634766,
+          "memory_reserved_gb": 0.08203125,
+          "memory_free_gb": 9.91748046875,
+          "utilization_percent": 0.8203525562771619
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 7.7,
+      "memory_usage_percent": 17.1,
+      "memory_available_gb": 12.90554428100586,
+      "memory_used_gb": 2.3605117797851562,
+      "timestamp": 1751399351.3052526,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.039637088775634766,
+          "memory_reserved_gb": 0.08203125,
+          "memory_free_gb": 9.91748046875,
+          "utilization_percent": 0.8203525562771619
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 7.4,
+      "memory_usage_percent": 17.1,
+      "memory_available_gb": 12.901081085205078,
+      "memory_used_gb": 2.364978790283203,
+      "timestamp": 1751399363.317945,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.039637088775634766,
+          "memory_reserved_gb": 0.08203125,
+          "memory_free_gb": 9.91748046875,
+          "utilization_percent": 0.8203525562771619
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 7.8,
+      "memory_usage_percent": 17.1,
+      "memory_available_gb": 12.905441284179688,
+      "memory_used_gb": 2.360595703125,
+      "timestamp": 1751399375.9338553,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.039637088775634766,
+          "memory_reserved_gb": 0.08203125,
+          "memory_free_gb": 9.91748046875,
+          "utilization_percent": 0.8203525562771619
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 7.5,
+      "memory_usage_percent": 17.1,
+      "memory_available_gb": 12.906143188476562,
+      "memory_used_gb": 2.3598556518554688,
+      "timestamp": 1751399387.9417264,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.039637088775634766,
+          "memory_reserved_gb": 0.08203125,
+          "memory_free_gb": 9.91748046875,
+          "utilization_percent": 0.8203525562771619
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 7.4,
+      "memory_usage_percent": 17.1,
+      "memory_available_gb": 12.908573150634766,
+      "memory_used_gb": 2.3574562072753906,
+      "timestamp": 1751399399.9526453,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.03953266143798828,
+          "memory_reserved_gb": 0.08203125,
+          "memory_free_gb": 9.91748046875,
+          "utilization_percent": 0.8203525562771619
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 7.3,
+      "memory_usage_percent": 17.1,
+      "memory_available_gb": 12.905654907226562,
+      "memory_used_gb": 2.3603897094726562,
+      "timestamp": 1751399412.5669918,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.039637088775634766,
+          "memory_reserved_gb": 0.08203125,
+          "memory_free_gb": 9.91748046875,
+          "utilization_percent": 0.8203525562771619
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 7.3,
+      "memory_usage_percent": 17.1,
+      "memory_available_gb": 12.904754638671875,
+      "memory_used_gb": 2.3612518310546875,
+      "timestamp": 1751399424.577954,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.039483070373535156,
+          "memory_reserved_gb": 0.08203125,
+          "memory_free_gb": 9.91748046875,
+          "utilization_percent": 0.8203525562771619
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 7.4,
+      "memory_usage_percent": 17.1,
+      "memory_available_gb": 12.904716491699219,
+      "memory_used_gb": 2.3612937927246094,
+      "timestamp": 1751399436.5849974,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.039759159088134766,
+          "memory_reserved_gb": 0.08203125,
+          "memory_free_gb": 9.91748046875,
+          "utilization_percent": 0.8203525562771619
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 7.9,
+      "memory_usage_percent": 17.1,
+      "memory_available_gb": 12.90402603149414,
+      "memory_used_gb": 2.3619651794433594,
+      "timestamp": 1751399449.2036824,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.039666175842285156,
+          "memory_reserved_gb": 0.08203125,
+          "memory_free_gb": 9.91748046875,
+          "utilization_percent": 0.8203525562771619
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 7.4,
+      "memory_usage_percent": 17.1,
+      "memory_available_gb": 12.902587890625,
+      "memory_used_gb": 2.363422393798828,
+      "timestamp": 1751399461.2164354,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.039759159088134766,
+          "memory_reserved_gb": 0.08203125,
+          "memory_free_gb": 9.91748046875,
+          "utilization_percent": 0.8203525562771619
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 7.5,
+      "memory_usage_percent": 17.1,
+      "memory_available_gb": 12.90481948852539,
+      "memory_used_gb": 2.3612136840820312,
+      "timestamp": 1751399473.2282102,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.03803205490112305,
+          "memory_reserved_gb": 0.08203125,
+          "memory_free_gb": 9.91748046875,
+          "utilization_percent": 0.8203525562771619
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 7.6,
+      "memory_usage_percent": 16.5,
+      "memory_available_gb": 12.998687744140625,
+      "memory_used_gb": 2.2673683166503906,
+      "timestamp": 1751399485.848781,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.03986406326293945,
+          "memory_reserved_gb": 0.08203125,
+          "memory_free_gb": 9.91748046875,
+          "utilization_percent": 0.8203525562771619
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 7.5,
+      "memory_usage_percent": 16.6,
+      "memory_available_gb": 12.989860534667969,
+      "memory_used_gb": 2.2761993408203125,
+      "timestamp": 1751399497.8596764,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.039637088775634766,
+          "memory_reserved_gb": 0.08203125,
+          "memory_free_gb": 9.91748046875,
+          "utilization_percent": 0.8203525562771619
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 7.4,
+      "memory_usage_percent": 16.6,
+      "memory_available_gb": 12.987506866455078,
+      "memory_used_gb": 2.2785415649414062,
+      "timestamp": 1751399510.4744325,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.039637088775634766,
+          "memory_reserved_gb": 0.08203125,
+          "memory_free_gb": 9.91748046875,
+          "utilization_percent": 0.8203525562771619
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 7.6,
+      "memory_usage_percent": 16.6,
+      "memory_available_gb": 12.991188049316406,
+      "memory_used_gb": 2.274860382080078,
+      "timestamp": 1751399522.4854991,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.039637088775634766,
+          "memory_reserved_gb": 0.08203125,
+          "memory_free_gb": 9.91748046875,
+          "utilization_percent": 0.8203525562771619
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 7.4,
+      "memory_usage_percent": 16.6,
+      "memory_available_gb": 12.988971710205078,
+      "memory_used_gb": 2.277080535888672,
+      "timestamp": 1751399534.4903595,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.03953266143798828,
+          "memory_reserved_gb": 0.08203125,
+          "memory_free_gb": 9.91748046875,
+          "utilization_percent": 0.8203525562771619
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 7.6,
+      "memory_usage_percent": 16.6,
+      "memory_available_gb": 12.98910140991211,
+      "memory_used_gb": 2.2769393920898438,
+      "timestamp": 1751399547.1102433,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.039637088775634766,
+          "memory_reserved_gb": 0.08203125,
+          "memory_free_gb": 9.91748046875,
+          "utilization_percent": 0.8203525562771619
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 7.5,
+      "memory_usage_percent": 16.6,
+      "memory_available_gb": 12.987335205078125,
+      "memory_used_gb": 2.278705596923828,
+      "timestamp": 1751399559.12286,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.039637088775634766,
+          "memory_reserved_gb": 0.08203125,
+          "memory_free_gb": 9.91748046875,
+          "utilization_percent": 0.8203525562771619
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 7.7,
+      "memory_usage_percent": 16.6,
+      "memory_available_gb": 12.987407684326172,
+      "memory_used_gb": 2.278644561767578,
+      "timestamp": 1751399571.133255,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.039637088775634766,
+          "memory_reserved_gb": 0.08203125,
+          "memory_free_gb": 9.91748046875,
+          "utilization_percent": 0.8203525562771619
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 7.3,
+      "memory_usage_percent": 16.6,
+      "memory_available_gb": 12.987617492675781,
+      "memory_used_gb": 2.2784271240234375,
+      "timestamp": 1751399583.7466357,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.040218353271484375,
+          "memory_reserved_gb": 0.08203125,
+          "memory_free_gb": 9.91748046875,
+          "utilization_percent": 0.8203525562771619
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 7.3,
+      "memory_usage_percent": 16.6,
+      "memory_available_gb": 12.987808227539062,
+      "memory_used_gb": 2.278240203857422,
+      "timestamp": 1751399595.7505567,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.039544105529785156,
+          "memory_reserved_gb": 0.08203125,
+          "memory_free_gb": 9.91748046875,
+          "utilization_percent": 0.8203525562771619
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 7.5,
+      "memory_usage_percent": 16.6,
+      "memory_available_gb": 12.988197326660156,
+      "memory_used_gb": 2.2778778076171875,
+      "timestamp": 1751399608.3546128,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.039637088775634766,
+          "memory_reserved_gb": 0.08203125,
+          "memory_free_gb": 9.91748046875,
+          "utilization_percent": 0.8203525562771619
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 7.9,
+      "memory_usage_percent": 16.6,
+      "memory_available_gb": 12.9864501953125,
+      "memory_used_gb": 2.279632568359375,
+      "timestamp": 1751399620.3657782,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.039637088775634766,
+          "memory_reserved_gb": 0.08203125,
+          "memory_free_gb": 9.91748046875,
+          "utilization_percent": 0.8203525562771619
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 7.7,
+      "memory_usage_percent": 16.6,
+      "memory_available_gb": 12.990089416503906,
+      "memory_used_gb": 2.2760047912597656,
+      "timestamp": 1751399632.3801765,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.039637088775634766,
+          "memory_reserved_gb": 0.08203125,
+          "memory_free_gb": 9.91748046875,
+          "utilization_percent": 0.8203525562771619
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 7.4,
+      "memory_usage_percent": 16.6,
+      "memory_available_gb": 12.98752212524414,
+      "memory_used_gb": 2.278575897216797,
+      "timestamp": 1751399644.9790244,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.039759159088134766,
+          "memory_reserved_gb": 0.08203125,
+          "memory_free_gb": 9.91748046875,
+          "utilization_percent": 0.8203525562771619
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 7.7,
+      "memory_usage_percent": 16.6,
+      "memory_available_gb": 12.990013122558594,
+      "memory_used_gb": 2.2760658264160156,
+      "timestamp": 1751399656.9833934,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.03580665588378906,
+          "memory_reserved_gb": 0.08203125,
+          "memory_free_gb": 9.91748046875,
+          "utilization_percent": 0.8203525562771619
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 7.3,
+      "memory_usage_percent": 16.6,
+      "memory_available_gb": 12.987361907958984,
+      "memory_used_gb": 2.2787132263183594,
+      "timestamp": 1751399668.9973774,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.039492130279541016,
+          "memory_reserved_gb": 0.083984375,
+          "memory_free_gb": 9.91552734375,
+          "utilization_percent": 0.8398847599980467
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 7.4,
+      "memory_usage_percent": 16.6,
+      "memory_available_gb": 12.986042022705078,
+      "memory_used_gb": 2.280040740966797,
+      "timestamp": 1751399681.586495,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.039492130279541016,
+          "memory_reserved_gb": 0.083984375,
+          "memory_free_gb": 9.91552734375,
+          "utilization_percent": 0.8398847599980467
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 7.4,
+      "memory_usage_percent": 16.6,
+      "memory_available_gb": 12.983909606933594,
+      "memory_used_gb": 2.2821693420410156,
+      "timestamp": 1751399693.5982208,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.039492130279541016,
+          "memory_reserved_gb": 0.083984375,
+          "memory_free_gb": 9.91552734375,
+          "utilization_percent": 0.8398847599980467
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 8.0,
+      "memory_usage_percent": 16.6,
+      "memory_available_gb": 12.986095428466797,
+      "memory_used_gb": 2.27996826171875,
+      "timestamp": 1751399706.182567,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.039492130279541016,
+          "memory_reserved_gb": 0.083984375,
+          "memory_free_gb": 9.91552734375,
+          "utilization_percent": 0.8398847599980467
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 7.7,
+      "memory_usage_percent": 16.6,
+      "memory_available_gb": 12.986923217773438,
+      "memory_used_gb": 2.2791290283203125,
+      "timestamp": 1751399718.1880367,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.039637088775634766,
+          "memory_reserved_gb": 0.083984375,
+          "memory_free_gb": 9.91552734375,
+          "utilization_percent": 0.8398847599980467
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 7.7,
+      "memory_usage_percent": 16.6,
+      "memory_available_gb": 12.984031677246094,
+      "memory_used_gb": 2.2820396423339844,
+      "timestamp": 1751399730.2021759,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.039637088775634766,
+          "memory_reserved_gb": 0.083984375,
+          "memory_free_gb": 9.91552734375,
+          "utilization_percent": 0.8398847599980467
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 7.4,
+      "memory_usage_percent": 16.6,
+      "memory_available_gb": 12.989551544189453,
+      "memory_used_gb": 2.276538848876953,
+      "timestamp": 1751399742.9106305,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.039637088775634766,
+          "memory_reserved_gb": 0.083984375,
+          "memory_free_gb": 9.91552734375,
+          "utilization_percent": 0.8398847599980467
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 7.2,
+      "memory_usage_percent": 16.6,
+      "memory_available_gb": 12.98495101928711,
+      "memory_used_gb": 2.281147003173828,
+      "timestamp": 1751399754.921231,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.039637088775634766,
+          "memory_reserved_gb": 0.083984375,
+          "memory_free_gb": 9.91552734375,
+          "utilization_percent": 0.8398847599980467
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 7.2,
+      "memory_usage_percent": 16.6,
+      "memory_available_gb": 12.98529052734375,
+      "memory_used_gb": 2.2807998657226562,
+      "timestamp": 1751399766.9321277,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.039637088775634766,
+          "memory_reserved_gb": 0.083984375,
+          "memory_free_gb": 9.91552734375,
+          "utilization_percent": 0.8398847599980467
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 7.2,
+      "memory_usage_percent": 16.6,
+      "memory_available_gb": 12.984500885009766,
+      "memory_used_gb": 2.2815933227539062,
+      "timestamp": 1751399779.5988986,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.039637088775634766,
+          "memory_reserved_gb": 0.083984375,
+          "memory_free_gb": 9.91552734375,
+          "utilization_percent": 0.8398847599980467
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 7.3,
+      "memory_usage_percent": 16.6,
+      "memory_available_gb": 12.984569549560547,
+      "memory_used_gb": 2.281505584716797,
+      "timestamp": 1751399791.6150458,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.039544105529785156,
+          "memory_reserved_gb": 0.083984375,
+          "memory_free_gb": 9.91552734375,
+          "utilization_percent": 0.8398847599980467
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 7.7,
+      "memory_usage_percent": 16.6,
+      "memory_available_gb": 12.983604431152344,
+      "memory_used_gb": 2.282482147216797,
+      "timestamp": 1751399804.152882,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.04021930694580078,
+          "memory_reserved_gb": 0.083984375,
+          "memory_free_gb": 9.91552734375,
+          "utilization_percent": 0.8398847599980467
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 7.7,
+      "memory_usage_percent": 16.6,
+      "memory_available_gb": 12.982734680175781,
+      "memory_used_gb": 2.283374786376953,
+      "timestamp": 1751399816.164092,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.039544105529785156,
+          "memory_reserved_gb": 0.083984375,
+          "memory_free_gb": 9.91552734375,
+          "utilization_percent": 0.8398847599980467
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 7.7,
+      "memory_usage_percent": 16.6,
+      "memory_available_gb": 12.982490539550781,
+      "memory_used_gb": 2.283618927001953,
+      "timestamp": 1751399828.1786008,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.03953266143798828,
+          "memory_reserved_gb": 0.083984375,
+          "memory_free_gb": 9.91552734375,
+          "utilization_percent": 0.8398847599980467
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 7.4,
+      "memory_usage_percent": 16.6,
+      "memory_available_gb": 12.979061126708984,
+      "memory_used_gb": 2.2870407104492188,
+      "timestamp": 1751399840.7276125,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.039637088775634766,
+          "memory_reserved_gb": 0.083984375,
+          "memory_free_gb": 9.91552734375,
+          "utilization_percent": 0.8398847599980467
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 7.5,
+      "memory_usage_percent": 16.7,
+      "memory_available_gb": 12.977413177490234,
+      "memory_used_gb": 2.288684844970703,
+      "timestamp": 1751399852.7397594,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.039637088775634766,
+          "memory_reserved_gb": 0.083984375,
+          "memory_free_gb": 9.91552734375,
+          "utilization_percent": 0.8398847599980467
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 7.6,
+      "memory_usage_percent": 16.7,
+      "memory_available_gb": 12.977165222167969,
+      "memory_used_gb": 2.2889404296875,
+      "timestamp": 1751399864.7530563,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.04010486602783203,
+          "memory_reserved_gb": 0.083984375,
+          "memory_free_gb": 9.91552734375,
+          "utilization_percent": 0.8398847599980467
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 7.7,
+      "memory_usage_percent": 16.6,
+      "memory_available_gb": 12.980278015136719,
+      "memory_used_gb": 2.2858238220214844,
+      "timestamp": 1751399877.381226,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.04023313522338867,
+          "memory_reserved_gb": 0.083984375,
+          "memory_free_gb": 9.91552734375,
+          "utilization_percent": 0.8398847599980467
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 7.7,
+      "memory_usage_percent": 16.6,
+      "memory_available_gb": 12.983013153076172,
+      "memory_used_gb": 2.2830772399902344,
+      "timestamp": 1751399889.393614,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.040221214294433594,
+          "memory_reserved_gb": 0.083984375,
+          "memory_free_gb": 9.91552734375,
+          "utilization_percent": 0.8398847599980467
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 7.9,
+      "memory_usage_percent": 16.6,
+      "memory_available_gb": 12.981597900390625,
+      "memory_used_gb": 2.2845191955566406,
+      "timestamp": 1751399901.995964,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.039637088775634766,
+          "memory_reserved_gb": 0.083984375,
+          "memory_free_gb": 9.91552734375,
+          "utilization_percent": 0.8398847599980467
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 7.4,
+      "memory_usage_percent": 16.6,
+      "memory_available_gb": 12.982612609863281,
+      "memory_used_gb": 2.283496856689453,
+      "timestamp": 1751399914.0079947,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.039637088775634766,
+          "memory_reserved_gb": 0.083984375,
+          "memory_free_gb": 9.91552734375,
+          "utilization_percent": 0.8398847599980467
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 7.5,
+      "memory_usage_percent": 16.6,
+      "memory_available_gb": 12.982685089111328,
+      "memory_used_gb": 2.283405303955078,
+      "timestamp": 1751399926.0198843,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.03953266143798828,
+          "memory_reserved_gb": 0.083984375,
+          "memory_free_gb": 9.91552734375,
+          "utilization_percent": 0.8398847599980467
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 7.3,
+      "memory_usage_percent": 16.6,
+      "memory_available_gb": 12.979515075683594,
+      "memory_used_gb": 2.2865638732910156,
+      "timestamp": 1751399938.6268487,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.03953266143798828,
+          "memory_reserved_gb": 0.083984375,
+          "memory_free_gb": 9.91552734375,
+          "utilization_percent": 0.8398847599980467
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 7.7,
+      "memory_usage_percent": 16.6,
+      "memory_available_gb": 12.982173919677734,
+      "memory_used_gb": 2.2839088439941406,
+      "timestamp": 1751399950.6385753,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.03834390640258789,
+          "memory_reserved_gb": 0.083984375,
+          "memory_free_gb": 9.91552734375,
+          "utilization_percent": 0.8398847599980467
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 7.9,
+      "memory_usage_percent": 16.6,
+      "memory_available_gb": 12.981155395507812,
+      "memory_used_gb": 2.2848968505859375,
+      "timestamp": 1751399962.6502016,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.039544105529785156,
+          "memory_reserved_gb": 0.083984375,
+          "memory_free_gb": 9.91552734375,
+          "utilization_percent": 0.8398847599980467
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 8.1,
+      "memory_usage_percent": 16.6,
+      "memory_available_gb": 12.98568344116211,
+      "memory_used_gb": 2.2803573608398438,
+      "timestamp": 1751399975.2540567,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.039637088775634766,
+          "memory_reserved_gb": 0.083984375,
+          "memory_free_gb": 9.91552734375,
+          "utilization_percent": 0.8398847599980467
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 7.6,
+      "memory_usage_percent": 16.6,
+      "memory_available_gb": 12.983062744140625,
+      "memory_used_gb": 2.283008575439453,
+      "timestamp": 1751399987.2609122,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.039637088775634766,
+          "memory_reserved_gb": 0.083984375,
+          "memory_free_gb": 9.91552734375,
+          "utilization_percent": 0.8398847599980467
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 7.9,
+      "memory_usage_percent": 16.4,
+      "memory_available_gb": 13.010345458984375,
+      "memory_used_gb": 2.2557449340820312,
+      "timestamp": 1751399999.2732878,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.040401458740234375,
+          "memory_reserved_gb": 0.083984375,
+          "memory_free_gb": 9.91552734375,
+          "utilization_percent": 0.8398847599980467
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 4.3,
+      "memory_usage_percent": 16.8,
+      "memory_available_gb": 12.950115203857422,
+      "memory_used_gb": 2.3160133361816406,
+      "timestamp": 1751400011.8910582,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.03208017349243164,
+          "memory_reserved_gb": 0.078125,
+          "memory_free_gb": 9.92138671875,
+          "utilization_percent": 0.7812881488353924
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 4.2,
+      "memory_usage_percent": 16.8,
+      "memory_available_gb": 12.947776794433594,
+      "memory_used_gb": 2.3183555603027344,
+      "timestamp": 1751400023.9009662,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.03208017349243164,
+          "memory_reserved_gb": 0.078125,
+          "memory_free_gb": 9.92138671875,
+          "utilization_percent": 0.7812881488353924
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 4.5,
+      "memory_usage_percent": 16.8,
+      "memory_available_gb": 12.951179504394531,
+      "memory_used_gb": 2.314952850341797,
+      "timestamp": 1751400036.4510903,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.03208017349243164,
+          "memory_reserved_gb": 0.078125,
+          "memory_free_gb": 9.92138671875,
+          "utilization_percent": 0.7812881488353924
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 4.4,
+      "memory_usage_percent": 16.8,
+      "memory_available_gb": 12.948944091796875,
+      "memory_used_gb": 2.3172035217285156,
+      "timestamp": 1751400048.464941,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.03208017349243164,
+          "memory_reserved_gb": 0.078125,
+          "memory_free_gb": 9.92138671875,
+          "utilization_percent": 0.7812881488353924
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 4.5,
+      "memory_usage_percent": 16.8,
+      "memory_available_gb": 12.951087951660156,
+      "memory_used_gb": 2.315052032470703,
+      "timestamp": 1751400060.4768767,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.03208017349243164,
+          "memory_reserved_gb": 0.078125,
+          "memory_free_gb": 9.92138671875,
+          "utilization_percent": 0.7812881488353924
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 4.2,
+      "memory_usage_percent": 16.8,
+      "memory_available_gb": 12.952625274658203,
+      "memory_used_gb": 2.31353759765625,
+      "timestamp": 1751400073.0189035,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.03208017349243164,
+          "memory_reserved_gb": 0.078125,
+          "memory_free_gb": 9.92138671875,
+          "utilization_percent": 0.7812881488353924
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 4.2,
+      "memory_usage_percent": 16.8,
+      "memory_available_gb": 12.951457977294922,
+      "memory_used_gb": 2.3146896362304688,
+      "timestamp": 1751400085.028169,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.03193521499633789,
+          "memory_reserved_gb": 0.078125,
+          "memory_free_gb": 9.92138671875,
+          "utilization_percent": 0.7812881488353924
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 4.2,
+      "memory_usage_percent": 16.8,
+      "memory_available_gb": 12.949283599853516,
+      "memory_used_gb": 2.3168373107910156,
+      "timestamp": 1751400097.0389135,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.03208017349243164,
+          "memory_reserved_gb": 0.078125,
+          "memory_free_gb": 9.92138671875,
+          "utilization_percent": 0.7812881488353924
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 4.8,
+      "memory_usage_percent": 16.8,
+      "memory_available_gb": 12.951190948486328,
+      "memory_used_gb": 2.3149147033691406,
+      "timestamp": 1751400109.5768023,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.03208017349243164,
+          "memory_reserved_gb": 0.078125,
+          "memory_free_gb": 9.92138671875,
+          "utilization_percent": 0.7812881488353924
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 4.5,
+      "memory_usage_percent": 16.8,
+      "memory_available_gb": 12.950817108154297,
+      "memory_used_gb": 2.3152999877929688,
+      "timestamp": 1751400121.5856867,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.03208017349243164,
+          "memory_reserved_gb": 0.078125,
+          "memory_free_gb": 9.92138671875,
+          "utilization_percent": 0.7812881488353924
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 4.5,
+      "memory_usage_percent": 16.8,
+      "memory_available_gb": 12.950180053710938,
+      "memory_used_gb": 2.3159408569335938,
+      "timestamp": 1751400134.1151948,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.03220224380493164,
+          "memory_reserved_gb": 0.078125,
+          "memory_free_gb": 9.92138671875,
+          "utilization_percent": 0.7812881488353924
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 4.2,
+      "memory_usage_percent": 16.8,
+      "memory_available_gb": 12.95083236694336,
+      "memory_used_gb": 2.315296173095703,
+      "timestamp": 1751400146.1257532,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.03208017349243164,
+          "memory_reserved_gb": 0.078125,
+          "memory_free_gb": 9.92138671875,
+          "utilization_percent": 0.7812881488353924
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 4.2,
+      "memory_usage_percent": 16.8,
+      "memory_available_gb": 12.951499938964844,
+      "memory_used_gb": 2.3146286010742188,
+      "timestamp": 1751400158.1373858,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.032366275787353516,
+          "memory_reserved_gb": 0.078125,
+          "memory_free_gb": 9.92138671875,
+          "utilization_percent": 0.7812881488353924
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 4.2,
+      "memory_usage_percent": 16.8,
+      "memory_available_gb": 12.954425811767578,
+      "memory_used_gb": 2.3117218017578125,
+      "timestamp": 1751400170.6602228,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.03208017349243164,
+          "memory_reserved_gb": 0.078125,
+          "memory_free_gb": 9.92138671875,
+          "utilization_percent": 0.7812881488353924
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 4.4,
+      "memory_usage_percent": 16.8,
+      "memory_available_gb": 12.952274322509766,
+      "memory_used_gb": 2.3138580322265625,
+      "timestamp": 1751400182.6702263,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.03208017349243164,
+          "memory_reserved_gb": 0.078125,
+          "memory_free_gb": 9.92138671875,
+          "utilization_percent": 0.7812881488353924
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 4.3,
+      "memory_usage_percent": 16.8,
+      "memory_available_gb": 12.954395294189453,
+      "memory_used_gb": 2.3117408752441406,
+      "timestamp": 1751400194.6820517,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.03220224380493164,
+          "memory_reserved_gb": 0.078125,
+          "memory_free_gb": 9.92138671875,
+          "utilization_percent": 0.7812881488353924
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 4.6,
+      "memory_usage_percent": 16.8,
+      "memory_available_gb": 12.952106475830078,
+      "memory_used_gb": 2.3140182495117188,
+      "timestamp": 1751400207.2068706,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.03208017349243164,
+          "memory_reserved_gb": 0.078125,
+          "memory_free_gb": 9.92138671875,
+          "utilization_percent": 0.7812881488353924
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 4.3,
+      "memory_usage_percent": 16.8,
+      "memory_available_gb": 12.953041076660156,
+      "memory_used_gb": 2.313079833984375,
+      "timestamp": 1751400219.217141,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.03208017349243164,
+          "memory_reserved_gb": 0.078125,
+          "memory_free_gb": 9.92138671875,
+          "utilization_percent": 0.7812881488353924
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 4.2,
+      "memory_usage_percent": 16.8,
+      "memory_available_gb": 12.953433990478516,
+      "memory_used_gb": 2.312702178955078,
+      "timestamp": 1751400231.7432535,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.03208017349243164,
+          "memory_reserved_gb": 0.078125,
+          "memory_free_gb": 9.92138671875,
+          "utilization_percent": 0.7812881488353924
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 4.2,
+      "memory_usage_percent": 16.8,
+      "memory_available_gb": 12.950584411621094,
+      "memory_used_gb": 2.3155517578125,
+      "timestamp": 1751400243.7567055,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.03208017349243164,
+          "memory_reserved_gb": 0.078125,
+          "memory_free_gb": 9.92138671875,
+          "utilization_percent": 0.7812881488353924
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 4.6,
+      "memory_usage_percent": 16.8,
+      "memory_available_gb": 12.949481964111328,
+      "memory_used_gb": 2.3166427612304688,
+      "timestamp": 1751400255.7684798,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.03220224380493164,
+          "memory_reserved_gb": 0.078125,
+          "memory_free_gb": 9.92138671875,
+          "utilization_percent": 0.7812881488353924
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 4.5,
+      "memory_usage_percent": 16.8,
+      "memory_available_gb": 12.950572967529297,
+      "memory_used_gb": 2.3155517578125,
+      "timestamp": 1751400268.2935932,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.03208017349243164,
+          "memory_reserved_gb": 0.078125,
+          "memory_free_gb": 9.92138671875,
+          "utilization_percent": 0.7812881488353924
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 4.4,
+      "memory_usage_percent": 16.8,
+      "memory_available_gb": 12.950794219970703,
+      "memory_used_gb": 2.3153343200683594,
+      "timestamp": 1751400280.304151,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.03193521499633789,
+          "memory_reserved_gb": 0.078125,
+          "memory_free_gb": 9.92138671875,
+          "utilization_percent": 0.7812881488353924
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 4.2,
+      "memory_usage_percent": 16.8,
+      "memory_available_gb": 12.95009994506836,
+      "memory_used_gb": 2.3160324096679688,
+      "timestamp": 1751400292.3155687,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.03208017349243164,
+          "memory_reserved_gb": 0.078125,
+          "memory_free_gb": 9.92138671875,
+          "utilization_percent": 0.7812881488353924
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 4.2,
+      "memory_usage_percent": 16.8,
+      "memory_available_gb": 12.948905944824219,
+      "memory_used_gb": 2.317211151123047,
+      "timestamp": 1751400304.835148,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.03208017349243164,
+          "memory_reserved_gb": 0.078125,
+          "memory_free_gb": 9.92138671875,
+          "utilization_percent": 0.7812881488353924
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 4.2,
+      "memory_usage_percent": 16.8,
+      "memory_available_gb": 12.949920654296875,
+      "memory_used_gb": 2.3161964416503906,
+      "timestamp": 1751400316.8472142,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.03220224380493164,
+          "memory_reserved_gb": 0.078125,
+          "memory_free_gb": 9.92138671875,
+          "utilization_percent": 0.7812881488353924
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 4.5,
+      "memory_usage_percent": 16.8,
+      "memory_available_gb": 12.949577331542969,
+      "memory_used_gb": 2.3165359497070312,
+      "timestamp": 1751400329.3704987,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.03208017349243164,
+          "memory_reserved_gb": 0.078125,
+          "memory_free_gb": 9.92138671875,
+          "utilization_percent": 0.7812881488353924
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 4.5,
+      "memory_usage_percent": 16.8,
+      "memory_available_gb": 12.950126647949219,
+      "memory_used_gb": 2.3159866333007812,
+      "timestamp": 1751400341.3825345,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.03193521499633789,
+          "memory_reserved_gb": 0.078125,
+          "memory_free_gb": 9.92138671875,
+          "utilization_percent": 0.7812881488353924
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 4.4,
+      "memory_usage_percent": 16.8,
+      "memory_available_gb": 12.949150085449219,
+      "memory_used_gb": 2.316974639892578,
+      "timestamp": 1751400353.3947308,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.03208017349243164,
+          "memory_reserved_gb": 0.078125,
+          "memory_free_gb": 9.92138671875,
+          "utilization_percent": 0.7812881488353924
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 4.3,
+      "memory_usage_percent": 16.8,
+      "memory_available_gb": 12.948955535888672,
+      "memory_used_gb": 2.317157745361328,
+      "timestamp": 1751400365.9242144,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.03193521499633789,
+          "memory_reserved_gb": 0.078125,
+          "memory_free_gb": 9.92138671875,
+          "utilization_percent": 0.7812881488353924
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 4.2,
+      "memory_usage_percent": 16.8,
+      "memory_available_gb": 12.950679779052734,
+      "memory_used_gb": 2.3154373168945312,
+      "timestamp": 1751400377.9360938,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.03208017349243164,
+          "memory_reserved_gb": 0.078125,
+          "memory_free_gb": 9.92138671875,
+          "utilization_percent": 0.7812881488353924
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 4.4,
+      "memory_usage_percent": 16.8,
+      "memory_available_gb": 12.950340270996094,
+      "memory_used_gb": 2.315776824951172,
+      "timestamp": 1751400389.9482532,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.03208017349243164,
+          "memory_reserved_gb": 0.078125,
+          "memory_free_gb": 9.92138671875,
+          "utilization_percent": 0.7812881488353924
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 4.4,
+      "memory_usage_percent": 16.8,
+      "memory_available_gb": 12.954620361328125,
+      "memory_used_gb": 2.3114776611328125,
+      "timestamp": 1751400402.4775326,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.03208017349243164,
+          "memory_reserved_gb": 0.078125,
+          "memory_free_gb": 9.92138671875,
+          "utilization_percent": 0.7812881488353924
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 4.5,
+      "memory_usage_percent": 16.8,
+      "memory_available_gb": 12.953071594238281,
+      "memory_used_gb": 2.3129920959472656,
+      "timestamp": 1751400414.4889348,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.03208017349243164,
+          "memory_reserved_gb": 0.078125,
+          "memory_free_gb": 9.92138671875,
+          "utilization_percent": 0.7812881488353924
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 4.4,
+      "memory_usage_percent": 16.8,
+      "memory_available_gb": 12.9547119140625,
+      "memory_used_gb": 2.3113975524902344,
+      "timestamp": 1751400427.0154586,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.031200885772705078,
+          "memory_reserved_gb": 0.078125,
+          "memory_free_gb": 9.92138671875,
+          "utilization_percent": 0.7812881488353924
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 4.2,
+      "memory_usage_percent": 16.8,
+      "memory_available_gb": 12.954124450683594,
+      "memory_used_gb": 2.31195068359375,
+      "timestamp": 1751400439.0273275,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.03208017349243164,
+          "memory_reserved_gb": 0.078125,
+          "memory_free_gb": 9.92138671875,
+          "utilization_percent": 0.7812881488353924
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 4.4,
+      "memory_usage_percent": 16.8,
+      "memory_available_gb": 12.95279312133789,
+      "memory_used_gb": 2.3133087158203125,
+      "timestamp": 1751400451.0358765,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.03208017349243164,
+          "memory_reserved_gb": 0.078125,
+          "memory_free_gb": 9.92138671875,
+          "utilization_percent": 0.7812881488353924
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 4.2,
+      "memory_usage_percent": 16.8,
+      "memory_available_gb": 12.950210571289062,
+      "memory_used_gb": 2.31591796875,
+      "timestamp": 1751400463.5617168,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.03208017349243164,
+          "memory_reserved_gb": 0.078125,
+          "memory_free_gb": 9.92138671875,
+          "utilization_percent": 0.7812881488353924
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 4.5,
+      "memory_usage_percent": 16.8,
+      "memory_available_gb": 12.949413299560547,
+      "memory_used_gb": 2.316692352294922,
+      "timestamp": 1751400475.573241,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.03208017349243164,
+          "memory_reserved_gb": 0.078125,
+          "memory_free_gb": 9.92138671875,
+          "utilization_percent": 0.7812881488353924
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 4.5,
+      "memory_usage_percent": 16.8,
+      "memory_available_gb": 12.950248718261719,
+      "memory_used_gb": 2.315868377685547,
+      "timestamp": 1751400487.5855854,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.03208017349243164,
+          "memory_reserved_gb": 0.078125,
+          "memory_free_gb": 9.92138671875,
+          "utilization_percent": 0.7812881488353924
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 4.2,
+      "memory_usage_percent": 16.8,
+      "memory_available_gb": 12.948173522949219,
+      "memory_used_gb": 2.3179397583007812,
+      "timestamp": 1751400500.1109657,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.03208017349243164,
+          "memory_reserved_gb": 0.078125,
+          "memory_free_gb": 9.92138671875,
+          "utilization_percent": 0.7812881488353924
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 4.2,
+      "memory_usage_percent": 16.9,
+      "memory_available_gb": 12.94601821899414,
+      "memory_used_gb": 2.3201065063476562,
+      "timestamp": 1751400512.1239848,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.03208017349243164,
+          "memory_reserved_gb": 0.078125,
+          "memory_free_gb": 9.92138671875,
+          "utilization_percent": 0.7812881488353924
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 4.2,
+      "memory_usage_percent": 16.8,
+      "memory_available_gb": 12.948650360107422,
+      "memory_used_gb": 2.317474365234375,
+      "timestamp": 1751400524.1354792,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.03208017349243164,
+          "memory_reserved_gb": 0.078125,
+          "memory_free_gb": 9.92138671875,
+          "utilization_percent": 0.7812881488353924
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 4.5,
+      "memory_usage_percent": 16.8,
+      "memory_available_gb": 12.952018737792969,
+      "memory_used_gb": 2.3140716552734375,
+      "timestamp": 1751400536.6449368,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.03208017349243164,
+          "memory_reserved_gb": 0.078125,
+          "memory_free_gb": 9.92138671875,
+          "utilization_percent": 0.7812881488353924
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 4.4,
+      "memory_usage_percent": 16.8,
+      "memory_available_gb": 12.949832916259766,
+      "memory_used_gb": 2.3162918090820312,
+      "timestamp": 1751400548.6574285,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.03208017349243164,
+          "memory_reserved_gb": 0.078125,
+          "memory_free_gb": 9.92138671875,
+          "utilization_percent": 0.7812881488353924
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 4.4,
+      "memory_usage_percent": 16.8,
+      "memory_available_gb": 12.951435089111328,
+      "memory_used_gb": 2.3146591186523438,
+      "timestamp": 1751400561.1538603,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.03208017349243164,
+          "memory_reserved_gb": 0.078125,
+          "memory_free_gb": 9.92138671875,
+          "utilization_percent": 0.7812881488353924
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 4.3,
+      "memory_usage_percent": 16.8,
+      "memory_available_gb": 12.950347900390625,
+      "memory_used_gb": 2.3157272338867188,
+      "timestamp": 1751400573.1662586,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.03193521499633789,
+          "memory_reserved_gb": 0.078125,
+          "memory_free_gb": 9.92138671875,
+          "utilization_percent": 0.7812881488353924
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 4.1,
+      "memory_usage_percent": 16.8,
+      "memory_available_gb": 12.948493957519531,
+      "memory_used_gb": 2.317615509033203,
+      "timestamp": 1751400585.178783,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.03208017349243164,
+          "memory_reserved_gb": 0.078125,
+          "memory_free_gb": 9.92138671875,
+          "utilization_percent": 0.7812881488353924
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 4.2,
+      "memory_usage_percent": 16.8,
+      "memory_available_gb": 12.947811126708984,
+      "memory_used_gb": 2.3182907104492188,
+      "timestamp": 1751400597.6949363,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.03193521499633789,
+          "memory_reserved_gb": 0.078125,
+          "memory_free_gb": 9.92138671875,
+          "utilization_percent": 0.7812881488353924
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 4.2,
+      "memory_usage_percent": 16.9,
+      "memory_available_gb": 12.944690704345703,
+      "memory_used_gb": 2.321392059326172,
+      "timestamp": 1751400609.7073743,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.03208017349243164,
+          "memory_reserved_gb": 0.078125,
+          "memory_free_gb": 9.92138671875,
+          "utilization_percent": 0.7812881488353924
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 4.5,
+      "memory_usage_percent": 16.9,
+      "memory_available_gb": 12.945690155029297,
+      "memory_used_gb": 2.3204116821289062,
+      "timestamp": 1751400621.7188432,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.03208017349243164,
+          "memory_reserved_gb": 0.078125,
+          "memory_free_gb": 9.92138671875,
+          "utilization_percent": 0.7812881488353924
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 4.5,
+      "memory_usage_percent": 16.8,
+      "memory_available_gb": 12.948375701904297,
+      "memory_used_gb": 2.3177223205566406,
+      "timestamp": 1751400634.2350857,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.03208017349243164,
+          "memory_reserved_gb": 0.078125,
+          "memory_free_gb": 9.92138671875,
+          "utilization_percent": 0.7812881488353924
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 4.4,
+      "memory_usage_percent": 16.9,
+      "memory_available_gb": 12.94253158569336,
+      "memory_used_gb": 2.3235435485839844,
+      "timestamp": 1751400646.24826,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.03208017349243164,
+          "memory_reserved_gb": 0.078125,
+          "memory_free_gb": 9.92138671875,
+          "utilization_percent": 0.7812881488353924
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 4.7,
+      "memory_usage_percent": 16.0,
+      "memory_available_gb": 13.08218002319336,
+      "memory_used_gb": 2.184051513671875,
+      "timestamp": 1751400658.7597983,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.03230714797973633,
+          "memory_reserved_gb": 0.052734375,
+          "memory_free_gb": 9.94677734375,
+          "utilization_percent": 0.5273695004638899
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 4.2,
+      "memory_usage_percent": 16.2,
+      "memory_available_gb": 13.040931701660156,
+      "memory_used_gb": 2.2252349853515625,
+      "timestamp": 1751400670.7715046,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.03208017349243164,
+          "memory_reserved_gb": 0.076171875,
+          "memory_free_gb": 9.92333984375,
+          "utilization_percent": 0.7617559451145075
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 4.2,
+      "memory_usage_percent": 16.2,
+      "memory_available_gb": 13.040447235107422,
+      "memory_used_gb": 2.225727081298828,
+      "timestamp": 1751400682.7812352,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.03208017349243164,
+          "memory_reserved_gb": 0.076171875,
+          "memory_free_gb": 9.92333984375,
+          "utilization_percent": 0.7617559451145075
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 4.2,
+      "memory_usage_percent": 16.3,
+      "memory_available_gb": 13.039985656738281,
+      "memory_used_gb": 2.226177215576172,
+      "timestamp": 1751400695.295759,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.03208017349243164,
+          "memory_reserved_gb": 0.076171875,
+          "memory_free_gb": 9.92333984375,
+          "utilization_percent": 0.7617559451145075
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 4.4,
+      "memory_usage_percent": 16.3,
+      "memory_available_gb": 13.039661407470703,
+      "memory_used_gb": 2.2264976501464844,
+      "timestamp": 1751400707.306273,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.03208017349243164,
+          "memory_reserved_gb": 0.076171875,
+          "memory_free_gb": 9.92333984375,
+          "utilization_percent": 0.7617559451145075
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 4.5,
+      "memory_usage_percent": 16.3,
+      "memory_available_gb": 13.037456512451172,
+      "memory_used_gb": 2.2287139892578125,
+      "timestamp": 1751400719.3192077,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.03220224380493164,
+          "memory_reserved_gb": 0.076171875,
+          "memory_free_gb": 9.92333984375,
+          "utilization_percent": 0.7617559451145075
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 4.5,
+      "memory_usage_percent": 16.3,
+      "memory_available_gb": 13.03652572631836,
+      "memory_used_gb": 2.2296218872070312,
+      "timestamp": 1751400731.8347259,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.03208017349243164,
+          "memory_reserved_gb": 0.076171875,
+          "memory_free_gb": 9.92333984375,
+          "utilization_percent": 0.7617559451145075
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 4.5,
+      "memory_usage_percent": 16.3,
+      "memory_available_gb": 13.035858154296875,
+      "memory_used_gb": 2.2303009033203125,
+      "timestamp": 1751400743.846134,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.03208017349243164,
+          "memory_reserved_gb": 0.076171875,
+          "memory_free_gb": 9.92333984375,
+          "utilization_percent": 0.7617559451145075
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 4.2,
+      "memory_usage_percent": 16.3,
+      "memory_available_gb": 13.038272857666016,
+      "memory_used_gb": 2.227893829345703,
+      "timestamp": 1751400756.3618517,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.03208017349243164,
+          "memory_reserved_gb": 0.076171875,
+          "memory_free_gb": 9.92333984375,
+          "utilization_percent": 0.7617559451145075
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 4.2,
+      "memory_usage_percent": 16.3,
+      "memory_available_gb": 13.03592300415039,
+      "memory_used_gb": 2.2302284240722656,
+      "timestamp": 1751400768.371989,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.03208017349243164,
+          "memory_reserved_gb": 0.076171875,
+          "memory_free_gb": 9.92333984375,
+          "utilization_percent": 0.7617559451145075
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 4.3,
+      "memory_usage_percent": 16.3,
+      "memory_available_gb": 13.037490844726562,
+      "memory_used_gb": 2.2286605834960938,
+      "timestamp": 1751400780.3845289,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.03175926208496094,
+          "memory_reserved_gb": 0.076171875,
+          "memory_free_gb": 9.92333984375,
+          "utilization_percent": 0.7617559451145075
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 4.4,
+      "memory_usage_percent": 16.3,
+      "memory_available_gb": 13.036567687988281,
+      "memory_used_gb": 2.2295799255371094,
+      "timestamp": 1751400792.898819,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.03208017349243164,
+          "memory_reserved_gb": 0.076171875,
+          "memory_free_gb": 9.92333984375,
+          "utilization_percent": 0.7617559451145075
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 4.4,
+      "memory_usage_percent": 16.3,
+      "memory_available_gb": 13.036567687988281,
+      "memory_used_gb": 2.2295989990234375,
+      "timestamp": 1751400804.910138,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.03208017349243164,
+          "memory_reserved_gb": 0.076171875,
+          "memory_free_gb": 9.92333984375,
+          "utilization_percent": 0.7617559451145075
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 4.5,
+      "memory_usage_percent": 16.3,
+      "memory_available_gb": 13.03753662109375,
+      "memory_used_gb": 2.2286453247070312,
+      "timestamp": 1751400816.921568,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.03208017349243164,
+          "memory_reserved_gb": 0.076171875,
+          "memory_free_gb": 9.92333984375,
+          "utilization_percent": 0.7617559451145075
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 4.4,
+      "memory_usage_percent": 16.3,
+      "memory_available_gb": 13.037792205810547,
+      "memory_used_gb": 2.2284011840820312,
+      "timestamp": 1751400829.4373896,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.03208017349243164,
+          "memory_reserved_gb": 0.076171875,
+          "memory_free_gb": 9.92333984375,
+          "utilization_percent": 0.7617559451145075
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 4.2,
+      "memory_usage_percent": 16.3,
+      "memory_available_gb": 13.035480499267578,
+      "memory_used_gb": 2.230712890625,
+      "timestamp": 1751400841.4485297,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.03208017349243164,
+          "memory_reserved_gb": 0.076171875,
+          "memory_free_gb": 9.92333984375,
+          "utilization_percent": 0.7617559451145075
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 4.2,
+      "memory_usage_percent": 16.3,
+      "memory_available_gb": 13.036552429199219,
+      "memory_used_gb": 2.2296180725097656,
+      "timestamp": 1751400853.9566026,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.03208017349243164,
+          "memory_reserved_gb": 0.076171875,
+          "memory_free_gb": 9.92333984375,
+          "utilization_percent": 0.7617559451145075
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 4.2,
+      "memory_usage_percent": 16.3,
+      "memory_available_gb": 13.035942077636719,
+      "memory_used_gb": 2.2302322387695312,
+      "timestamp": 1751400865.9685123,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.03220224380493164,
+          "memory_reserved_gb": 0.076171875,
+          "memory_free_gb": 9.92333984375,
+          "utilization_percent": 0.7617559451145075
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 4.3,
+      "memory_usage_percent": 16.3,
+      "memory_available_gb": 13.03628158569336,
+      "memory_used_gb": 2.2298927307128906,
+      "timestamp": 1751400877.9816358,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.03208017349243164,
+          "memory_reserved_gb": 0.076171875,
+          "memory_free_gb": 9.92333984375,
+          "utilization_percent": 0.7617559451145075
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 4.5,
+      "memory_usage_percent": 16.3,
+      "memory_available_gb": 13.038249969482422,
+      "memory_used_gb": 2.227916717529297,
+      "timestamp": 1751400890.4676807,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.03208017349243164,
+          "memory_reserved_gb": 0.076171875,
+          "memory_free_gb": 9.92333984375,
+          "utilization_percent": 0.7617559451145075
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 4.4,
+      "memory_usage_percent": 16.3,
+      "memory_available_gb": 13.036567687988281,
+      "memory_used_gb": 2.2296142578125,
+      "timestamp": 1751400902.4803157,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.03208017349243164,
+          "memory_reserved_gb": 0.076171875,
+          "memory_free_gb": 9.92333984375,
+          "utilization_percent": 0.7617559451145075
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 4.4,
+      "memory_usage_percent": 16.3,
+      "memory_available_gb": 13.036380767822266,
+      "memory_used_gb": 2.2297897338867188,
+      "timestamp": 1751400914.4897232,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.03208017349243164,
+          "memory_reserved_gb": 0.076171875,
+          "memory_free_gb": 9.92333984375,
+          "utilization_percent": 0.7617559451145075
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 4.2,
+      "memory_usage_percent": 16.3,
+      "memory_available_gb": 13.034538269042969,
+      "memory_used_gb": 2.23162841796875,
+      "timestamp": 1751400926.9987838,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.03193521499633789,
+          "memory_reserved_gb": 0.076171875,
+          "memory_free_gb": 9.92333984375,
+          "utilization_percent": 0.7617559451145075
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 4.2,
+      "memory_usage_percent": 16.3,
+      "memory_available_gb": 13.031478881835938,
+      "memory_used_gb": 2.234691619873047,
+      "timestamp": 1751400939.011078,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.03208017349243164,
+          "memory_reserved_gb": 0.076171875,
+          "memory_free_gb": 9.92333984375,
+          "utilization_percent": 0.7617559451145075
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 4.2,
+      "memory_usage_percent": 16.3,
+      "memory_available_gb": 13.032520294189453,
+      "memory_used_gb": 2.233654022216797,
+      "timestamp": 1751400951.5388322,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.03208017349243164,
+          "memory_reserved_gb": 0.076171875,
+          "memory_free_gb": 9.92333984375,
+          "utilization_percent": 0.7617559451145075
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 4.4,
+      "memory_usage_percent": 16.3,
+      "memory_available_gb": 13.033084869384766,
+      "memory_used_gb": 2.23309326171875,
+      "timestamp": 1751400963.5437322,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.03208017349243164,
+          "memory_reserved_gb": 0.076171875,
+          "memory_free_gb": 9.92333984375,
+          "utilization_percent": 0.7617559451145075
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 4.5,
+      "memory_usage_percent": 16.3,
+      "memory_available_gb": 13.036468505859375,
+      "memory_used_gb": 2.2297325134277344,
+      "timestamp": 1751400975.5559676,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.03208017349243164,
+          "memory_reserved_gb": 0.076171875,
+          "memory_free_gb": 9.92333984375,
+          "utilization_percent": 0.7617559451145075
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 4.5,
+      "memory_usage_percent": 16.3,
+      "memory_available_gb": 13.03725814819336,
+      "memory_used_gb": 2.22894287109375,
+      "timestamp": 1751400988.0660613,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.031246185302734375,
+          "memory_reserved_gb": 0.076171875,
+          "memory_free_gb": 9.92333984375,
+          "utilization_percent": 0.7617559451145075
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 4.2,
+      "memory_usage_percent": 16.3,
+      "memory_available_gb": 13.037750244140625,
+      "memory_used_gb": 2.2284622192382812,
+      "timestamp": 1751401000.0688212,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.03208017349243164,
+          "memory_reserved_gb": 0.076171875,
+          "memory_free_gb": 9.92333984375,
+          "utilization_percent": 0.7617559451145075
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 4.2,
+      "memory_usage_percent": 16.3,
+      "memory_available_gb": 13.032543182373047,
+      "memory_used_gb": 2.2336578369140625,
+      "timestamp": 1751401012.0746815,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.03208017349243164,
+          "memory_reserved_gb": 0.076171875,
+          "memory_free_gb": 9.92333984375,
+          "utilization_percent": 0.7617559451145075
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 4.1,
+      "memory_usage_percent": 16.3,
+      "memory_available_gb": 13.034156799316406,
+      "memory_used_gb": 2.2320404052734375,
+      "timestamp": 1751401024.552345,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.03208017349243164,
+          "memory_reserved_gb": 0.076171875,
+          "memory_free_gb": 9.92333984375,
+          "utilization_percent": 0.7617559451145075
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 4.2,
+      "memory_usage_percent": 16.3,
+      "memory_available_gb": 13.03549575805664,
+      "memory_used_gb": 2.2306976318359375,
+      "timestamp": 1751401036.5653043,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.03208017349243164,
+          "memory_reserved_gb": 0.076171875,
+          "memory_free_gb": 9.92333984375,
+          "utilization_percent": 0.7617559451145075
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 4.6,
+      "memory_usage_percent": 16.3,
+      "memory_available_gb": 13.03493881225586,
+      "memory_used_gb": 2.2312393188476562,
+      "timestamp": 1751401049.0694103,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.03220224380493164,
+          "memory_reserved_gb": 0.076171875,
+          "memory_free_gb": 9.92333984375,
+          "utilization_percent": 0.7617559451145075
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 4.7,
+      "memory_usage_percent": 16.3,
+      "memory_available_gb": 13.03133773803711,
+      "memory_used_gb": 2.234844207763672,
+      "timestamp": 1751401061.0825095,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.03208017349243164,
+          "memory_reserved_gb": 0.076171875,
+          "memory_free_gb": 9.92333984375,
+          "utilization_percent": 0.7617559451145075
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 4.5,
+      "memory_usage_percent": 16.3,
+      "memory_available_gb": 13.035823822021484,
+      "memory_used_gb": 2.2303543090820312,
+      "timestamp": 1751401073.088048,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.03220224380493164,
+          "memory_reserved_gb": 0.076171875,
+          "memory_free_gb": 9.92333984375,
+          "utilization_percent": 0.7617559451145075
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 4.2,
+      "memory_usage_percent": 16.3,
+      "memory_available_gb": 13.034259796142578,
+      "memory_used_gb": 2.2319107055664062,
+      "timestamp": 1751401085.588503,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.03208017349243164,
+          "memory_reserved_gb": 0.076171875,
+          "memory_free_gb": 9.92333984375,
+          "utilization_percent": 0.7617559451145075
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 4.3,
+      "memory_usage_percent": 16.3,
+      "memory_available_gb": 13.034648895263672,
+      "memory_used_gb": 2.2315444946289062,
+      "timestamp": 1751401097.5923686,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.03220224380493164,
+          "memory_reserved_gb": 0.076171875,
+          "memory_free_gb": 9.92333984375,
+          "utilization_percent": 0.7617559451145075
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 4.2,
+      "memory_usage_percent": 16.3,
+      "memory_available_gb": 13.030681610107422,
+      "memory_used_gb": 2.2355308532714844,
+      "timestamp": 1751401109.6053493,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.03208017349243164,
+          "memory_reserved_gb": 0.076171875,
+          "memory_free_gb": 9.92333984375,
+          "utilization_percent": 0.7617559451145075
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 4.3,
+      "memory_usage_percent": 16.3,
+      "memory_available_gb": 13.03415298461914,
+      "memory_used_gb": 2.232067108154297,
+      "timestamp": 1751401122.0867743,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.03193521499633789,
+          "memory_reserved_gb": 0.076171875,
+          "memory_free_gb": 9.92333984375,
+          "utilization_percent": 0.7617559451145075
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 4.6,
+      "memory_usage_percent": 16.3,
+      "memory_available_gb": 13.031864166259766,
+      "memory_used_gb": 2.2343521118164062,
+      "timestamp": 1751401134.0996568,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.03208017349243164,
+          "memory_reserved_gb": 0.076171875,
+          "memory_free_gb": 9.92333984375,
+          "utilization_percent": 0.7617559451145075
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 4.5,
+      "memory_usage_percent": 16.3,
+      "memory_available_gb": 13.030651092529297,
+      "memory_used_gb": 2.235576629638672,
+      "timestamp": 1751401146.112712,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.03208017349243164,
+          "memory_reserved_gb": 0.076171875,
+          "memory_free_gb": 9.92333984375,
+          "utilization_percent": 0.7617559451145075
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 4.4,
+      "memory_usage_percent": 16.3,
+      "memory_available_gb": 13.036174774169922,
+      "memory_used_gb": 2.230052947998047,
+      "timestamp": 1751401158.5720003,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.03208017349243164,
+          "memory_reserved_gb": 0.076171875,
+          "memory_free_gb": 9.92333984375,
+          "utilization_percent": 0.7617559451145075
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 4.2,
+      "memory_usage_percent": 16.3,
+      "memory_available_gb": 13.033378601074219,
+      "memory_used_gb": 2.2328262329101562,
+      "timestamp": 1751401170.584367,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.03208017349243164,
+          "memory_reserved_gb": 0.076171875,
+          "memory_free_gb": 9.92333984375,
+          "utilization_percent": 0.7617559451145075
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 4.2,
+      "memory_usage_percent": 16.3,
+      "memory_available_gb": 13.034969329833984,
+      "memory_used_gb": 2.231243133544922,
+      "timestamp": 1751401183.03716,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.03220224380493164,
+          "memory_reserved_gb": 0.076171875,
+          "memory_free_gb": 9.92333984375,
+          "utilization_percent": 0.7617559451145075
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 4.2,
+      "memory_usage_percent": 16.3,
+      "memory_available_gb": 13.031993865966797,
+      "memory_used_gb": 2.234203338623047,
+      "timestamp": 1751401195.0533314,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.03208017349243164,
+          "memory_reserved_gb": 0.076171875,
+          "memory_free_gb": 9.92333984375,
+          "utilization_percent": 0.7617559451145075
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 4.5,
+      "memory_usage_percent": 16.3,
+      "memory_available_gb": 13.03421401977539,
+      "memory_used_gb": 2.2319679260253906,
+      "timestamp": 1751401207.0655792,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.03208017349243164,
+          "memory_reserved_gb": 0.076171875,
+          "memory_free_gb": 9.92333984375,
+          "utilization_percent": 0.7617559451145075
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 4.5,
+      "memory_usage_percent": 16.3,
+      "memory_available_gb": 13.031578063964844,
+      "memory_used_gb": 2.234569549560547,
+      "timestamp": 1751401219.5052826,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.03208017349243164,
+          "memory_reserved_gb": 0.076171875,
+          "memory_free_gb": 9.92333984375,
+          "utilization_percent": 0.7617559451145075
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 4.4,
+      "memory_usage_percent": 16.3,
+      "memory_available_gb": 13.034427642822266,
+      "memory_used_gb": 2.2317428588867188,
+      "timestamp": 1751401231.5177948,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.03208017349243164,
+          "memory_reserved_gb": 0.076171875,
+          "memory_free_gb": 9.92333984375,
+          "utilization_percent": 0.7617559451145075
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 4.2,
+      "memory_usage_percent": 16.3,
+      "memory_available_gb": 13.033939361572266,
+      "memory_used_gb": 2.2322311401367188,
+      "timestamp": 1751401243.5208697,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.03208017349243164,
+          "memory_reserved_gb": 0.076171875,
+          "memory_free_gb": 9.92333984375,
+          "utilization_percent": 0.7617559451145075
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 4.2,
+      "memory_usage_percent": 16.3,
+      "memory_available_gb": 13.032184600830078,
+      "memory_used_gb": 2.233978271484375,
+      "timestamp": 1751401255.9450862,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.03208017349243164,
+          "memory_reserved_gb": 0.076171875,
+          "memory_free_gb": 9.92333984375,
+          "utilization_percent": 0.7617559451145075
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 4.2,
+      "memory_usage_percent": 16.3,
+      "memory_available_gb": 13.03298568725586,
+      "memory_used_gb": 2.233196258544922,
+      "timestamp": 1751401267.9482317,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.03124523162841797,
+          "memory_reserved_gb": 0.076171875,
+          "memory_free_gb": 9.92333984375,
+          "utilization_percent": 0.7617559451145075
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 4.2,
+      "memory_usage_percent": 16.3,
+      "memory_available_gb": 13.036567687988281,
+      "memory_used_gb": 2.229625701904297,
+      "timestamp": 1751401280.3838508,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.03208017349243164,
+          "memory_reserved_gb": 0.076171875,
+          "memory_free_gb": 9.92333984375,
+          "utilization_percent": 0.7617559451145075
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 4.4,
+      "memory_usage_percent": 16.3,
+      "memory_available_gb": 13.033939361572266,
+      "memory_used_gb": 2.2322463989257812,
+      "timestamp": 1751401292.3996487,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.03220224380493164,
+          "memory_reserved_gb": 0.076171875,
+          "memory_free_gb": 9.92333984375,
+          "utilization_percent": 0.7617559451145075
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 4.7,
+      "memory_usage_percent": 16.3,
+      "memory_available_gb": 13.032882690429688,
+      "memory_used_gb": 2.2333106994628906,
+      "timestamp": 1751401304.412678,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.03208017349243164,
+          "memory_reserved_gb": 0.076171875,
+          "memory_free_gb": 9.92333984375,
+          "utilization_percent": 0.7617559451145075
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 4.5,
+      "memory_usage_percent": 16.3,
+      "memory_available_gb": 13.031494140625,
+      "memory_used_gb": 2.2346763610839844,
+      "timestamp": 1751401316.8427947,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.03193521499633789,
+          "memory_reserved_gb": 0.076171875,
+          "memory_free_gb": 9.92333984375,
+          "utilization_percent": 0.7617559451145075
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 4.4,
+      "memory_usage_percent": 16.3,
+      "memory_available_gb": 13.027534484863281,
+      "memory_used_gb": 2.2385940551757812,
+      "timestamp": 1751401328.8534198,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.03208017349243164,
+          "memory_reserved_gb": 0.076171875,
+          "memory_free_gb": 9.92333984375,
+          "utilization_percent": 0.7617559451145075
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 4.2,
+      "memory_usage_percent": 16.3,
+      "memory_available_gb": 13.032089233398438,
+      "memory_used_gb": 2.2340354919433594,
+      "timestamp": 1751401340.8663437,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.03208017349243164,
+          "memory_reserved_gb": 0.076171875,
+          "memory_free_gb": 9.92333984375,
+          "utilization_percent": 0.7617559451145075
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 4.2,
+      "memory_usage_percent": 16.3,
+      "memory_available_gb": 13.032569885253906,
+      "memory_used_gb": 2.2335586547851562,
+      "timestamp": 1751401353.2912676,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.03208017349243164,
+          "memory_reserved_gb": 0.076171875,
+          "memory_free_gb": 9.92333984375,
+          "utilization_percent": 0.7617559451145075
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 4.2,
+      "memory_usage_percent": 16.3,
+      "memory_available_gb": 13.030094146728516,
+      "memory_used_gb": 2.2360572814941406,
+      "timestamp": 1751401365.3037672,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.03208017349243164,
+          "memory_reserved_gb": 0.076171875,
+          "memory_free_gb": 9.92333984375,
+          "utilization_percent": 0.7617559451145075
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 4.4,
+      "memory_usage_percent": 16.3,
+      "memory_available_gb": 13.03094482421875,
+      "memory_used_gb": 2.2351837158203125,
+      "timestamp": 1751401377.7458005,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.03220224380493164,
+          "memory_reserved_gb": 0.076171875,
+          "memory_free_gb": 9.92333984375,
+          "utilization_percent": 0.7617559451145075
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 4.4,
+      "memory_usage_percent": 16.3,
+      "memory_available_gb": 13.03298568725586,
+      "memory_used_gb": 2.2331886291503906,
+      "timestamp": 1751401389.7611384,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.03208017349243164,
+          "memory_reserved_gb": 0.076171875,
+          "memory_free_gb": 9.92333984375,
+          "utilization_percent": 0.7617559451145075
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 4.4,
+      "memory_usage_percent": 16.3,
+      "memory_available_gb": 13.03173828125,
+      "memory_used_gb": 2.2344741821289062,
+      "timestamp": 1751401401.7738793,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.03208017349243164,
+          "memory_reserved_gb": 0.076171875,
+          "memory_free_gb": 9.92333984375,
+          "utilization_percent": 0.7617559451145075
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 4.3,
+      "memory_usage_percent": 16.3,
+      "memory_available_gb": 13.033111572265625,
+      "memory_used_gb": 2.2330780029296875,
+      "timestamp": 1751401414.2040055,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.03208017349243164,
+          "memory_reserved_gb": 0.076171875,
+          "memory_free_gb": 9.92333984375,
+          "utilization_percent": 0.7617559451145075
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 4.2,
+      "memory_usage_percent": 16.3,
+      "memory_available_gb": 13.031661987304688,
+      "memory_used_gb": 2.234546661376953,
+      "timestamp": 1751401426.2080464,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.03208017349243164,
+          "memory_reserved_gb": 0.076171875,
+          "memory_free_gb": 9.92333984375,
+          "utilization_percent": 0.7617559451145075
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 4.2,
+      "memory_usage_percent": 16.3,
+      "memory_available_gb": 13.035911560058594,
+      "memory_used_gb": 2.2302818298339844,
+      "timestamp": 1751401438.21858,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.03220224380493164,
+          "memory_reserved_gb": 0.076171875,
+          "memory_free_gb": 9.92333984375,
+          "utilization_percent": 0.7617559451145075
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 4.7,
+      "memory_usage_percent": 16.3,
+      "memory_available_gb": 13.035308837890625,
+      "memory_used_gb": 2.2308883666992188,
+      "timestamp": 1751401450.6457994,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.03208017349243164,
+          "memory_reserved_gb": 0.076171875,
+          "memory_free_gb": 9.92333984375,
+          "utilization_percent": 0.7617559451145075
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 4.6,
+      "memory_usage_percent": 16.3,
+      "memory_available_gb": 13.034748077392578,
+      "memory_used_gb": 2.2314491271972656,
+      "timestamp": 1751401462.6584344,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.03193521499633789,
+          "memory_reserved_gb": 0.076171875,
+          "memory_free_gb": 9.92333984375,
+          "utilization_percent": 0.7617559451145075
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 4.4,
+      "memory_usage_percent": 16.3,
+      "memory_available_gb": 13.032928466796875,
+      "memory_used_gb": 2.233264923095703,
+      "timestamp": 1751401475.0924258,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.03208017349243164,
+          "memory_reserved_gb": 0.076171875,
+          "memory_free_gb": 9.92333984375,
+          "utilization_percent": 0.7617559451145075
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 4.6,
+      "memory_usage_percent": 16.3,
+      "memory_available_gb": 13.032878875732422,
+      "memory_used_gb": 2.233306884765625,
+      "timestamp": 1751401487.1024566,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.03208017349243164,
+          "memory_reserved_gb": 0.076171875,
+          "memory_free_gb": 9.92333984375,
+          "utilization_percent": 0.7617559451145075
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 4.2,
+      "memory_usage_percent": 16.3,
+      "memory_available_gb": 13.034652709960938,
+      "memory_used_gb": 2.2315101623535156,
+      "timestamp": 1751401499.1072826,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.03208017349243164,
+          "memory_reserved_gb": 0.076171875,
+          "memory_free_gb": 9.92333984375,
+          "utilization_percent": 0.7617559451145075
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 4.2,
+      "memory_usage_percent": 16.3,
+      "memory_available_gb": 13.031436920166016,
+      "memory_used_gb": 2.2347373962402344,
+      "timestamp": 1751401511.5359304,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.03208017349243164,
+          "memory_reserved_gb": 0.076171875,
+          "memory_free_gb": 9.92333984375,
+          "utilization_percent": 0.7617559451145075
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 4.2,
+      "memory_usage_percent": 16.3,
+      "memory_available_gb": 13.027938842773438,
+      "memory_used_gb": 2.2382125854492188,
+      "timestamp": 1751401523.5468407,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.03220224380493164,
+          "memory_reserved_gb": 0.076171875,
+          "memory_free_gb": 9.92333984375,
+          "utilization_percent": 0.7617559451145075
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 4.4,
+      "memory_usage_percent": 16.3,
+      "memory_available_gb": 13.0303955078125,
+      "memory_used_gb": 2.2357254028320312,
+      "timestamp": 1751401535.5599327,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.03208017349243164,
+          "memory_reserved_gb": 0.076171875,
+          "memory_free_gb": 9.92333984375,
+          "utilization_percent": 0.7617559451145075
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 4.5,
+      "memory_usage_percent": 16.3,
+      "memory_available_gb": 13.030342102050781,
+      "memory_used_gb": 2.2358169555664062,
+      "timestamp": 1751401547.9924514,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.03220224380493164,
+          "memory_reserved_gb": 0.076171875,
+          "memory_free_gb": 9.92333984375,
+          "utilization_percent": 0.7617559451145075
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 4.7,
+      "memory_usage_percent": 16.3,
+      "memory_available_gb": 13.027511596679688,
+      "memory_used_gb": 2.2386131286621094,
+      "timestamp": 1751401560.0054822,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.03208017349243164,
+          "memory_reserved_gb": 0.076171875,
+          "memory_free_gb": 9.92333984375,
+          "utilization_percent": 0.7617559451145075
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 4.2,
+      "memory_usage_percent": 16.3,
+      "memory_available_gb": 13.026802062988281,
+      "memory_used_gb": 2.239299774169922,
+      "timestamp": 1751401572.0125854,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.03220224380493164,
+          "memory_reserved_gb": 0.076171875,
+          "memory_free_gb": 9.92333984375,
+          "utilization_percent": 0.7617559451145075
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 4.2,
+      "memory_usage_percent": 16.3,
+      "memory_available_gb": 13.026668548583984,
+      "memory_used_gb": 2.2394790649414062,
+      "timestamp": 1751401584.4476936,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.03208017349243164,
+          "memory_reserved_gb": 0.076171875,
+          "memory_free_gb": 9.92333984375,
+          "utilization_percent": 0.7617559451145075
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 4.2,
+      "memory_usage_percent": 16.3,
+      "memory_available_gb": 13.027217864990234,
+      "memory_used_gb": 2.2388992309570312,
+      "timestamp": 1751401596.4607284,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.03193521499633789,
+          "memory_reserved_gb": 0.076171875,
+          "memory_free_gb": 9.92333984375,
+          "utilization_percent": 0.7617559451145075
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 4.2,
+      "memory_usage_percent": 16.3,
+      "memory_available_gb": 13.029430389404297,
+      "memory_used_gb": 2.236675262451172,
+      "timestamp": 1751401608.883672,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.03208017349243164,
+          "memory_reserved_gb": 0.076171875,
+          "memory_free_gb": 9.92333984375,
+          "utilization_percent": 0.7617559451145075
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 4.4,
+      "memory_usage_percent": 16.3,
+      "memory_available_gb": 13.02908706665039,
+      "memory_used_gb": 2.2370758056640625,
+      "timestamp": 1751401620.8966513,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.03208017349243164,
+          "memory_reserved_gb": 0.076171875,
+          "memory_free_gb": 9.92333984375,
+          "utilization_percent": 0.7617559451145075
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 4.4,
+      "memory_usage_percent": 16.3,
+      "memory_available_gb": 13.029266357421875,
+      "memory_used_gb": 2.2368736267089844,
+      "timestamp": 1751401632.9095647,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.03208017349243164,
+          "memory_reserved_gb": 0.076171875,
+          "memory_free_gb": 9.92333984375,
+          "utilization_percent": 0.7617559451145075
+        }
+      ]
+    },
+    {
+      "cpu_usage_percent": 4.8,
+      "memory_usage_percent": 16.3,
+      "memory_available_gb": 13.03067398071289,
+      "memory_used_gb": 2.2354507446289062,
+      "timestamp": 1751401644.9398654,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.031229019165039062,
+          "memory_reserved_gb": 0.076171875,
+          "memory_free_gb": 9.92333984375,
+          "utilization_percent": 0.7617559451145075
+        }
+      ]
+    }
+  ],
+  "start_time": "2025-07-02T03:25:18.975583",
+  "end_time": null
+}
