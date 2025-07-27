@@ -239,6 +239,15 @@ class ModelTrainingInterface:
                 logger.warning(f"Invalid best validation loss: {best_val_loss}, returning minimum score")
                 score = -1e6
             
+            # Store trained models for JSD calculation
+            self._last_cvae_model = cvae_model
+            self._last_meta_learner = meta_learner
+            self._last_feature_engineer = getattr(self, '_feature_engineer', None)
+            
+            # Store historical data for JSD calculation
+            if hasattr(self, '_data_cache') and 'train_df' in self._data_cache:
+                self._historical_df = self._data_cache['train_df']
+            
             # Cleanup
             self._cleanup_resources()
             
@@ -437,6 +446,28 @@ class ModelTrainingInterface:
         self._feature_cache.clear()
         self._cleanup_resources()
         logger.info("Cleared training interface caches")
+    
+    def get_trained_models(self) -> Dict[str, Any]:
+        """
+        Get the most recently trained models for evaluation.
+        
+        Returns:
+            Dict containing trained model components for JSD calculation
+        """
+        return {
+            'cvae': getattr(self, '_last_cvae_model', None),
+            'meta_learner': getattr(self, '_last_meta_learner', None),
+            'feature_engineer': getattr(self, '_last_feature_engineer', None)
+        }
+    
+    def get_historical_data(self):
+        """
+        Get historical lottery data for statistical analysis.
+        
+        Returns:
+            DataFrame containing historical lottery data for JSD calculation
+        """
+        return getattr(self, '_historical_df', None)
 
 
 class OptimizationObjective:

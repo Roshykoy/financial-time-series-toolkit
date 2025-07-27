@@ -119,10 +119,11 @@ The most advanced optimization method featuring:
 
 - **NSGA-II (Evolutionary Algorithm)**: Global search with population-based optimization
 - **TPE/Optuna (Multi-Objective Bayesian)**: Sample-efficient optimization with learning
-- **Multi-Objective Functions**: 
-  - Accuracy (maximize model prediction performance)
-  - Training Time (minimize computational cost)
-  - Model Complexity (minimize overfitting risk)
+- **Multi-Objective Functions** (prioritized by weight): 
+  - Model Complexity (minimize overfitting risk) - **Weight: 1.0 (HIGH)**
+  - JSD Alignment Fidelity (statistical realism with historical data) - **Weight: 1.0 (HIGH)**
+  - Training Time (minimize computational cost) - **Weight: 0.8 (MEDIUM-HIGH)**
+  - Accuracy (maximize model prediction performance) - **Weight: 0.6 (MEDIUM)**
 - **Interactive Pareto Front**: Choose from multiple optimal trade-off solutions
 - **Checkpoint System**: Resume interrupted optimizations with full state preservation
 - **Automatic Integration**: Selected parameters flow seamlessly to training pipeline
@@ -176,25 +177,31 @@ Comprehensive system validation and testing:
 - **Delta features and number group distributions**
 - **Graph-based relationship features**
 
+#### 6. JSD Alignment Fidelity (`src/evaluation_pipeline.py`)
+- **Statistical Metric**: Jensen-Shannon Distance alignment between model and historical data
+- **Objective**: Minimize |Sample_JSD - Historical_JSD| to ensure statistical realism
+- **Integration**: Seamlessly integrated into Pareto Front multi-objective optimization
+- **Benefits**: Ensures models replicate true lottery statistical properties, not just accuracy
+
 ### Advanced Pipeline Components
 
-#### 6. Training Engine (`src/cvae_engine.py`)
+#### 7. Training Engine (`src/cvae_engine.py`)
 - Conservative training with stability checks
 - Error recovery and comprehensive logging
 - Mixed precision handling with overflow detection
 - Gradient management and numerical stability
 
-#### 7. Inference Pipeline (`src/inference_pipeline.py`)
+#### 8. Inference Pipeline (`src/inference_pipeline.py`)
 - Sophisticated number generation using CVAE sampling
 - Meta-learned ensemble weights
 - Confidence-based selection and iterative refinement
 - Local search with CVAE-guided exploration
 
-#### 8. Optimization System (`src/hyperparameter_optimizer.py`)
-- Grid Search, Random Search, and Bayesian Optimization
-- Early stopping and progress tracking
-- Result persistence and performance analysis
-- Automatic configuration application
+#### 9. Multi-Objective Optimization System (`src/optimization/`)
+- **Pareto Front Optimization**: NSGA-II and TPE/Optuna algorithms
+- **Four-Objective Optimization**: Model Complexity, Statistical Fidelity, Training Time, Accuracy
+- **Interactive Selection**: Choose optimal trade-offs from Pareto Front
+- **Checkpoint System**: Resume interrupted optimizations with full state preservation
 
 ---
 

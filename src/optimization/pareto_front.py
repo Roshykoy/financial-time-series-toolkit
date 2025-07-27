@@ -194,6 +194,28 @@ class MultiObjectiveFunction:
                 elif obj_name == 'model_complexity':
                     # Negate for maximization (lower complexity is better)
                     value = -model_complexity
+                elif obj_name == 'jsd_alignment_fidelity':
+                    # Calculate JSD alignment fidelity using trained model
+                    try:
+                        # Import here to avoid circular imports
+                        from ..evaluation_pipeline import CVAEEvaluator
+                        # Get trained models and historical data from training interface
+                        models = self.training_interface.get_trained_models()
+                        historical_data = self.training_interface.get_historical_data()
+                        
+                        if models['cvae'] is not None and historical_data is not None:
+                            evaluator = CVAEEvaluator(
+                                models['cvae'], models['meta_learner'], 
+                                models['feature_engineer'], historical_data, config
+                            )
+                            # JSD alignment returns negative difference (higher negative = better alignment)
+                            value = evaluator.calculate_jsd_alignment_fidelity(num_samples=500)
+                        else:
+                            logger.warning("Trained models or historical data not available for JSD calculation")
+                            value = float('-inf')
+                    except Exception as e:
+                        logger.error(f"JSD alignment fidelity calculation failed: {e}")
+                        value = float('-inf')
                 else:
                     logger.warning(f"Unknown objective: {obj_name}")
                     value = 0.0
@@ -1192,7 +1214,7 @@ def create_pareto_optimizer(
 DEFAULT_MULTI_OBJECTIVE_DEFINITIONS = {
     'accuracy': {
         'direction': 'maximize',
-        'weight': 1.0,
+        'weight': 0.6,
         'description': 'Model prediction accuracy'
     },
     'training_time': {
@@ -1202,7 +1224,12 @@ DEFAULT_MULTI_OBJECTIVE_DEFINITIONS = {
     },
     'model_complexity': {
         'direction': 'minimize',
-        'weight': 0.6,
+        'weight': 1.0,
         'description': 'Model complexity score (0-1)'
+    },
+    'jsd_alignment_fidelity': {
+        'direction': 'maximize',
+        'weight': 1.0,
+        'description': 'Statistical alignment between model-generated and historical data distributions'
     }
 }

@@ -9,6 +9,7 @@ import random
 from collections import defaultdict
 import matplotlib.pyplot as plt
 import seaborn as sns
+from scipy.spatial.distance import jensenshannon
 
 from src.config import CONFIG
 from src.cvae_model import ConditionalVAE
@@ -33,6 +34,7 @@ class CVAEEvaluator:
         self.device = next(cvae_model.parameters()).device
         
         # Initialize scorers for evaluation
+        self._historical_jsd = None  # Cache for historical JSD calculation
         self.temporal_scorer = TemporalScorer(config)
         self.temporal_scorer.fit(df)
         self.i_ching_scorer = IChingScorer(config)
@@ -450,6 +452,165 @@ class CVAEEvaluator:
             'reconstruction': reconstruction_results,
             'latent_space': latent_results
         }
+    
+    def calculate_jsd_alignment_fidelity(self, generated_numbers=None, num_samples=1000):
+        """
+        Calculate JSD alignment fidelity by comparing model vs historical data JSD differences.
+        
+        This measures how well the model replicates the true statistical properties
+        of historical lottery data by comparing Jensen-Shannon distances from uniform baseline.
+        
+        Args:
+            generated_numbers: List of generated lottery combinations from trained model
+            num_samples: Number of samples to generate if generated_numbers not provided
+            
+        Returns:
+            float: JSD alignment fidelity score (lower is better, 0 = perfect alignment)
+                  Returns negative value for Pareto maximization (since we minimize difference)
+        """
+        try:
+            # Calculate historical JSD (cache for efficiency)
+            if self._historical_jsd is None:
+                self._historical_jsd = self._calculate_historical_jsd()
+            
+            # Generate model samples if not provided
+            if generated_numbers is None or len(generated_numbers) == 0:
+                generated_numbers = self._generate_sample_combinations(num_samples)
+            
+            # Calculate sample JSD from model-generated numbers
+            sample_jsd = self._calculate_sample_jsd(generated_numbers)
+            
+            # Calculate absolute difference between sample and historical JSD
+            jsd_difference = abs(sample_jsd - self._historical_jsd)
+            
+            # Return negative difference for Pareto maximization framework
+            # (lower difference = better = higher negative value when maximized)
+            alignment_fidelity = -jsd_difference
+            
+            return alignment_fidelity
+            
+        except Exception as e:
+            print(f"Error calculating JSD alignment fidelity: {e}")
+            return float('-inf')  # Worst possible score for failed evaluation
+    
+    def _calculate_historical_jsd(self):
+        """Calculate JSD between historical lottery data and uniform distribution."""
+        try:
+            # Extract all historical winning numbers from the dataset
+            historical_numbers = []
+            
+            # Check for different column naming conventions
+            number_columns = []
+            if 'Winning Number 1' in self.df.columns:
+                # Format: 'Winning Number 1', '2', '3', '4', '5', '6'
+                number_columns = ['Winning Number 1', '2', '3', '4', '5', '6']
+            elif 'Winning_Num_1' in self.df.columns:
+                # Format: 'Winning_Num_1', 'Winning_Num_2', etc.
+                number_columns = ['Winning_Num_1', 'Winning_Num_2', 'Winning_Num_3', 
+                                'Winning_Num_4', 'Winning_Num_5', 'Winning_Num_6']
+            elif 'N1' in self.df.columns:
+                # Format: 'N1', 'N2', 'N3', 'N4', 'N5', 'N6'
+                number_columns = ['N1', 'N2', 'N3', 'N4', 'N5', 'N6']
+            else:
+                # Try to find columns with 'number' in name
+                number_columns = [col for col in self.df.columns if 'number' in col.lower()]
+                if len(number_columns) < 6:
+                    # Fallback: assume first 6 numeric columns are the winning numbers
+                    numeric_cols = self.df.select_dtypes(include=[np.number]).columns
+                    number_columns = numeric_cols[:6].tolist()
+            
+            for _, row in self.df.iterrows():
+                for col in number_columns:
+                    if col in row and pd.notna(row[col]):
+                        num = int(row[col])
+                        if 1 <= num <= 49:  # Valid Mark Six range
+                            historical_numbers.append(num)
+            
+            return self._calculate_jsd_from_numbers(historical_numbers)
+            
+        except Exception as e:
+            print(f"Error calculating historical JSD: {e}")
+            return 0.0
+    
+    def _calculate_sample_jsd(self, generated_numbers):
+        """Calculate JSD between generated numbers and uniform distribution."""
+        try:
+            # Flatten generated combinations
+            sample_numbers = []
+            for combo in generated_numbers:
+                if isinstance(combo, (list, tuple, np.ndarray)):
+                    sample_numbers.extend([int(x) for x in combo if 1 <= int(x) <= 49])
+            
+            return self._calculate_jsd_from_numbers(sample_numbers)
+            
+        except Exception as e:
+            print(f"Error calculating sample JSD: {e}")
+            return 0.0
+    
+    def _calculate_jsd_from_numbers(self, numbers):
+        """Helper function to calculate JSD from list of numbers."""
+        if not numbers:
+            return 0.0
+            
+        # Create frequency distribution for numbers 1-49
+        number_counts = np.zeros(49)
+        for num in numbers:
+            if 1 <= num <= 49:
+                number_counts[num - 1] += 1
+        
+        # Normalize to probability distribution
+        if np.sum(number_counts) > 0:
+            observed_dist = number_counts / np.sum(number_counts)
+        else:
+            return 0.0
+        
+        # Theoretical uniform distribution for lottery numbers 1-49
+        uniform_dist = np.ones(49) / 49
+        
+        # Calculate and return Jensen-Shannon Distance
+        return jensenshannon(observed_dist, uniform_dist)
+    
+    def _generate_sample_combinations(self, num_samples):
+        """Generate sample combinations using the trained model for JSD analysis."""
+        print(f"Generating {num_samples} sample combinations for JSD analysis...")
+        
+        try:
+            generated_combinations = []
+            with torch.no_grad():
+                # Use recent temporal context
+                current_index = len(self.df)
+                sequence = self.cvae_model.temporal_encoder.prepare_sequence_data(
+                    self.df, current_index
+                ).to(self.device)
+                context, _ = self.cvae_model.temporal_encoder(sequence)
+                
+                # Generate in batches
+                batch_size = 10
+                num_batches = (num_samples + batch_size - 1) // batch_size
+                
+                for batch_idx in tqdm(range(num_batches), desc="Generating JSD samples"):
+                    current_batch_size = min(batch_size, num_samples - len(generated_combinations))
+                    batch_context = context.expand(current_batch_size, -1)
+                    
+                    combinations, _ = self.cvae_model.generate(
+                        batch_context, num_samples=1, temperature=0.8
+                    )
+                    
+                    # Convert to list format
+                    for combo in combinations:
+                        if isinstance(combo, torch.Tensor):
+                            combo = combo.cpu().numpy()
+                        generated_combinations.append(combo.tolist())
+                    
+                    if len(generated_combinations) >= num_samples:
+                        break
+            
+            return generated_combinations[:num_samples]
+            
+        except Exception as e:
+            print(f"Error generating sample combinations: {e}")
+            # Return empty list if generation fails
+            return []
 
 def run_evaluation(use_i_ching=False):
     """
