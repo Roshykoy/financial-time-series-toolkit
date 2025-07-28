@@ -99,10 +99,47 @@ class CVAELossComputer:
         
         # Add auxiliary loss to prevent posterior collapse
         # Encourage diversity in latent representations
-        mu_var = mu.var(dim=0).mean()  # Variance across batch dimension
-        diversity_bonus = -torch.log(mu_var + eps) * 0.01  # Small penalty for low diversity
+        batch_size = mu.size(0)
+        if batch_size > 1:
+            # Calculate variance only if we have more than one sample
+            mu_var = mu.var(dim=0, unbiased=False).mean()  # Use biased variance to avoid NaN
+            if torch.isnan(mu_var) or torch.isinf(mu_var) or mu_var <= 0:
+                # Failed variance calculation, use fallback
+                diversity_bonus = torch.tensor(0.0, device=mu.device, dtype=mu.dtype)
+            else:
+                diversity_bonus = -torch.log(mu_var + eps) * 0.01  # Small penalty for low diversity
+        else:
+            # Single sample batch - no variance calculation possible
+            diversity_bonus = torch.tensor(0.0, device=mu.device, dtype=mu.dtype)
         
         return kl_clamped + diversity_bonus
+    
+    def get_kl_beta(self, epoch, batch_idx, num_batches):
+        """
+        Get KL annealing beta value for current training step.
+        
+        Args:
+            epoch: Current epoch
+            batch_idx: Current batch index
+            num_batches: Total batches per epoch
+            
+        Returns:
+            Beta value for KL loss weighting
+        """
+        # Get annealing parameters from config
+        annealing_epochs = self.config.get('kl_annealing_epochs', 10)
+        min_beta = self.config.get('kl_min_beta', 0.0)
+        max_beta = self.config.get('kl_max_beta', 1.0)
+        
+        # Calculate current step
+        current_step = epoch + batch_idx / num_batches
+        
+        # Linear annealing
+        if current_step >= annealing_epochs:
+            return max_beta
+        else:
+            progress = current_step / annealing_epochs
+            return min_beta + (max_beta - min_beta) * progress
     
     def hard_contrastive_loss(self, model, positive_combinations, negative_combinations, 
                             pair_counts, temporal_sequences, current_indices):
@@ -371,11 +408,25 @@ def train_one_epoch_cvae(model, meta_learner, train_loader, optimizers, device, 
             
             epoch_losses['meta_loss'].append(meta_loss.item())
         
+        # Check for NaN/inf losses before recording
+        recon_val = recon_loss.item()
+        kl_val = kl_loss.item()
+        contrastive_val = contrastive_loss.item()
+        total_val = cvae_loss.item()
+        
+        # Skip recording if any loss is NaN/inf
+        if not (np.isfinite(recon_val) and np.isfinite(kl_val) and 
+                np.isfinite(contrastive_val) and np.isfinite(total_val)):
+            print(f"⚠️  Skipping batch {batch_idx} due to NaN/inf losses: "
+                  f"recon={recon_val:.4f}, kl={kl_val:.4f}, "
+                  f"contrastive={contrastive_val:.4f}, total={total_val:.4f}")
+            continue
+        
         # Record losses
-        epoch_losses['reconstruction_loss'].append(recon_loss.item())
-        epoch_losses['kl_loss'].append(kl_loss.item())
-        epoch_losses['contrastive_loss'].append(contrastive_loss.item())
-        epoch_losses['total_cvae_loss'].append(cvae_loss.item())
+        epoch_losses['reconstruction_loss'].append(recon_val)
+        epoch_losses['kl_loss'].append(kl_val)
+        epoch_losses['contrastive_loss'].append(contrastive_val)
+        epoch_losses['total_cvae_loss'].append(total_val)
         
         # Logging
         if batch_idx % config['log_interval'] == 0:
@@ -384,8 +435,15 @@ def train_one_epoch_cvae(model, meta_learner, train_loader, optimizers, device, 
                   f'KL: {kl_loss.item():.4f}, '
                   f'Contrastive: {contrastive_loss.item():.4f}')
     
-    # Return average losses
-    avg_losses = {key: np.mean(values) for key, values in epoch_losses.items()}
+    # Return average losses with safe handling of empty lists
+    avg_losses = {}
+    for key, values in epoch_losses.items():
+        if len(values) > 0:
+            avg_losses[key] = np.mean(values)
+        else:
+            # If no valid losses recorded, return NaN to signal failure
+            avg_losses[key] = float('nan')
+    
     return avg_losses
 
 def evaluate_cvae(model, meta_learner, val_loader, device, config):

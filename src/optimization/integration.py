@@ -242,11 +242,16 @@ class ModelTrainingInterface:
             # Store trained models for JSD calculation
             self._last_cvae_model = cvae_model
             self._last_meta_learner = meta_learner
-            self._last_feature_engineer = getattr(self, '_feature_engineer', None)
+            self._last_feature_engineer = self.feature_engineer  # Use the feature_engineer instance
             
             # Store historical data for JSD calculation
-            if hasattr(self, '_data_cache') and 'train_df' in self._data_cache:
-                self._historical_df = self._data_cache['train_df']
+            try:
+                # Load the historical data directly from file
+                df = self._load_data()
+                self._historical_df = df
+            except Exception as e:
+                logger.warning(f"Could not load historical data for JSD calculation: {e}")
+                self._historical_df = None
             
             # Cleanup
             self._cleanup_resources()
@@ -390,7 +395,7 @@ class ModelTrainingInterface:
             },
             'batch_size': {
                 'type': 'choice',
-                'choices': [4, 8, 16, 32]
+                'choices': [8, 16, 32]  # Minimum 8 to avoid variance calculation issues
             },
             'epochs': {
                 'type': 'int',
@@ -436,7 +441,7 @@ class ModelTrainingInterface:
             # Data parameters
             'negative_samples': {
                 'type': 'choice',
-                'choices': [4, 8, 16, 32]
+                'choices': [8, 16, 32]  # Minimum 8 to avoid variance calculation issues
             }
         }
     

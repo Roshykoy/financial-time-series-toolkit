@@ -30,7 +30,7 @@ class SearchSpaceConfig:
     
     batch_size: Dict[str, Any] = field(default_factory=lambda: {
         "type": "choice",
-        "choices": [4, 8, 16, 32, 64]
+        "choices": [8, 16, 32, 64]  # Minimum 8 to avoid variance calculation issues
     })
     
     hidden_size: Dict[str, Any] = field(default_factory=lambda: {
@@ -84,7 +84,7 @@ class SearchSpaceConfig:
     
     negative_samples: Dict[str, Any] = field(default_factory=lambda: {
         "type": "choice",
-        "choices": [4, 8, 16, 32]
+        "choices": [8, 16, 32]  # Minimum 8 to avoid variance calculation issues
     })
 
 
