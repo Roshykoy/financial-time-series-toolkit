@@ -20,56 +20,101 @@ class CVAELossComputer:
         
     def reconstruction_loss(self, reconstruction_logits, target_combinations):
         """
-        Computes reconstruction loss for generated vs actual combinations.
+        Computes reconstruction loss with improved numerical stability and debugging.
         
         Args:
             reconstruction_logits: [batch_size, 6, num_numbers]
             target_combinations: [batch_size, 6] - 1-based indices
         
         Returns:
-            loss: Reconstruction loss
+            loss: Reconstruction loss with debugging info
         """
         batch_size = target_combinations.size(0)
         
         # Convert to 0-based indices for cross-entropy
         targets_zero_based = target_combinations - 1
         
-        # Compute cross-entropy loss for each position
-        total_loss = 0
+        # Validate target indices
+        if torch.any(targets_zero_based < 0) or torch.any(targets_zero_based >= reconstruction_logits.size(-1)):
+            print(f"⚠️  Invalid target indices detected: min={targets_zero_based.min()}, max={targets_zero_based.max()}")
+            # Clamp to valid range
+            targets_zero_based = torch.clamp(targets_zero_based, 0, reconstruction_logits.size(-1) - 1)
+        
+        # Compute cross-entropy loss for each position with better error handling
+        position_losses = []
         for pos in range(6):
             pos_logits = reconstruction_logits[:, pos, :]  # [batch_size, num_numbers]
             pos_targets = targets_zero_based[:, pos]      # [batch_size]
-            pos_loss = F.cross_entropy(pos_logits, pos_targets, reduction='mean')
-            total_loss += pos_loss
+            
+            try:
+                pos_loss = F.cross_entropy(pos_logits, pos_targets, reduction='mean')
+                
+                # Check for problematic loss values
+                if torch.isnan(pos_loss) or torch.isinf(pos_loss):
+                    print(f"⚠️  NaN/Inf in reconstruction loss at position {pos}")
+                    pos_loss = torch.tensor(1.0, device=pos_logits.device, dtype=pos_logits.dtype)
+                
+                position_losses.append(pos_loss)
+                
+            except Exception as e:
+                print(f"⚠️  Error computing reconstruction loss at position {pos}: {e}")
+                position_losses.append(torch.tensor(1.0, device=reconstruction_logits.device, dtype=reconstruction_logits.dtype))
         
-        return total_loss / 6  # Average over positions
+        total_loss = sum(position_losses) / len(position_losses)
+        
+        # Debug: check if reconstruction loss is exactly zero (perfect memorization)
+        if total_loss.item() == 0.0:
+            print("⚠️  Reconstruction loss is exactly zero - possible overfitting")
+        
+        return total_loss
     
     def kl_divergence_loss(self, mu, logvar, mu_prior, logvar_prior):
         """
-        Computes KL divergence between posterior and context-dependent prior.
+        Computes KL divergence between posterior and context-dependent prior with numerical stability.
         
         KL(q(z|x,c) || p(z|c)) where c is temporal context
         """
-        # Standard KL divergence formula between two Gaussians
+        # Clamp logvar values to prevent numerical issues
+        logvar = torch.clamp(logvar, min=-10, max=10)
+        logvar_prior = torch.clamp(logvar_prior, min=-10, max=10)
+        
+        # Standard KL divergence formula between two Gaussians with stability improvements
+        eps = self.config.get('numerical_stability_eps', 1e-8)
+        
         var_ratio = torch.exp(logvar - logvar_prior)
-        t1 = (mu - mu_prior).pow(2) / torch.exp(logvar_prior)
+        t1 = (mu - mu_prior).pow(2) / (torch.exp(logvar_prior) + eps)
         t2 = var_ratio
         t3 = logvar_prior - logvar
         kl_div = 0.5 * torch.sum(t1 + t2 + t3 - 1, dim=-1)
         
-        return kl_div.mean()
+        # Check for problematic KL values
+        kl_mean = kl_div.mean()
+        if torch.isnan(kl_mean) or torch.isinf(kl_mean):
+            print("⚠️  NaN/Inf in KL divergence, using fallback")
+            return torch.tensor(0.01, device=mu.device, dtype=mu.dtype)  # Small positive fallback
+        
+        # Apply soft constraint to prevent KL collapse
+        kl_min = self.config.get('kl_min_value', 1e-6)
+        kl_clamped = torch.clamp(kl_mean, min=kl_min)
+        
+        # Add auxiliary loss to prevent posterior collapse
+        # Encourage diversity in latent representations
+        mu_var = mu.var(dim=0).mean()  # Variance across batch dimension
+        diversity_bonus = -torch.log(mu_var + eps) * 0.01  # Small penalty for low diversity
+        
+        return kl_clamped + diversity_bonus
     
     def hard_contrastive_loss(self, model, positive_combinations, negative_combinations, 
                             pair_counts, temporal_sequences, current_indices):
         """
-        Computes contrastive loss with hard negative mining.
+        Computes contrastive loss with hard negative mining and improved numerical stability.
         
         Args:
             model: CVAE model
             positive_combinations: Real winning combinations
             negative_combinations: Pool of negative samples
             pair_counts: Historical pair frequencies
-            df: Historical data for temporal context
+            temporal_sequences: Pre-computed temporal sequences
             current_indices: Current draw indices
         """
         batch_size = len(positive_combinations)
@@ -99,16 +144,28 @@ class CVAELossComputer:
         
         similarities = torch.bmm(pos_norm, neg_norm.transpose(1, 2)).squeeze(1)  # [batch, num_neg]
         
-        # InfoNCE-style loss
+        # InfoNCE-style loss with numerical stability improvements
         temperature = self.config['contrastive_temperature']
-        exp_sim = torch.exp(similarities / temperature)
         
-        # Positive similarity (self-similarity, should be high)
+        # Clamp similarities to prevent extreme values
+        similarities = torch.clamp(similarities, min=-10, max=10)
+        
+        # Use log-sum-exp trick for numerical stability
+        max_sim = similarities.max(dim=-1, keepdim=True)[0]
+        exp_sim = torch.exp((similarities - max_sim) / temperature)
+        
+        # Positive similarity (self-similarity, should be high) 
         pos_sim = torch.ones(batch_size, device=device)
-        exp_pos = torch.exp(pos_sim / temperature)
+        exp_pos = torch.exp((pos_sim - max_sim.squeeze()) / temperature)
         
-        # Contrastive loss
-        contrastive_loss = -torch.log(exp_pos / (exp_pos + exp_sim.sum(dim=-1)))
+        # Contrastive loss with numerical stability
+        denominator = exp_pos + exp_sim.sum(dim=-1)
+        contrastive_loss = -torch.log(exp_pos / (denominator + self.config.get('numerical_stability_eps', 1e-8)))
+        
+        # Check for problematic values
+        if torch.isnan(contrastive_loss).any() or torch.isinf(contrastive_loss).any():
+            print("⚠️  NaN/Inf in contrastive loss, using fallback")
+            return torch.tensor(0.1, device=device, dtype=similarities.dtype)  # Small fallback value
         
         return contrastive_loss.mean()
     
@@ -146,16 +203,22 @@ class CVAELossComputer:
                 mu_neg_cand, logvar_neg_cand = model.encode(candidate_negatives, pair_counts)
                 z_neg_cand = model.reparameterize(mu_neg_cand, logvar_neg_cand)
                 
-                # Compute similarities to positive
+                # Compute similarities to positive with numerical stability
                 pos_z = z_pos[i:i+1]  # [1, latent_dim]
                 similarities = F.cosine_similarity(pos_z, z_neg_cand, dim=-1)
                 
-                # Select hardest negatives (most similar to positive)
-                if len(candidate_negatives) >= num_hard:
-                    _, hard_indices = torch.topk(similarities, num_hard, largest=True)
-                    hard_samples = [candidate_negatives[idx] for idx in hard_indices.cpu().numpy()]
+                # Check for NaN/Inf similarities
+                if torch.isnan(similarities).any() or torch.isinf(similarities).any():
+                    print(f"⚠️  Invalid similarities in hard negative mining for batch {i}")
+                    # Fall back to random sampling
+                    hard_samples = random.sample(candidate_negatives, min(num_hard, len(candidate_negatives)))
                 else:
-                    hard_samples = candidate_negatives
+                    # Select hardest negatives (most similar to positive)
+                    if len(candidate_negatives) >= num_hard:
+                        _, hard_indices = torch.topk(similarities, num_hard, largest=True)
+                        hard_samples = [candidate_negatives[idx] for idx in hard_indices.cpu().numpy()]
+                    else:
+                        hard_samples = candidate_negatives
                 
                 # Add random negatives
                 remaining_candidates = [neg for neg in candidate_negatives if neg not in hard_samples]

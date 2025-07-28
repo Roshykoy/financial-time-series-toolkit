@@ -21,8 +21,9 @@ from src.feature_engineering import FeatureEngineer
 from src.temporal_scorer import TemporalScorer
 from src.i_ching_scorer import IChingScorer
 
-# Add these imports at the top of src/training_pipeline.py
+# Enhanced imports for debugging and monitoring
 from src.debug_utils import ModelDebugger, debug_training_step, quick_model_test
+from src.loss_monitor import LossMonitor
 
 # Add this function after the existing imports
 def debug_training_setup(cvae_model, meta_learner, config, device):
@@ -257,7 +258,10 @@ def run_training():
     else:
         ema_cvae = ema_meta = None
     
-    # Training history
+    # Enhanced training monitoring
+    loss_monitor = LossMonitor(CONFIG, save_dir="outputs/loss_monitoring")
+    
+    # Training history (keep for compatibility)
     train_history = {
         'reconstruction_loss': [],
         'kl_loss': [],
@@ -283,10 +287,9 @@ def run_training():
         print(f"\nEpoch {epoch + 1}/{CONFIG['epochs']}")
         print("-" * 40)
         
-        # Training phase
-        # Note: We need to modify the training function to work with our data loader
+        # Training phase with enhanced monitoring
         epoch_train_losses = train_one_epoch_cvae_modified(
-            cvae_model, meta_learner, train_loader, optimizers, device, CONFIG, epoch, df, scaler
+            cvae_model, meta_learner, train_loader, optimizers, device, CONFIG, epoch, df, scaler, loss_monitor
         )
         
         # Validation phase
@@ -312,12 +315,27 @@ def run_training():
             if key in val_history:
                 val_history[key].append(value)
         
-        # Print epoch summary
+        # Enhanced epoch reporting with loss monitor
         print(f"Train - Recon: {epoch_train_losses['reconstruction_loss']:.4f}, "
-              f"KL: {epoch_train_losses['kl_loss']:.4f}, "
+              f"KL: {epoch_train_losses['kl_loss']:.6f}, "
               f"Contrastive: {epoch_train_losses['contrastive_loss']:.4f}")
         print(f"Val   - Recon: {epoch_val_losses['reconstruction_loss']:.4f}, "
-              f"KL: {epoch_val_losses['kl_loss']:.4f}")
+              f"KL: {epoch_val_losses['kl_loss']:.6f}")
+        
+        # Generate comprehensive loss analysis
+        loss_monitor.print_epoch_summary(epoch)
+        diagnostic_report = loss_monitor.generate_diagnostic_report(epoch)
+        
+        # Create loss plots
+        if CONFIG.get('save_loss_plots', True):
+            loss_monitor.create_loss_plots(epoch, save_plots=True)
+        
+        # Print recommendations if any
+        if diagnostic_report['recommendations']:
+            print(f"\n💡 Training Recommendations:")
+            for rec in diagnostic_report['recommendations']:
+                severity_emoji = "🔴" if rec['severity'] == 'high' else "🟡"
+                print(f"   {severity_emoji} {rec['issue']}: {rec['suggestion']}")
         
         # Save best model
         current_val_loss = epoch_val_losses['reconstruction_loss'] + epoch_val_losses['kl_loss']
@@ -381,9 +399,13 @@ def run_training():
         print("Generating sample combinations...")
         generate_sample_combinations(cvae_model, meta_learner, df, feature_engineer, CONFIG)
     
+    # Save final monitoring state
+    loss_monitor.save_monitoring_state()
+    
     print(f"Models saved to: {CONFIG['model_save_path']}")
     print(f"Meta-learner saved to: {CONFIG['meta_learner_save_path']}")
     print(f"Feature engineer saved to: {CONFIG['feature_engineer_path']}")
+    print(f"Loss monitoring data saved to: outputs/loss_monitoring/")
 
 # Modified training functions to work with our data structure
 def train_one_epoch_cvae_debug(model, meta_learner, train_loader, optimizers, device, config, epoch, df, scaler=None):
@@ -517,9 +539,9 @@ def train_one_epoch_cvae_debug(model, meta_learner, train_loader, optimizers, de
 # Replace the train_one_epoch_cvae_modified function in src/training_pipeline.py
 # with this fixed version that handles mixed precision overflow
 
-def train_one_epoch_cvae_modified(model, meta_learner, train_loader, optimizers, device, config, epoch, df, scaler=None):
+def train_one_epoch_cvae_modified(model, meta_learner, train_loader, optimizers, device, config, epoch, df, scaler=None, loss_monitor=None):
     """
-    Enhanced training function for CVAE with meta-learner - FIXED for mixed precision overflow.
+    Enhanced training function for CVAE with meta-learner - IMPROVED overflow handling and debugging.
     
     Args:
         model: CVAE model
@@ -533,22 +555,27 @@ def train_one_epoch_cvae_modified(model, meta_learner, train_loader, optimizers,
         scaler: Mixed precision scaler (optional)
     
     Returns:
-        epoch_losses: Dictionary of average losses
+        epoch_losses: Dictionary of average losses with debugging info
     """
     from src.cvae_engine import CVAELossComputer
     
     model.train()
     meta_learner.train()
     
-    # Initialize loss computer
+    # Initialize loss computer with improved debugging
     loss_computer = CVAELossComputer(config)
     epoch_losses = defaultdict(list)
     
     progress_bar = tqdm(train_loader, desc=f"Training Epoch {epoch+1}")
     
-    # Track mixed precision overflow occurrences
-    overflow_count = 0
-    successful_batches = 0
+    # Track training statistics for debugging
+    batch_stats = {
+        'processed_batches': 0,
+        'skipped_batches': 0,
+        'overflow_batches': 0,
+        'successful_backprops': 0,
+        'loss_components': defaultdict(list)
+    }
     
     for batch_idx, batch_dict in enumerate(progress_bar):
         try:
@@ -570,127 +597,122 @@ def train_one_epoch_cvae_modified(model, meta_learner, train_loader, optimizers,
             for optimizer in optimizers.values():
                 optimizer.zero_grad()
             
-            # Forward pass with mixed precision handling
-            if scaler:
-                # Mixed precision training with overflow detection
-                with torch.amp.autocast('cuda', dtype=torch.float16):
-                    try:
+            # Forward pass with improved error handling
+            try:
+                if scaler and config.get('use_mixed_precision', False):
+                    # Mixed precision training with better overflow handling
+                    with torch.amp.autocast('cuda', dtype=torch.float16):
                         reconstruction_logits, mu, logvar, mu_prior, logvar_prior, temporal_context = model(
                             positive_combinations, pair_counts, temporal_sequences, current_indices
                         )
-                        
-                        # Check for overflow in model outputs BEFORE loss computation
-                        outputs_to_check = [reconstruction_logits, mu, logvar, mu_prior, logvar_prior, temporal_context]
-                        has_overflow = False
-                        
-                        for i, output in enumerate(outputs_to_check):
-                            if torch.isinf(output).any() or torch.isnan(output).any():
-                                has_overflow = True
-                                break
-                            # Check for values too large for fp16
-                            if output.dtype == torch.float16 and output.abs().max() > 65504:  # fp16 max value
-                                has_overflow = True
-                                break
-                        
-                        if has_overflow:
-                            raise OverflowError("Model output overflow detected")
-                        
-                        # Convert combinations to tensor for loss computation
-                        target_tensor = torch.tensor(positive_combinations, device=device)
-                        
-                        # Compute losses with overflow checking
-                        recon_loss = loss_computer.reconstruction_loss(reconstruction_logits, target_tensor)
-                        kl_loss = loss_computer.kl_divergence_loss(mu, logvar, mu_prior, logvar_prior)
-                        contrastive_loss = loss_computer.hard_contrastive_loss(
-                            model, positive_combinations, negative_pool, 
-                            pair_counts, df, current_indices
-                        )
-                        
-                        # Check losses for overflow
-                        losses_to_check = [recon_loss, kl_loss, contrastive_loss]
-                        for loss_tensor in losses_to_check:
-                            if torch.isinf(loss_tensor).any() or torch.isnan(loss_tensor).any():
-                                raise OverflowError("Loss overflow detected")
-                        
-                        # Total CVAE loss with clamping to prevent overflow
-                        cvae_loss = (config['reconstruction_weight'] * torch.clamp(recon_loss, max=100) + 
-                                    config['kl_weight'] * torch.clamp(kl_loss, max=50) + 
-                                    config['contrastive_weight'] * torch.clamp(contrastive_loss, max=100))
-                        
-                        # Final overflow check
-                        if torch.isinf(cvae_loss).any() or torch.isnan(cvae_loss).any():
-                            raise OverflowError("Final loss overflow")
-                        
-                    except (OverflowError, RuntimeError) as overflow_error:
-                        if "overflow" in str(overflow_error).lower() or "half" in str(overflow_error).lower():
-                            overflow_count += 1
-                            if overflow_count <= 5:  # Only warn for first few overflows
-                                print(f"⚠️  Mixed precision overflow in batch {batch_idx} (#{overflow_count})")
-                            
-                            # Skip this batch gracefully
-                            continue
-                        else:
-                            raise  # Re-raise non-overflow errors
-                
-                # Backward pass with mixed precision
-                try:
-                    scaler.scale(cvae_loss).backward(retain_graph=True)
-                    
-                    # Check if scaler detected overflow
-                    scaler.unscale_(optimizers['cvae'])
-                    
-                    # Check gradients for overflow after unscaling
-                    grad_overflow = False
-                    for param in model.parameters():
-                        if param.grad is not None:
-                            if torch.isinf(param.grad).any() or torch.isnan(param.grad).any():
-                                grad_overflow = True
-                                break
-                    
-                    if grad_overflow:
-                        print(f"⚠️  Gradient overflow detected in batch {batch_idx}")
-                        continue
-                    
-                    # Gradient clipping
-                    torch.nn.utils.clip_grad_norm_(model.parameters(), config['gradient_clip_norm'])
-                    
-                    # Optimizer step
-                    scaler.step(optimizers['cvae'])
-                    scaler.update()
-                    
-                except RuntimeError as grad_error:
-                    if "overflow" in str(grad_error).lower():
-                        overflow_count += 1
-                        continue
-                    else:
-                        raise
-                
-            else:
-                # Standard precision training (safer)
-                reconstruction_logits, mu, logvar, mu_prior, logvar_prior, temporal_context = model(
-                    positive_combinations, pair_counts, temporal_sequences, current_indices
-                )
+                else:
+                    # Standard precision training (safer)
+                    reconstruction_logits, mu, logvar, mu_prior, logvar_prior, temporal_context = model(
+                        positive_combinations, pair_counts, temporal_sequences, current_indices
+                    )
                 
                 # Convert combinations to tensor for loss computation
                 target_tensor = torch.tensor(positive_combinations, device=device)
                 
-                # Compute losses
+                # Compute losses with detailed monitoring and KL annealing
                 recon_loss = loss_computer.reconstruction_loss(reconstruction_logits, target_tensor)
-                kl_loss = loss_computer.kl_divergence_loss(mu, logvar, mu_prior, logvar_prior)
+                
+                # Ensure all variables are defined before KL computation
+                if 'mu' in locals() and 'logvar' in locals() and 'mu_prior' in locals() and 'logvar_prior' in locals():
+                    kl_loss_raw = loss_computer.kl_divergence_loss(mu, logvar, mu_prior, logvar_prior)
+                else:
+                    print(f"⚠️  Missing KL variables in batch {batch_idx}")
+                    kl_loss_raw = torch.tensor(0.01, device=device, requires_grad=True)
+                
                 contrastive_loss = loss_computer.hard_contrastive_loss(
                     model, positive_combinations, negative_pool, 
-                    pair_counts, df, current_indices
+                    pair_counts, temporal_sequences, current_indices
                 )
                 
-                # Total CVAE loss
-                cvae_loss = (config['reconstruction_weight'] * recon_loss + 
-                            config['kl_weight'] * kl_loss + 
-                            config['contrastive_weight'] * contrastive_loss)
+                # Apply KL annealing
+                kl_beta = loss_computer.get_kl_beta(epoch, batch_idx, len(train_loader))
+                kl_loss = kl_beta * kl_loss_raw
                 
-                # Backward pass
-                cvae_loss.backward(retain_graph=True)
-                torch.nn.utils.clip_grad_norm_(model.parameters(), config['gradient_clip_norm'])
-                optimizers['cvae'].step()
+                # Update model's beta for monitoring
+                if hasattr(model, 'current_beta'):
+                    model.current_beta = kl_beta
+                
+                # Store individual loss components for debugging
+                batch_stats['loss_components']['reconstruction'].append(recon_loss.item())
+                batch_stats['loss_components']['kl_divergence'].append(kl_loss.item())
+                batch_stats['loss_components']['kl_raw'].append(kl_loss_raw.item())
+                batch_stats['loss_components']['kl_beta'].append(kl_beta)
+                batch_stats['loss_components']['contrastive'].append(contrastive_loss.item())
+                
+                # Check for problematic loss values (but don't skip)
+                if recon_loss.item() == 0.0:
+                    print(f"⚠️  Zero reconstruction loss in batch {batch_idx}")
+                if kl_loss_raw.item() < 1e-6:
+                    print(f"⚠️  Near-zero KL divergence (raw) in batch {batch_idx}: {kl_loss_raw.item():.8f}, beta: {kl_beta:.4f}")
+                
+                # Log KL annealing progress occasionally
+                if batch_idx % 100 == 0 and kl_beta < 1.0:
+                    print(f"KL annealing: β={kl_beta:.4f}, raw_KL={kl_loss_raw.item():.6f}, scaled_KL={kl_loss.item():.6f}")
+                
+                # Total CVAE loss WITHOUT aggressive clamping - only prevent extreme values
+                max_reasonable_loss = 1000.0  # Much higher threshold
+                recon_loss_safe = torch.clamp(recon_loss, max=max_reasonable_loss)
+                kl_loss_safe = torch.clamp(kl_loss, max=max_reasonable_loss) 
+                contrastive_loss_safe = torch.clamp(contrastive_loss, max=max_reasonable_loss)
+                
+                cvae_loss = (config['reconstruction_weight'] * recon_loss_safe + 
+                            config['kl_weight'] * kl_loss_safe + 
+                            config['contrastive_weight'] * contrastive_loss_safe)
+                
+                # Check for NaN/Inf but don't skip batch - use fallback
+                if torch.isnan(cvae_loss).any() or torch.isinf(cvae_loss).any():
+                    print(f"⚠️  NaN/Inf loss detected in batch {batch_idx}, using fallback loss")
+                    cvae_loss = torch.tensor(1.0, device=device, requires_grad=True)
+                    batch_stats['skipped_batches'] += 1
+                
+            except Exception as forward_error:
+                print(f"❌ Forward pass error in batch {batch_idx}: {forward_error}")
+                batch_stats['skipped_batches'] += 1
+                continue
+                
+            # Backward pass with improved error handling
+            try:
+                if scaler and config.get('use_mixed_precision', False):
+                    # Mixed precision backward pass
+                    scaler.scale(cvae_loss).backward(retain_graph=True)
+                    scaler.unscale_(optimizers['cvae'])
+                    
+                    # Check gradients and clip
+                    total_grad_norm = torch.nn.utils.clip_grad_norm_(model.parameters(), config['gradient_clip_norm'])
+                    
+                    # Log gradient information for debugging
+                    if batch_idx == 0:  # Log first batch of each epoch
+                        print(f"Gradient norm: {total_grad_norm:.6f}")
+                    
+                    scaler.step(optimizers['cvae'])
+                    scaler.update()
+                else:
+                    # Standard precision backward pass
+                    cvae_loss.backward(retain_graph=True)
+                    
+                    # Gradient clipping with monitoring
+                    total_grad_norm = torch.nn.utils.clip_grad_norm_(model.parameters(), config['gradient_clip_norm'])
+                    
+                    # Log gradient information for debugging
+                    if batch_idx == 0:  # Log first batch of each epoch
+                        print(f"Gradient norm: {total_grad_norm:.6f}")
+                    
+                    optimizers['cvae'].step()
+                
+                batch_stats['successful_backprops'] += 1
+                
+            except Exception as backward_error:
+                print(f"❌ Backward pass error in batch {batch_idx}: {backward_error}")
+                batch_stats['skipped_batches'] += 1
+                # Zero gradients and continue
+                for optimizer in optimizers.values():
+                    optimizer.zero_grad()
+                continue
             
             # Meta-learner training (every few batches to reduce overhead)
             if batch_idx % config.get('meta_learner_frequency', 5) == 0:
@@ -721,27 +743,50 @@ def train_one_epoch_cvae_modified(model, meta_learner, train_loader, optimizers,
                     
                     epoch_losses['meta_loss'].append(meta_loss.item())
                     
+                    # Add meta loss to monitor
+                    if loss_monitor:
+                        loss_monitor.log_batch_losses(epoch, batch_idx, {'meta_learner': meta_loss})
+                    
                 except Exception as meta_e:
                     # Meta-learner training is optional, continue without it
                     if batch_idx <= 5:  # Only warn for first few batches
                         print(f"Warning: Meta-learner training failed for batch {batch_idx}: {meta_e}")
             
-            # Record losses
+            # Record losses with enhanced monitoring
             epoch_losses['reconstruction_loss'].append(recon_loss.item())
             epoch_losses['kl_loss'].append(kl_loss.item()) 
             epoch_losses['contrastive_loss'].append(contrastive_loss.item())
             epoch_losses['total_cvae_loss'].append(cvae_loss.item())
             
-            successful_batches += 1
+            # Log to loss monitor if available
+            if loss_monitor:
+                loss_dict = {
+                    'reconstruction': recon_loss,
+                    'kl_divergence': kl_loss,
+                    'kl_raw': kl_loss_raw,
+                    'kl_beta': kl_beta,
+                    'contrastive': contrastive_loss,
+                    'total': cvae_loss
+                }
+                
+                # Add gradient information if available
+                gradient_dict = None
+                if 'total_grad_norm' in locals():
+                    gradient_dict = {'total_grad_norm': total_grad_norm}
+                
+                loss_monitor.log_batch_losses(epoch, batch_idx, loss_dict, gradient_dict)
             
-            # Update progress bar
+            batch_stats['processed_batches'] += 1
+            
+            # Update progress bar with detailed stats
             current_loss = cvae_loss.item()
             progress_bar.set_postfix({
                 'Loss': f'{current_loss:.4f}',
                 'Recon': f'{recon_loss.item():.4f}',
-                'KL': f'{kl_loss.item():.4f}',
-                'Contrastive': f'{contrastive_loss.item():.4f}',
-                'Success': f'{successful_batches}/{batch_idx+1}'
+                'KL': f'{kl_loss.item():.6f}',  # More precision for KL
+                'Cont': f'{contrastive_loss.item():.4f}',
+                'Proc': f"{batch_stats['processed_batches']}/{batch_idx+1}",
+                'Skip': f"{batch_stats['skipped_batches']}"
             })
             
             # Check for loss explosion
@@ -769,12 +814,28 @@ def train_one_epoch_cvae_modified(model, meta_learner, train_loader, optimizers,
                 else:
                     continue
     
-    # Print overflow summary
-    if overflow_count > 0:
-        print(f"\n⚠️  Mixed precision overflow occurred in {overflow_count} batches")
-        print(f"✅ Successfully processed {successful_batches}/{len(train_loader)} batches")
-        if overflow_count > len(train_loader) * 0.5:
-            print("💡 Consider disabling mixed precision training (set use_mixed_precision=False)")
+    # Print detailed training summary
+    total_batches = len(train_loader)
+    print(f"\n📊 Training Epoch {epoch+1} Summary:")
+    print(f"   Processed: {batch_stats['processed_batches']}/{total_batches} batches")
+    print(f"   Skipped: {batch_stats['skipped_batches']} batches")
+    print(f"   Successful backprops: {batch_stats['successful_backprops']}")
+    
+    # Print loss component statistics
+    if batch_stats['loss_components']['reconstruction']:
+        avg_recon = np.mean(batch_stats['loss_components']['reconstruction'])
+        avg_kl = np.mean(batch_stats['loss_components']['kl_divergence']) 
+        avg_cont = np.mean(batch_stats['loss_components']['contrastive'])
+        print(f"   Avg losses: Recon={avg_recon:.4f}, KL={avg_kl:.6f}, Cont={avg_cont:.4f}")
+        
+        # Check for concerning patterns
+        zero_recon_count = sum(1 for x in batch_stats['loss_components']['reconstruction'] if x == 0.0)
+        if zero_recon_count > 0:
+            print(f"   ⚠️  {zero_recon_count} batches had zero reconstruction loss")
+        
+        near_zero_kl_count = sum(1 for x in batch_stats['loss_components']['kl_divergence'] if x < 1e-6)
+        if near_zero_kl_count > 0:
+            print(f"   ⚠️  {near_zero_kl_count} batches had near-zero KL divergence")
     
     # CRITICAL FIX: Ensure all required keys exist even if training failed
     required_keys = ['reconstruction_loss', 'kl_loss', 'contrastive_loss', 'total_cvae_loss', 'meta_loss']

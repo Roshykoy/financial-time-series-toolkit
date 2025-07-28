@@ -158,12 +158,19 @@ class GenerativeDecoder(nn.Module):
 class ConditionalVAE(nn.Module):
     """
     Main Conditional Variational Autoencoder for lottery number generation.
+    Enhanced with KL collapse prevention and improved numerical stability.
     """
     
     def __init__(self, config):
         super().__init__()
         self.config = config
         self.latent_dim = config['latent_dim']
+        
+        # KL annealing parameters
+        self.kl_annealing_epochs = config.get('kl_annealing_epochs', 10)
+        self.kl_min_beta = config.get('kl_min_beta', 0.0)
+        self.kl_max_beta = config.get('kl_max_beta', 1.0)
+        self.current_beta = self.kl_min_beta
         
         # Encoder components
         self.graph_encoder = NumberGraphEncoder(config)
@@ -202,15 +209,28 @@ class ConditionalVAE(nn.Module):
             return torch.stack(contexts), torch.stack(trend_features)
     
     def reparameterize(self, mu, logvar):
-        """Reparameterization trick for VAE."""
+        """Reparameterization trick for VAE with improved numerical stability."""
+        # Clamp logvar to prevent numerical issues
+        logvar = torch.clamp(logvar, min=-10, max=10)
         std = torch.exp(0.5 * logvar)
-        eps = torch.randn_like(std)
-        return mu + eps * std
+        
+        # Add small epsilon for numerical stability
+        eps = torch.randn_like(std) 
+        return mu + eps * (std + self.config.get('numerical_stability_eps', 1e-8))
     
     def get_prior_params(self, context):
-        """Get context-dependent prior parameters."""
+        """Get context-dependent prior parameters with regularization."""
         prior_params = self.prior_network(context)
         mu_prior, logvar_prior = torch.chunk(prior_params, 2, dim=-1)
+        
+        # Regularize prior to prevent collapse
+        # Encourage non-zero variance in prior
+        logvar_prior = torch.clamp(logvar_prior, min=-5, max=5)
+        
+        # Add small regularization to prevent perfect posterior-prior matching
+        prior_noise = torch.randn_like(mu_prior) * 0.01
+        mu_prior = mu_prior + prior_noise
+        
         return mu_prior, logvar_prior
     
     def forward(self, number_sets, pair_counts, temporal_sequences, current_indices):
@@ -235,8 +255,14 @@ class ConditionalVAE(nn.Module):
         # Process pre-computed temporal sequences
         context, _ = self.temporal_encoder(temporal_sequences)
         
-        # Sample from posterior
+        # Sample from posterior with KL regularization
         z = self.reparameterize(mu, logvar)
+        
+        # Store KL components for analysis
+        self._last_mu = mu.detach()
+        self._last_logvar = logvar.detach()
+        self._last_mu_prior = mu_prior.detach()
+        self._last_logvar_prior = logvar_prior.detach()
         
         # Get context-dependent prior
         mu_prior, logvar_prior = self.get_prior_params(context)

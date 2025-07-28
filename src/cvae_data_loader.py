@@ -63,46 +63,75 @@ class CVAEDataset(Dataset):
         return negative_pool
     
     def _precompute_temporal_sequences(self):
-        """Precomputes temporal sequences for each draw to speed up training."""
-        print("Precomputing temporal sequences...")
+        """Precomputes temporal sequences with improved temporal integrity."""
+        print("Precomputing temporal sequences with proper temporal ordering...")
         self.temporal_sequences = {}
         
         sequence_length = self.config['temporal_sequence_length']
         
-        for idx in tqdm(range(len(self.df)), desc="Computing sequences"):
-            # Get sequence of draws before current index
+        # Ensure we have Date column for proper temporal ordering
+        if 'Date' in self.df.columns:
+            # Sort by date to ensure proper temporal order
+            df_sorted = self.df.sort_values('Date').reset_index(drop=True)
+            print("Using date-sorted temporal sequences")
+        else:
+            df_sorted = self.df
+            print("⚠️  Using row-order temporal sequences (not recommended)")
+        
+        for idx in tqdm(range(len(df_sorted)), desc="Computing temporal sequences"):
+            # Get sequence of draws STRICTLY before current index (no data leakage)
             start_idx = max(0, idx - sequence_length)
-            end_idx = idx
+            end_idx = idx  # Exclusive - current draw not included in its own sequence
             
             if start_idx == end_idx:
-                # Beginning of dataset - create dummy sequence
-                sequence = np.zeros((sequence_length, 6), dtype=int)
+                # Beginning of dataset - create dummy sequence with padding
+                sequence = np.ones((sequence_length, 6), dtype=int)  # Use 1s instead of 0s (valid lottery numbers)
+                # Add some random variation to prevent model from learning padding pattern
+                for i in range(sequence_length):
+                    sequence[i] = sorted(np.random.choice(range(1, self.config['num_lotto_numbers'] + 1), 6, replace=False))
             else:
-                # Extract actual sequence
-                sequence_data = self.df.iloc[start_idx:end_idx][self.winning_num_cols].values
+                # Extract actual historical sequence
+                sequence_data = df_sorted.iloc[start_idx:end_idx][self.winning_num_cols].values
                 
-                # Pad if necessary
+                # Pad if necessary (only at the beginning of the sequence)
                 if len(sequence_data) < sequence_length:
-                    padding = np.zeros((sequence_length - len(sequence_data), 6), dtype=int)
+                    needed_padding = sequence_length - len(sequence_data)
+                    # Create realistic padding instead of zeros
+                    padding = np.ones((needed_padding, 6), dtype=int)
+                    for i in range(needed_padding):
+                        padding[i] = sorted(np.random.choice(range(1, self.config['num_lotto_numbers'] + 1), 6, replace=False))
                     sequence = np.vstack([padding, sequence_data])
                 else:
                     sequence = sequence_data[-sequence_length:]
             
-            self.temporal_sequences[idx] = torch.tensor(sequence, dtype=torch.long)
+            # Store the original index mapping for validation
+            self.temporal_sequences[idx] = {
+                'sequence': torch.tensor(sequence, dtype=torch.long),
+                'original_idx': idx,
+                'has_padding': start_idx == end_idx or len(sequence_data) < sequence_length if start_idx != end_idx else True
+            }
     
     def __len__(self):
         return len(self.df)
     
     def __getitem__(self, idx):
         """
-        Returns a training sample with all necessary components.
+        Returns a training sample with improved temporal integrity.
         """
         # Get the positive combination (historical winner)
         row = self.df.iloc[idx]
         positive_combination = row[self.winning_num_cols].astype(int).tolist()
         
-        # Get temporal sequence
-        temporal_sequence = self.temporal_sequences[idx]
+        # Validate combination
+        if len(set(positive_combination)) != 6:
+            print(f"⚠️  Invalid combination at index {idx}: {positive_combination}")
+            # Create a valid combination as fallback
+            positive_combination = sorted(random.sample(range(1, self.config['num_lotto_numbers'] + 1), 6))
+        
+        # Get temporal sequence with metadata
+        temporal_data = self.temporal_sequences[idx]
+        temporal_sequence = temporal_data['sequence'] if isinstance(temporal_data, dict) else temporal_data
+        has_padding = temporal_data.get('has_padding', False) if isinstance(temporal_data, dict) else False
         
         # Sample negative combinations for this batch item
         num_negatives = self.config['negative_samples']
@@ -112,13 +141,25 @@ class CVAEDataset(Dataset):
         # Get pair counts from feature engineer
         pair_counts = self.feature_engineer.pair_counts
         
+        # Add temporal validation info
+        date_info = None
+        if 'Date' in row:
+            date_info = {
+                'date': row['Date'],
+                'has_temporal_padding': has_padding
+            }
+        
         return {
             'positive_combination': positive_combination,
             'temporal_sequence': temporal_sequence,
             'negative_samples': sampled_negatives,
             'pair_counts': pair_counts,
             'draw_index': idx,
-            'date': row['Date'] if 'Date' in row else None
+            'date_info': date_info,
+            'temporal_integrity': {
+                'has_padding': has_padding,
+                'sequence_length': len(temporal_sequence)
+            }
         }
 
 def collate_cvae_batch(batch):
@@ -149,22 +190,46 @@ def collate_cvae_batch(batch):
 
 def create_cvae_data_loaders(df, feature_engineer, config):
     """
-    Creates training and validation data loaders for CVAE.
+    Creates training and validation data loaders for CVAE with proper temporal splitting.
     
     Args:
-        df: Historical lottery data
+        df: Historical lottery data (must be sorted by Date)
         feature_engineer: Fitted feature engineering object
         config: Configuration dictionary
     
     Returns:
         train_loader, val_loader: DataLoader objects
     """
-    # Split data
-    train_size = int(len(df) * 0.85)
-    train_df = df.iloc[:train_size].reset_index(drop=True)
-    val_df = df.iloc[train_size:].reset_index(drop=True)
+    # Ensure data is sorted by date for proper temporal splitting
+    if 'Date' in df.columns:
+        df = df.sort_values('Date').reset_index(drop=True)
+        print(f"Data sorted by date: {df['Date'].iloc[0]} to {df['Date'].iloc[-1]}")
+    else:
+        print("⚠️  No Date column found, using row order (not recommended)")
     
-    print(f"Creating CVAE datasets: {len(train_df)} train, {len(val_df)} validation")
+    # Temporal split with gap to prevent leakage
+    total_size = len(df)
+    # Use 75% for training, 5% gap, 20% for validation
+    train_end = int(total_size * 0.75)
+    gap_size = max(1, int(total_size * 0.05))  # At least 1 sample gap
+    val_start = train_end + gap_size
+    
+    # Create temporal splits
+    train_df = df.iloc[:train_end].reset_index(drop=True)
+    val_df = df.iloc[val_start:].reset_index(drop=True)
+    
+    print(f"Temporal split: {len(train_df)} train, {gap_size} gap, {len(val_df)} validation")
+    if 'Date' in df.columns:
+        print(f"Train period: {train_df['Date'].iloc[0]} to {train_df['Date'].iloc[-1]}")
+        print(f"Validation period: {val_df['Date'].iloc[0]} to {val_df['Date'].iloc[-1]}")
+        
+        # Verify no temporal leakage
+        if train_df['Date'].iloc[-1] >= val_df['Date'].iloc[0]:
+            print("⚠️  Warning: Potential temporal leakage detected")
+    
+    # Ensure minimum validation size
+    if len(val_df) < 10:
+        print("⚠️  Very small validation set, consider using more data")
     
     # Create datasets
     train_dataset = CVAEDataset(train_df, feature_engineer, config, is_training=True)

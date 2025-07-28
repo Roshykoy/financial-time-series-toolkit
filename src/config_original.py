@@ -100,7 +100,7 @@ CONFIG = {
     
     # Device Configuration - STABILITY FOCUSED
     "device": "cuda" if torch.cuda.is_available() else "cpu",
-    "use_mixed_precision": False,    # DISABLED - was causing overflow
+    "use_mixed_precision": False,    # DISABLED - was causing overflow issues
     
     # Advanced Training Options - CONSERVATIVE
     "use_scheduler": False,          # DISABLED for stability
@@ -128,6 +128,16 @@ CONFIG = {
     "min_improvement": 0.001,        # Minimum improvement to consider
     "max_grad_norm": 0.5,           # Additional gradient clipping parameter
     "numerical_stability_eps": 1e-8, # Small epsilon for numerical stability
+    
+    # KL ANNEALING AND COLLAPSE PREVENTION
+    "kl_annealing_epochs": 5,        # Number of epochs for KL annealing
+    "kl_min_beta": 0.0,              # Starting KL weight (0 = no KL loss initially)
+    "kl_max_beta": 1.0,              # Final KL weight (1 = full KL loss)
+    "kl_min_value": 1e-6,            # Minimum KL value to prevent complete collapse
+    
+    # IMPROVED LOSS MONITORING
+    "save_loss_plots": True,         # Generate detailed loss plots
+    "loss_monitoring_enabled": True, # Enable comprehensive loss monitoring
     
     # MEMORY MANAGEMENT
     "clear_cache_frequency": 5,      # Clear CUDA cache every 5 batches
