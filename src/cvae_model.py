@@ -255,6 +255,9 @@ class ConditionalVAE(nn.Module):
         # Process pre-computed temporal sequences
         context, _ = self.temporal_encoder(temporal_sequences)
         
+        # Get context-dependent prior
+        mu_prior, logvar_prior = self.get_prior_params(context)
+        
         # Sample from posterior with KL regularization
         z = self.reparameterize(mu, logvar)
         
@@ -263,9 +266,6 @@ class ConditionalVAE(nn.Module):
         self._last_logvar = logvar.detach()
         self._last_mu_prior = mu_prior.detach()
         self._last_logvar_prior = logvar_prior.detach()
-        
-        # Get context-dependent prior
-        mu_prior, logvar_prior = self.get_prior_params(context)
         
         # Decode
         reconstruction_logits, _ = self.decoder(z, context)
