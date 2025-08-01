@@ -134,10 +134,10 @@ def create_pareto_optimized_config(pareto_params: Optional[Dict[str, Any]] = Non
     config = LEGACY_CONFIG.copy()
     config.update({
         'device': 'cuda' if torch.cuda.is_available() else 'cpu',
-        'epochs': 5,
+        'epochs': 6,
         'use_mixed_precision': True,
-        'early_stopping_patience': 3,
-        'gradient_clip_norm': 1.775078258677981,
+        'early_stopping_patience': 4,
+        'gradient_clip_norm': 0.5035892758042647,
     })
     
     # Load Pareto Front parameters if not provided

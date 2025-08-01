@@ -118,22 +118,24 @@ class HardwareResourceManager:
     def _calculate_batch_size(self, ram_gb: float, gpu_memory_gb: List[float]) -> int:
         """Calculate recommended batch size based on available memory."""
         if gpu_memory_gb:
-            # GPU-based calculation
+            # GPU-based calculation with minimum viable batch size = 32
             min_gpu_memory = min(gpu_memory_gb)
-            if min_gpu_memory >= 8:
-                return 32
-            elif min_gpu_memory >= 4:
-                return 16
+            if min_gpu_memory >= 10:
+                return 128  # RTX 3080+ can handle larger batches
+            elif min_gpu_memory >= 8:
+                return 64   # Good balance for 8-10GB GPUs
+            elif min_gpu_memory >= 6:
+                return 32   # Minimum viable for model complexity < 1.0
             else:
-                return 8
+                return 32   # Force minimum even on lower VRAM
         else:
-            # CPU-based calculation
-            if ram_gb >= 16:
-                return 16
-            elif ram_gb >= 8:
-                return 8
+            # CPU-based calculation - still respect minimum
+            if ram_gb >= 32:
+                return 32
+            elif ram_gb >= 16:
+                return 32
             else:
-                return 4
+                return 32   # Always minimum 32 for viable model complexity
     
     def get_resource_status(self) -> Dict[str, Any]:
         """Get current resource usage status."""
@@ -200,17 +202,168 @@ class HardwareResourceManager:
         
         return len(issues) == 0, issues
     
+    def estimate_gpu_memory_usage(self, config: Dict[str, Any]) -> float:
+        """Estimate GPU memory usage in GB for given configuration."""
+        try:
+            # Base memory for PyTorch overhead
+            base_memory_gb = 1.0
+            
+            # Model parameters memory estimation
+            batch_size = config.get('batch_size', 32)
+            hidden_size = config.get('hidden_size', 256)
+            latent_dim = config.get('latent_dim', 64)
+            num_layers = config.get('num_layers', 4)
+            decoder_layers = config.get('decoder_layers', 3)
+            
+            # CVAE encoder memory (scales with batch_size and hidden_size)
+            encoder_memory = (batch_size * hidden_size * num_layers * 4) / (1024**3)  # 4 bytes per float32
+            
+            # CVAE decoder memory (scales with batch_size and decoder complexity)
+            decoder_memory = (batch_size * hidden_size * decoder_layers * 4) / (1024**3)
+            
+            # Latent space memory
+            latent_memory = (batch_size * latent_dim * 4) / (1024**3)
+            
+            # Graph encoder memory (depends on graph size and hidden dimensions)
+            graph_memory = (batch_size * hidden_size * 2 * 4) / (1024**3)  # Approximate
+            
+            # Temporal context memory
+            temporal_memory = (batch_size * config.get('temporal_context_dim', 128) * 4) / (1024**3)
+            
+            # Optimizer states (Adam requires 2x parameter memory)
+            model_params = (hidden_size ** 2 * num_layers + hidden_size * latent_dim) * 4 / (1024**3)
+            optimizer_memory = model_params * 2
+            
+            # Gradient memory (same as model parameters)
+            gradient_memory = model_params
+            
+            # Loss computation and intermediate activations (scales significantly with batch size)
+            activation_memory = (batch_size * hidden_size * 8) / (1024**3)  # Conservative estimate
+            
+            total_memory = (base_memory_gb + encoder_memory + decoder_memory + 
+                          latent_memory + graph_memory + temporal_memory + 
+                          optimizer_memory + gradient_memory + activation_memory)
+            
+            logger.debug(f"Memory estimation: {total_memory:.2f}GB for batch_size={batch_size}, hidden_size={hidden_size}")
+            return total_memory
+            
+        except Exception as e:
+            logger.error(f"Error estimating GPU memory: {e}")
+            # Return conservative estimate
+            return 8.0
+    
+    def get_optimal_parameter_combinations(self, max_memory_gb: Optional[float] = None) -> List[Dict[str, Any]]:
+        """Get optimal parameter combinations that maximize GPU utilization."""
+        if max_memory_gb is None:
+            # Use 80% of available GPU memory as safety margin
+            if self.profile.gpu_memory_gb:
+                max_memory_gb = min(self.profile.gpu_memory_gb) * 0.8
+            else:
+                max_memory_gb = 6.0  # Conservative fallback
+        
+        optimal_combinations = []
+        
+        # Define parameter search space with hardware constraints
+        batch_sizes = [32, 48, 64, 96, 128]  # Minimum 32 for model complexity
+        hidden_sizes = [128, 256, 384, 512, 768]
+        num_layers_options = [2, 3, 4, 5, 6]
+        
+        for batch_size in batch_sizes:
+            for hidden_size in hidden_sizes:
+                for num_layers in num_layers_options:
+                    config = {
+                        'batch_size': batch_size,
+                        'hidden_size': hidden_size,
+                        'num_layers': num_layers,
+                        'latent_dim': 64,
+                        'decoder_layers': 3,
+                        'temporal_context_dim': 128
+                    }
+                    
+                    estimated_memory = self.estimate_gpu_memory_usage(config)
+                    
+                    if estimated_memory <= max_memory_gb:
+                        # Calculate efficiency score (higher batch_size and hidden_size preferred)
+                        efficiency_score = (batch_size / 128) * (hidden_size / 768) * (1.0 / num_layers)
+                        memory_utilization = estimated_memory / max_memory_gb
+                        
+                        optimal_combinations.append({
+                            'config': config,
+                            'estimated_memory_gb': estimated_memory,
+                            'memory_utilization': memory_utilization,
+                            'efficiency_score': efficiency_score
+                        })
+        
+        # Sort by efficiency score and memory utilization
+        optimal_combinations.sort(key=lambda x: (x['efficiency_score'], x['memory_utilization']), reverse=True)
+        
+        logger.info(f"Found {len(optimal_combinations)} viable parameter combinations for {max_memory_gb:.1f}GB GPU")
+        return optimal_combinations
+    
+    def constrain_parameter_ranges(self, parameter_ranges: Dict[str, Any]) -> Dict[str, Any]:
+        """Apply hardware-aware constraints to parameter ranges."""
+        constrained_ranges = parameter_ranges.copy()
+        
+        # Enforce minimum batch size for viable model complexity
+        if 'batch_size' in constrained_ranges:
+            if 'options' in constrained_ranges['batch_size']:
+                # Filter out batch sizes < 32
+                original_options = constrained_ranges['batch_size']['options']
+                constrained_options = [bs for bs in original_options if bs >= 32]
+                constrained_ranges['batch_size']['options'] = constrained_options
+                logger.info(f"Constrained batch_size options from {original_options} to {constrained_options}")
+            
+            elif 'range' in constrained_ranges['batch_size']:
+                # Adjust range minimum to 32
+                original_range = constrained_ranges['batch_size']['range']
+                constrained_range = (max(32, original_range[0]), original_range[1])
+                constrained_ranges['batch_size']['range'] = constrained_range
+                logger.info(f"Constrained batch_size range from {original_range} to {constrained_range}")
+        
+        # Adjust hidden_size based on GPU memory
+        if 'hidden_size' in constrained_ranges and self.profile.gpu_memory_gb:
+            max_gpu_memory = min(self.profile.gpu_memory_gb)
+            
+            if 'options' in constrained_ranges['hidden_size']:
+                original_options = constrained_ranges['hidden_size']['options']
+                # Test each hidden_size option with batch_size=32 to see what fits
+                viable_options = []
+                
+                for hidden_size in original_options:
+                    test_config = {
+                        'batch_size': 32,
+                        'hidden_size': hidden_size,
+                        'num_layers': 4,
+                        'latent_dim': 64,
+                        'decoder_layers': 3,
+                        'temporal_context_dim': 128
+                    }
+                    estimated_memory = self.estimate_gpu_memory_usage(test_config)
+                    
+                    if estimated_memory <= max_gpu_memory * 0.8:  # 80% safety margin
+                        viable_options.append(hidden_size)
+                
+                if viable_options:
+                    constrained_ranges['hidden_size']['options'] = viable_options
+                    logger.info(f"Constrained hidden_size options from {original_options} to {viable_options}")
+        
+        return constrained_ranges
+    
     def optimize_for_hardware(self, base_config: Dict[str, Any]) -> Dict[str, Any]:
         """Optimize configuration parameters for available hardware."""
         optimized_config = base_config.copy()
         
-        # Adjust batch size
+        # Adjust batch size with minimum constraint for model complexity
         if 'batch_size' in optimized_config:
             current_batch = optimized_config['batch_size']
             recommended_batch = self.profile.recommended_batch_size
             
-            # Use smaller of current and recommended to be conservative
-            optimized_config['batch_size'] = min(current_batch, recommended_batch)
+            # Enforce minimum batch size of 32 for viable model complexity
+            min_viable_batch = 32
+            optimal_batch = max(min_viable_batch, min(current_batch, recommended_batch))
+            optimized_config['batch_size'] = optimal_batch
+            
+            logger.info(f"Batch size optimization: {current_batch} → {optimal_batch} (min_viable={min_viable_batch})")
         
         # Adjust number of workers
         if 'num_workers' in optimized_config:
@@ -232,9 +385,36 @@ class HardwareResourceManager:
         if 'parallel_jobs' not in optimized_config:
             optimized_config['parallel_jobs'] = self.profile.parallel_jobs
         
-        logger.info(f"Hardware optimization: batch_size={optimized_config.get('batch_size')}, "
+        # GPU memory validation and optimization
+        if self.profile.gpu_available and self.profile.gpu_memory_gb:
+            max_gpu_memory = min(self.profile.gpu_memory_gb) * 0.8  # 80% safety margin
+            estimated_memory = self.estimate_gpu_memory_usage(optimized_config)
+            
+            if estimated_memory > max_gpu_memory:
+                logger.warning(f"Configuration exceeds GPU memory ({estimated_memory:.2f}GB > {max_gpu_memory:.2f}GB)")
+                
+                # Try to reduce hidden_size to fit memory constraint
+                if 'hidden_size' in optimized_config:
+                    original_hidden_size = optimized_config['hidden_size']
+                    
+                    # Try smaller hidden sizes
+                    hidden_size_options = [256, 128, 384, 512, 768, 1024]
+                    for hidden_size in sorted(hidden_size_options):
+                        if hidden_size < original_hidden_size:
+                            test_config = optimized_config.copy()
+                            test_config['hidden_size'] = hidden_size
+                            test_memory = self.estimate_gpu_memory_usage(test_config)
+                            
+                            if test_memory <= max_gpu_memory:
+                                optimized_config['hidden_size'] = hidden_size
+                                logger.info(f"Reduced hidden_size: {original_hidden_size} → {hidden_size} to fit GPU memory")
+                                break
+        
+        final_memory = self.estimate_gpu_memory_usage(optimized_config)
+        logger.info(f"Hardware optimization complete: batch_size={optimized_config.get('batch_size')}, "
+                   f"hidden_size={optimized_config.get('hidden_size')}, "
                    f"device={optimized_config.get('device')}, "
-                   f"parallel_jobs={optimized_config.get('parallel_jobs')}")
+                   f"estimated_memory={final_memory:.2f}GB")
         
         return optimized_config
     
@@ -376,6 +556,66 @@ class HardwareResourceManager:
             
         except Exception as e:
             logger.error(f"Error saving hardware profile: {e}")
+    
+    def get_pareto_optimization_constraints(self) -> Dict[str, Any]:
+        """Get hardware-optimized constraints for Pareto Front optimization."""
+        constraints = {
+            'memory_aware': True,
+            'gpu_memory_gb': min(self.profile.gpu_memory_gb) if self.profile.gpu_memory_gb else 0,
+            'safety_margin': 0.8,  # Use 80% of available GPU memory
+            'min_batch_size': 32,  # Minimum for model_complexity < 1.0
+            'recommended_batch_sizes': [],
+            'viable_hidden_sizes': [],
+            'optimal_combinations': []
+        }
+        
+        if self.profile.gpu_available and self.profile.gpu_memory_gb:
+            max_memory = min(self.profile.gpu_memory_gb) * constraints['safety_margin']
+            
+            # Calculate recommended batch sizes for RTX 3080
+            gpu_memory = min(self.profile.gpu_memory_gb)
+            if gpu_memory >= 10:
+                constraints['recommended_batch_sizes'] = [32, 48, 64, 96, 128, 160]
+            elif gpu_memory >= 8:
+                constraints['recommended_batch_sizes'] = [32, 48, 64, 96]
+            else:
+                constraints['recommended_batch_sizes'] = [32, 48, 64]
+            
+            # Test viable hidden sizes
+            test_config_base = {
+                'batch_size': 32,
+                'num_layers': 4,
+                'latent_dim': 64,
+                'decoder_layers': 3,
+                'temporal_context_dim': 128
+            }
+            
+            viable_hidden_sizes = []
+            for hidden_size in [128, 256, 384, 512, 640, 768, 896, 1024]:
+                test_config = test_config_base.copy()
+                test_config['hidden_size'] = hidden_size
+                
+                estimated_memory = self.estimate_gpu_memory_usage(test_config)
+                if estimated_memory <= max_memory:
+                    viable_hidden_sizes.append(hidden_size)
+            
+            constraints['viable_hidden_sizes'] = viable_hidden_sizes
+            
+            # Get top optimal combinations for Pareto Front
+            optimal_combinations = self.get_optimal_parameter_combinations(max_memory)
+            constraints['optimal_combinations'] = optimal_combinations[:10]  # Top 10 combinations
+            
+            logger.info(f"Pareto optimization constraints: batch_sizes={constraints['recommended_batch_sizes']}, "
+                       f"hidden_sizes={viable_hidden_sizes}, "
+                       f"optimal_combinations={len(constraints['optimal_combinations'])}")
+        
+        else:
+            # CPU fallback constraints
+            constraints['recommended_batch_sizes'] = [32, 48, 64]
+            constraints['viable_hidden_sizes'] = [128, 256, 384, 512]
+            logger.warning("GPU not available, using CPU-optimized constraints")
+        
+        return constraints
 
 
 def create_hardware_manager(config: Optional[Dict[str, Any]] = None) -> HardwareResourceManager:
