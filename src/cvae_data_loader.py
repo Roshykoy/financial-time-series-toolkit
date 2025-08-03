@@ -4,8 +4,80 @@ from torch.utils.data import Dataset, DataLoader
 import pandas as pd
 import numpy as np
 import random
+import multiprocessing
+import psutil
 from collections import Counter
 from tqdm import tqdm
+
+# Phase 2 optimization imports
+try:
+    from src.optimization.parallel_feature_processor import ParallelFeatureProcessor
+    from src.optimization.memory_pool_manager import get_memory_manager, MemoryPoolConfig
+    PHASE2_AVAILABLE = True
+except ImportError:
+    PHASE2_AVAILABLE = False
+    print("⚠️ Phase 2 optimizations not available, using standard processing")
+
+def _get_optimal_num_workers():
+    """Calculate optimal number of workers for DataLoader based on hardware."""
+    try:
+        cpu_count = multiprocessing.cpu_count()
+        # Use CPU cores - 1 for optimal performance, minimum 1, maximum 8
+        optimal_workers = max(1, min(cpu_count - 1, 8))
+        return optimal_workers
+    except Exception:
+        return 2  # Fallback to safe default
+
+def _get_smart_pin_memory():
+    """Determine if pin_memory should be enabled based on system resources."""
+    if not torch.cuda.is_available():
+        return False
+    
+    try:
+        # Check available system RAM
+        available_ram_gb = psutil.virtual_memory().available / (1024**3)
+        # Only enable pin_memory if we have sufficient RAM (>4GB available)
+        return available_ram_gb > 4.0
+    except Exception:
+        return torch.cuda.is_available()  # Fallback to basic CUDA check
+
+def _calculate_optimal_batch_size(config):
+    """Calculate optimal batch size based on available VRAM and configuration."""
+    base_batch_size = config.get('batch_size', 8)
+    
+    if not torch.cuda.is_available() or config.get('optimized_batch_size') != 'auto':
+        return base_batch_size
+    
+    try:
+        # Get current GPU memory info
+        if hasattr(torch.cuda, 'mem_get_info'):
+            total_memory, free_memory = torch.cuda.mem_get_info()
+            total_gb = total_memory / (1024**3)
+            free_gb = free_memory / (1024**3)
+            
+            # Conservative scaling based on available VRAM
+            target_utilization = config.get('vram_utilization_target', 0.80)
+            max_batch_size = config.get('max_batch_size', 32)
+            
+            if total_gb >= 8.0:  # High-end GPU
+                scaling_factor = min(3.5, free_gb / 2.0)  # Conservative scaling
+            elif total_gb >= 6.0:  # Mid-range GPU  
+                scaling_factor = min(2.5, free_gb / 1.5)
+            else:  # Lower-end GPU
+                scaling_factor = min(2.0, free_gb / 1.0)
+            
+            optimal_batch_size = int(base_batch_size * scaling_factor)
+            optimal_batch_size = min(optimal_batch_size, max_batch_size)
+            
+            print(f"🚀 Hardware-optimized batch size: {base_batch_size} → {optimal_batch_size} "
+                  f"(VRAM: {free_gb:.1f}GB free / {total_gb:.1f}GB total)")
+            
+            return optimal_batch_size
+        else:
+            return base_batch_size
+    except Exception as e:
+        print(f"⚠️  Batch size optimization failed: {e}, using default: {base_batch_size}")
+        return base_batch_size
 
 class CVAEDataset(Dataset):
     """
@@ -164,8 +236,8 @@ class CVAEDataset(Dataset):
 
 def collate_cvae_batch(batch):
     """
-    Custom collate function for CVAE training batches.
-    Groups together all the components needed for training.
+    Enhanced custom collate function for CVAE training batches with Phase 2 optimizations.
+    Groups together all the components needed for training with parallel feature processing.
     """
     positive_combinations = [item['positive_combination'] for item in batch]
     temporal_sequences = torch.stack([item['temporal_sequence'] for item in batch])
@@ -179,14 +251,55 @@ def collate_cvae_batch(batch):
     # Get pair counts (same for all items in batch)
     pair_counts = batch[0]['pair_counts']
     
+    # Phase 2 enhancement: Add batch metadata for parallel processing
+    batch_metadata = {
+        'batch_size': len(batch),
+        'feature_ready': True,  # Mark that this batch can use parallel features
+        'temporal_integrity': all(item.get('temporal_integrity', {}).get('has_padding', False) for item in batch)
+    }
+    
     return {
         'positive_combinations': positive_combinations,
         'temporal_sequences': temporal_sequences,
         'negative_pool': all_negatives,
         'pair_counts': pair_counts,
         'current_indices': draw_indices,
-        'batch_size': len(batch)
+        'batch_size': len(batch),
+        'batch_metadata': batch_metadata  # Phase 2 addition
     }
+
+
+def enhanced_collate_cvae_batch_phase2(batch):
+    """
+    Phase 2 enhanced collate function with parallel feature processing integration.
+    Uses parallel feature processor if available and enabled.
+    """
+    # Get basic batch data
+    basic_batch = collate_cvae_batch(batch)
+    
+    # Check if Phase 2 parallel processing is available
+    if hasattr(batch[0], '_parallel_processor') and batch[0]._parallel_processor is not None:
+        try:
+            # Extract data for parallel feature processing
+            positive_combinations = basic_batch['positive_combinations']
+            current_indices = basic_batch['current_indices']
+            
+            # Process features in parallel
+            parallel_processor = batch[0]._parallel_processor
+            feature_vectors = parallel_processor.process_batch_parallel(
+                positive_combinations, current_indices
+            )
+            
+            # Add processed features to batch
+            basic_batch['parallel_features'] = torch.from_numpy(feature_vectors)
+            basic_batch['feature_processing_stats'] = parallel_processor.get_performance_stats()
+            
+        except Exception as e:
+            print(f"⚠️ Parallel feature processing failed, using fallback: {e}")
+            # Fallback to standard processing
+            basic_batch['parallel_features'] = None
+    
+    return basic_batch
 
 def create_cvae_data_loaders(df, feature_engineer, config):
     """
@@ -239,24 +352,120 @@ def create_cvae_data_loaders(df, feature_engineer, config):
                              negative_pool=train_dataset.negative_pool, 
                              is_training=False)
     
-    # Create data loaders
+    # === PHASE 1 PERFORMANCE OPTIMIZATIONS ===
+    
+    # Calculate optimal settings based on hardware
+    optimal_batch_size = _calculate_optimal_batch_size(config)
+    optimal_workers = _get_optimal_num_workers() if config.get('num_workers') == 'auto' else config.get('num_workers', 2)
+    smart_pin_memory = _get_smart_pin_memory() if config.get('pin_memory') == 'auto' else config.get('pin_memory', torch.cuda.is_available())
+    
+    # === PHASE 2 MEDIUM-TERM IMPROVEMENTS ===
+    
+    # Initialize Phase 2 optimizations if enabled
+    parallel_processor = None
+    memory_manager = None
+    
+    if PHASE2_AVAILABLE and config.get('enable_performance_optimizations', False):
+        if config.get('enable_parallel_features', False):
+            try:
+                # Initialize parallel feature processor
+                parallel_config = {
+                    'feature_cache_size_gb': config.get('feature_cache_size_gb', 6.0),
+                    'max_workers': config.get('feature_parallel_workers', 'auto'),
+                    'parallel_threshold': config.get('feature_batch_threshold', 16),
+                    'use_threading': config.get('use_feature_threading', True)
+                }
+                parallel_processor = ParallelFeatureProcessor(feature_engineer, parallel_config)
+                print(f"✅ Phase 2 Parallel Feature Processor initialized")
+            except Exception as e:
+                print(f"⚠️ Parallel feature processor initialization failed: {e}")
+        
+        if config.get('enable_memory_pools', False):
+            try:
+                # Initialize memory pool manager
+                memory_config = MemoryPoolConfig(
+                    tensor_pool_gb=config.get('tensor_pool_size_gb', 4.0),
+                    batch_cache_gb=config.get('batch_cache_size_gb', 8.0),
+                    feature_cache_gb=config.get('feature_cache_size_gb', 6.0),
+                    enable_compression=config.get('enable_cache_compression', True),
+                    cleanup_threshold=config.get('memory_pressure_threshold', 0.85)
+                )
+                memory_manager = get_memory_manager(memory_config)
+                memory_manager.optimize_for_batch_size(optimal_batch_size)
+                print(f"✅ Phase 2 Memory Pool Manager initialized")
+            except Exception as e:
+                print(f"⚠️ Memory pool manager initialization failed: {e}")
+    
+    # Enhanced dynamic batch sizing for Phase 2
+    if config.get('enable_dynamic_batching', False) and memory_manager:
+        try:
+            # Get current memory stats for dynamic batch sizing
+            memory_stats = memory_manager.get_comprehensive_stats()
+            memory_pressure = memory_stats['memory_usage_pct'] / 100.0
+            
+            if memory_pressure < 0.7:  # Low memory pressure
+                scaling_factor = config.get('batch_size_scaling_factor', 3.5)
+                max_dynamic_size = config.get('max_dynamic_batch_size', 64)
+                enhanced_batch_size = min(int(optimal_batch_size * scaling_factor), max_dynamic_size)
+                optimal_batch_size = enhanced_batch_size
+                print(f"🚀 Dynamic batch sizing: {optimal_batch_size} (memory pressure: {memory_pressure:.1%})")
+        except Exception as e:
+            print(f"⚠️ Dynamic batch sizing failed: {e}")
+    
+    # Display optimization info
+    if config.get('enable_performance_optimizations', False):
+        available_ram = psutil.virtual_memory().available / (1024**3)
+        print(f"🚀 Phase 1+2 DataLoader Optimizations:")
+        print(f"   • Workers: {optimal_workers} (CPU cores: {multiprocessing.cpu_count()})")
+        print(f"   • Batch size: {optimal_batch_size}")
+        print(f"   • Pin memory: {smart_pin_memory} (RAM: {available_ram:.1f}GB available)")
+        print(f"   • Persistent workers: {config.get('persistent_workers', True)}")
+        print(f"   • Prefetch factor: {config.get('prefetch_factor', 4)}")
+        
+        if parallel_processor:
+            print(f"   • Parallel features: ✅ {parallel_processor.num_workers} workers")
+        if memory_manager:
+            print(f"   • Memory pools: ✅ {memory_manager.config.tensor_pool_gb}GB tensor pool")
+    
+    # Choose appropriate collate function based on Phase 2 availability
+    collate_function = collate_cvae_batch
+    if PHASE2_AVAILABLE and config.get('enable_parallel_features', False) and parallel_processor:
+        # Use enhanced collate function for Phase 2
+        collate_function = enhanced_collate_cvae_batch_phase2
+        # Attach parallel processor to datasets for collate function access
+        train_dataset._parallel_processor = parallel_processor
+        val_dataset._parallel_processor = parallel_processor
+    
+    # Create optimized data loaders
     train_loader = DataLoader(
         train_dataset,
-        batch_size=config['batch_size'],
+        batch_size=optimal_batch_size,
         shuffle=True,
-        collate_fn=collate_cvae_batch,
-        num_workers=2,
-        pin_memory=True if torch.cuda.is_available() else False
+        collate_fn=collate_function,
+        num_workers=optimal_workers,
+        pin_memory=smart_pin_memory,
+        persistent_workers=config.get('persistent_workers', True) if optimal_workers > 0 else False,
+        prefetch_factor=config.get('prefetch_factor', 4) if optimal_workers > 0 else 2
     )
     
     val_loader = DataLoader(
         val_dataset,
-        batch_size=config['batch_size'],
+        batch_size=optimal_batch_size,
         shuffle=False,
-        collate_fn=collate_cvae_batch,
-        num_workers=2,
-        pin_memory=True if torch.cuda.is_available() else False
+        collate_fn=collate_function,
+        num_workers=optimal_workers,
+        pin_memory=smart_pin_memory,
+        persistent_workers=config.get('persistent_workers', True) if optimal_workers > 0 else False,
+        prefetch_factor=config.get('prefetch_factor', 4) if optimal_workers > 0 else 2
     )
+    
+    # Store Phase 2 components in DataLoader for later access
+    if parallel_processor:
+        train_loader._parallel_processor = parallel_processor
+        val_loader._parallel_processor = parallel_processor
+    if memory_manager:
+        train_loader._memory_manager = memory_manager
+        val_loader._memory_manager = memory_manager
     
     return train_loader, val_loader
 

@@ -84,6 +84,51 @@ CONFIG = {
     "evaluation_neg_samples": 49,    # Reduced from 99
     "validation_generation_samples": 5,  # Reduced from 20
     
+    # --- PHASE 1 PERFORMANCE OPTIMIZATIONS (APPROVED BY EXPERT PANEL) ---
+    
+    # Asynchronous Data Pipeline Enhancement
+    "num_workers": "auto",              # Auto-detect optimal worker count
+    "pin_memory": "auto",               # Smart pin_memory based on CUDA + memory
+    "persistent_workers": True,         # Keep workers alive between epochs
+    "prefetch_factor": 4,              # Pre-load 4 batches ahead
+    
+    # Batch Size Optimization for VRAM Utilization
+    "optimized_batch_size": "auto",     # Auto-calculate based on available VRAM
+    "max_batch_size": 32,              # Safety limit for batch size scaling
+    "vram_utilization_target": 0.80,   # Target 80% VRAM utilization
+    
+    # Production Configuration Settings
+    "enable_mixed_precision": True,     # Re-enable with proper overflow handling
+    "enable_torch_compile": True,       # PyTorch 2.0 model compilation
+    "channels_last_memory": True,       # Memory layout optimization
+    "gradient_checkpointing": False,    # Disabled for speed (vs memory trade-off)
+    "cpu_offload": False,              # Keep on GPU for speed
+    "memory_efficient_attention": True, # Optimize attention computation
+    "enable_performance_optimizations": True,  # Master switch for all optimizations
+    
+    # --- PHASE 2 MEDIUM-TERM IMPROVEMENTS (EXPERT PANEL APPROVED) ---
+    
+    # Feature Engineering Parallelization
+    "enable_parallel_features": True,          # Master switch for parallel feature processing
+    "feature_parallel_workers": "auto",        # Auto-detect optimal workers for feature computation
+    "feature_batch_threshold": 16,             # Minimum batch size for parallel processing
+    "feature_vectorization": True,             # Enable vectorized feature computation
+    "use_feature_threading": True,             # Use threading vs multiprocessing
+    
+    # Memory Pool Management System
+    "enable_memory_pools": True,               # Master switch for memory pool management
+    "tensor_pool_size_gb": 4.0,               # GPU tensor memory pool size
+    "batch_cache_size_gb": 8.0,               # Batch data cache size
+    "feature_cache_size_gb": 6.0,             # Feature vector cache size
+    "enable_cache_compression": True,          # LZ4 compression for cached data
+    "memory_pressure_threshold": 0.85,        # Memory usage threshold for cleanup
+    
+    # Dynamic Batch Size Enhancement  
+    "enable_dynamic_batching": True,           # Dynamic batch size based on memory pressure
+    "batch_size_scaling_factor": 3.5,         # Scaling factor for optimal batch sizes
+    "max_dynamic_batch_size": 64,             # Safety limit for dynamic batch sizing
+    "memory_aware_batching": True,            # Adjust batch size based on available memory
+    
     # File Paths
     "model_save_path": "models/conservative_cvae_model.pth",
     "meta_learner_save_path": "models/conservative_meta_learner.pth", 
