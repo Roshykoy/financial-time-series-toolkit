@@ -1,0 +1,96 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ray-workers
+  namespace: marksix-ai
+  labels:
+    app: ray-workers
+    component: distributed-computing
+spec:
+  replicas: 5
+  selector:
+    matchLabels:
+      app: ray-workers
+  template:
+    metadata:
+      labels:
+        app: ray-workers
+    spec:
+      containers:
+      - name: ray-worker
+        image: marksix-ai:latest
+        env:
+        - name: RAY_HEAD_SERVICE
+          value: "ray-head-svc"
+        - name: RAY_HEAD_PORT
+          value: "10001"
+        - name: WORLD_SIZE
+          value: "6"
+        - name: NCCL_SOCKET_IFNAME
+          value: "eth0"
+        - name: NCCL_IB_DISABLE
+          value: "1"
+        command:
+        - /bin/bash
+        - -c
+        - |
+          # Wait for Ray head to be ready
+          until nc -z ray-head-svc 10001; do
+            echo "Waiting for Ray head service..."
+            sleep 5
+          done
+          
+          # Start Ray worker
+          ray start \
+            --address=ray-head-svc:10001 \
+            --num-cpus=8 \
+            --num-gpus=1 \
+            --memory=32000000000 \
+            --object-store-memory=8000000000 \
+            --block
+        resources:
+          requests:
+            cpu: "6"
+            memory: "24Gi"
+            nvidia.com/gpu: "1"
+          limits:
+            cpu: "8"
+            memory: "32Gi"
+            nvidia.com/gpu: "1"
+        volumeMounts:
+        - name: shared-storage
+          mountPath: /app/data
+        - name: model-storage
+          mountPath: /app/models
+        - name: shm-volume
+          mountPath: /dev/shm
+      volumes:
+      - name: shared-storage
+        persistentVolumeClaim:
+          claimName: marksix-data-pvc
+      - name: model-storage
+        persistentVolumeClaim:
+          claimName: marksix-models-pvc
+      - name: shm-volume
+        emptyDir:
+          medium: Memory
+          sizeLimit: 8Gi
+      nodeSelector:
+        kubernetes.io/arch: amd64
+        nvidia.com/gpu.present: "true"
+      tolerations:
+      - key: nvidia.com/gpu
+        operator: Exists
+        effect: NoSchedule
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: app
+                  operator: In
+                  values:
+                  - ray-workers
+              topologyKey: kubernetes.io/hostname

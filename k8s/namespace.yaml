@@ -1,0 +1,39 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: marksix-ai
+  labels:
+    name: marksix-ai
+    phase: "3.0"
+    component: "distributed-training"
+---
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: marksix-resource-quota
+  namespace: marksix-ai
+spec:
+  hard:
+    requests.cpu: "48"
+    requests.memory: 192Gi
+    requests.nvidia.com/gpu: "6"
+    limits.cpu: "64"
+    limits.memory: 256Gi
+    limits.nvidia.com/gpu: "6"
+    persistentvolumeclaims: "10"
+---
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: marksix-limits
+  namespace: marksix-ai
+spec:
+  limits:
+  - default:
+      cpu: "8"
+      memory: "32Gi"
+      nvidia.com/gpu: "1"
+    defaultRequest:
+      cpu: "4"
+      memory: "16Gi"
+    type: Container

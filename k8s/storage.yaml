@@ -1,0 +1,128 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: marksix-data-pvc
+  namespace: marksix-ai
+  labels:
+    app: marksix-storage
+    type: data
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 100Gi
+  storageClassName: nfs-client
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: marksix-models-pvc
+  namespace: marksix-ai
+  labels:
+    app: marksix-storage
+    type: models
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 50Gi
+  storageClassName: nfs-client
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: marksix-config
+  namespace: marksix-ai
+  labels:
+    app: marksix-config
+data:
+  training_config.yaml: |
+    # Phase 3 Distributed Training Configuration
+    distributed:
+      backend: nccl
+      init_method: env://
+      world_size: 6
+      find_unused_parameters: true
+      broadcast_buffers: true
+      bucket_cap_mb: 25
+    
+    ray_cluster:
+      namespace: marksix_ai
+      dashboard_host: "0.0.0.0"
+      dashboard_port: 8265
+      log_to_driver: true
+    
+    numa_memory:
+      enable_numa_optimization: true
+      cpu_affinity_enabled: true
+      memory_binding_enabled: true
+      cross_node_threshold_mb: 1024
+      local_node_preference: 0.8
+    
+    multi_gpu:
+      backend: nccl
+      find_unused_parameters: true
+      broadcast_buffers: true
+      bucket_cap_mb: 25
+      gradient_predivide_factor: 1.0
+    
+    # Phase 3 Performance Targets
+    performance_targets:
+      distributed_scaling_efficiency: 0.85
+      gpu_utilization_target: 0.95
+      memory_bandwidth_utilization: 0.80
+      cumulative_speedup_target: 3.5  # 250-350% over baseline
+  
+  phase3_features.yaml: |
+    # Phase 3 Feature Configuration
+    features:
+      distributed_training:
+        enabled: true
+        coordinator: "src.distributed.training_coordinator"
+        
+      ray_cluster:
+        enabled: true
+        manager: "src.distributed.ray_cluster"
+        
+      multi_gpu:
+        enabled: true
+        backend: "src.distributed.multi_gpu_backend"
+        
+      numa_memory:
+        enabled: true
+        manager: "src.distributed.numa_memory_manager"
+    
+    microservices:
+      data_ingestion:
+        replicas: 2
+        resources:
+          cpu: "4"
+          memory: "16Gi"
+          
+      cvae_training:
+        replicas: 3
+        resources:
+          cpu: "8"
+          memory: "32Gi"
+          gpu: "1"
+          
+      meta_learner:
+        replicas: 2
+        resources:
+          cpu: "6"
+          memory: "24Gi"
+          
+      pareto_optimization:
+        replicas: 2
+        resources:
+          cpu: "8"
+          memory: "32Gi"
+          gpu: "1"
+          
+      inference:
+        replicas: 3
+        resources:
+          cpu: "4"
+          memory: "16Gi"
