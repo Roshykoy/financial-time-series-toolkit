@@ -8,7 +8,7 @@ class ConfigurationManager:
     """Manages configuration files and hyperparameter presets."""
     
     def __init__(self):
-        self.config_dir = "configurations"
+        self.config_dir = "config"
         self.presets_file = os.path.join(self.config_dir, "presets.json")
         os.makedirs(self.config_dir, exist_ok=True)
         self._load_presets()

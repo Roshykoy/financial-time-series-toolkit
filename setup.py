@@ -76,9 +76,9 @@ def create_directories():
     
     directories = [
         'models',
-        'outputs', 
+        'outputs',
         'hyperparameter_results',
-        'configurations',
+        'config',
         'data/raw',
         'data/processed'
     ]
@@ -191,10 +191,11 @@ def create_sample_config():
         pass
     
     import json
-    with open('system_config.json', 'w') as f:
+    config_path = os.path.join('config', 'system_config.json')
+    with open(config_path, 'w') as f:
         json.dump(sample_config, f, indent=2)
-    
-    print("✅ System configuration saved to system_config.json")
+
+    print(f"✅ System configuration saved to {config_path}")
 
 def print_next_steps():
     """Print next steps for the user."""
@@ -222,7 +223,7 @@ def print_next_steps():
     print("- Start with Quick Search if you want to test the feature first")
     
     print("\n🆘 IF YOU ENCOUNTER ISSUES:")
-    print("- Check system_config.json for your system recommendations")
+    print("- Check config/system_config.json for your system recommendations")
     print("- Use smaller batch_size if you get memory errors")
     print("- Reduce epochs_per_trial in hyperparameter optimization if training is slow")
 
