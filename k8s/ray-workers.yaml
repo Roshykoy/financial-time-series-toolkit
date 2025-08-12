@@ -30,16 +30,20 @@ spec:
           value: "eth0"
         - name: NCCL_IB_DISABLE
           value: "1"
+        - name: CONFIG_PATH
+          value: "/app/config/training_config.yaml"
         command:
         - /bin/bash
         - -c
         - |
+          echo "Loading configuration from ${CONFIG_PATH}" && cat ${CONFIG_PATH}
+
           # Wait for Ray head to be ready
           until nc -z ray-head-svc 10001; do
             echo "Waiting for Ray head service..."
             sleep 5
           done
-          
+
           # Start Ray worker
           ray start \
             --address=ray-head-svc:10001 \
@@ -64,6 +68,8 @@ spec:
           mountPath: /app/models
         - name: shm-volume
           mountPath: /dev/shm
+        - name: config-volume
+          mountPath: /app/config
       volumes:
       - name: shared-storage
         persistentVolumeClaim:
@@ -75,6 +81,9 @@ spec:
         emptyDir:
           medium: Memory
           sizeLimit: 8Gi
+      - name: config-volume
+        configMap:
+          name: marksix-config
       nodeSelector:
         kubernetes.io/arch: amd64
         nvidia.com/gpu.present: "true"

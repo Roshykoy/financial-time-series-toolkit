@@ -58,10 +58,13 @@ spec:
           value: "0.0.0.0"
         - name: RAY_DASHBOARD_PORT
           value: "8265"
+        - name: CONFIG_PATH
+          value: "/app/config/training_config.yaml"
         command:
         - /bin/bash
         - -c
         - |
+          echo "Loading configuration from ${CONFIG_PATH}" && cat ${CONFIG_PATH}
           ray start --head \
             --port=10001 \
             --redis-port=6379 \
@@ -88,6 +91,8 @@ spec:
           mountPath: /app/models
         - name: shm-volume
           mountPath: /dev/shm
+        - name: config-volume
+          mountPath: /app/config
       volumes:
       - name: shared-storage
         persistentVolumeClaim:
@@ -99,6 +104,9 @@ spec:
         emptyDir:
           medium: Memory
           sizeLimit: 8Gi
+      - name: config-volume
+        configMap:
+          name: marksix-config
       nodeSelector:
         kubernetes.io/arch: amd64
         nvidia.com/gpu.present: "true"
