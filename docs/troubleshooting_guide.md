@@ -451,7 +451,7 @@ pip install "numpy>=1.24,<2.0"
 
 # Resolve conflicts
 pip install --upgrade pip setuptools wheel
-pip install --force-reinstall -r requirements.txt
+pip install --force-reinstall -r requirements/dev.txt
 ```
 
 ### 11. File Permission Issues

@@ -6,7 +6,7 @@
 - **Problem**: Test runner failed because pytest was not installed in the current environment
 - **Root Cause**: Development environment setup incomplete 
 - **Solution**: 
-  - Added pytest and pytest-cov to root requirements.txt
+  - Added pytest and pytest-cov to requirements/dev.txt
   - Enhanced test runner with automatic dependency detection
   - Added fallback mechanisms and installation prompts
   - Created comprehensive dependency checker
@@ -23,7 +23,6 @@
 
 ### **1. Enhanced Requirements Management**
 Created comprehensive requirements system:
-- **requirements.txt**: Root requirements with essentials
 - **requirements/base.txt**: Core application dependencies
 - **requirements/dev.txt**: Full development dependencies
 - **requirements/optimization.txt**: Hyperparameter optimization specific
