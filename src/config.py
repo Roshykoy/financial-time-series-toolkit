@@ -221,7 +221,6 @@ CONFIG = {
     "meta_learner_save_path_new": "models/active/meta_learner.pth",
     "feature_engineer_path_new": "models/active/feature_engineer.pkl",
     "pareto_results_dir": "models/pareto_optimized",
-    "predictions_output_dir": "outputs_new/predictions/ai_predictions",
     
     # =============================================================================
     # MONITORING AND DEBUGGING
