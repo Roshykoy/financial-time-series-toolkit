@@ -68,7 +68,11 @@ marksix_ai/
 # --- Project-Specific ---
 
 # Trained models and artifacts
-models/
+models/*
+!models/active/
+!models/archived/
+!models/pareto_optimized/
+!models/**/*.json
 *.pkl
 *.pth
 

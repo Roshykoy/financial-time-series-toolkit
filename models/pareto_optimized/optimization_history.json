@@ -39,7 +39,7 @@
   },
   "system_integration": {
     "automatic_detection": true,
-    "parameter_loading": "models_new/pareto_optimized/selected_parameters.json",
+    "parameter_loading": "models/pareto_optimized/selected_parameters.json",
     "training_integration": "Option 2 auto-detects and uses optimized parameters",
     "validation": "Comprehensive testing framework validates compatibility"
   }

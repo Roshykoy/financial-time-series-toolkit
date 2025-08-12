@@ -217,10 +217,10 @@ CONFIG = {
     "feature_engineer_path": "models/conservative_feature_engineer.pkl",
     
     # New Path Structure (for future migration compatibility)
-    "model_save_path_new": "models_new/active/marksix_model.pth",
-    "meta_learner_save_path_new": "models_new/active/meta_learner.pth",
-    "feature_engineer_path_new": "models_new/active/feature_engineer.pkl",
-    "pareto_results_dir": "models_new/pareto_optimized",
+    "model_save_path_new": "models/active/marksix_model.pth",
+    "meta_learner_save_path_new": "models/active/meta_learner.pth",
+    "feature_engineer_path_new": "models/active/feature_engineer.pkl",
+    "pareto_results_dir": "models/pareto_optimized",
     "predictions_output_dir": "outputs_new/predictions/ai_predictions",
     
     # =============================================================================
