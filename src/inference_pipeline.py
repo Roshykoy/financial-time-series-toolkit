@@ -8,7 +8,7 @@ import os
 from collections import defaultdict
 import random
 
-from src.config_legacy import CONFIG
+from src.config import CONFIG
 from src.cvae_model import ConditionalVAE
 from src.meta_learner import AttentionMetaLearner
 from src.feature_engineering import FeatureEngineer
@@ -413,7 +413,6 @@ def find_latest_model():
     ]
     
     # First, check if the standard CONFIG paths exist (highest priority)
-    from src.config import CONFIG
     standard_paths = [
         (CONFIG["model_save_path"], CONFIG["meta_learner_save_path"], CONFIG["feature_engineer_path"], "current_optimized")
     ]

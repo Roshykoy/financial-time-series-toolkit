@@ -21,7 +21,7 @@ from .monitoring import create_monitor, create_visualizer
 from .utils import OptimizationUtils, ConfigTemplate
 from .pareto_interface import create_pareto_interface
 from ..infrastructure.logging.logger import get_logger
-from ..config_legacy import CONFIG
+from ..config import CONFIG
 
 logger = get_logger(__name__)
 

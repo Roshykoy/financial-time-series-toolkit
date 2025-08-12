@@ -1,0 +1,49 @@
+{
+  "fast_training": {
+    "learning_rate": 0.001,
+    "hidden_size": 256,
+    "num_layers": 4,
+    "dropout": 0.2,
+    "batch_size": 64,
+    "epochs": 5,
+    "margin": 0.5,
+    "negative_samples": 16,
+    "use_sam_optimizer": false
+  },
+  "balanced": {
+    "learning_rate": 0.0001,
+    "hidden_size": 256,
+    "num_layers": 6,
+    "dropout": 0.15,
+    "batch_size": 64,
+    "epochs": 15,
+    "margin": 0.5,
+    "negative_samples": 32,
+    "use_sam_optimizer": true,
+    "rho": 0.05
+  },
+  "high_quality": {
+    "learning_rate": 5e-05,
+    "hidden_size": 512,
+    "num_layers": 8,
+    "dropout": 0.1,
+    "batch_size": 32,
+    "epochs": 25,
+    "margin": 0.7,
+    "negative_samples": 64,
+    "use_sam_optimizer": true,
+    "rho": 0.05
+  },
+  "experimental": {
+    "learning_rate": 0.0001,
+    "hidden_size": 768,
+    "num_layers": 10,
+    "dropout": 0.3,
+    "batch_size": 128,
+    "epochs": 20,
+    "margin": 1.0,
+    "negative_samples": 48,
+    "use_sam_optimizer": true,
+    "rho": 0.1
+  }
+}

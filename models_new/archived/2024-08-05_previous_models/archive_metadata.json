@@ -1,0 +1,42 @@
+{
+  "archive_info": {
+    "archive_date": "2025-01-08",
+    "source": "models/conservative_*",
+    "reason": "Migration to Production System v4.0 - Single Active Model",
+    "archive_category": "Previous Alternative Models"
+  },
+  "archived_models": {
+    "conservative_cvae_model.pth": {
+      "type": "ConditionalVAE",
+      "training_date": "2024-08-05",
+      "purpose": "Conservative training variant", 
+      "file_size_mb": 11.7,
+      "performance": "More cautious generation, lower diversity"
+    },
+    "conservative_meta_learner.pth": {
+      "type": "AttentionMetaLearner",
+      "training_date": "2024-08-05", 
+      "purpose": "Conservative ensemble weighting",
+      "file_size_mb": 2.7,
+      "performance": "Risk-averse ensemble decisions"
+    },
+    "conservative_feature_engineer.pkl": {
+      "type": "FeatureEngineer",
+      "training_date": "2024-08-05",
+      "purpose": "Conservative feature processing",
+      "file_size_mb": 0.04,
+      "performance": "Standard feature engineering pipeline"
+    }
+  },
+  "retention_policy": {
+    "keep_until": "2025-04-08",
+    "retention_months": 3,
+    "auto_cleanup": true,
+    "restore_available": true
+  },
+  "usage_notes": {
+    "restoration": "Can be restored to active/ if needed",
+    "compatibility": "Compatible with Production System v4.0",
+    "performance": "Lower performance than current active models"
+  }
+}

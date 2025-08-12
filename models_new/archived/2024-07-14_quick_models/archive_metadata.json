@@ -1,0 +1,43 @@
+{
+  "archive_info": {
+    "archive_date": "2025-01-08",
+    "source": "models/quick_*",
+    "reason": "Migration to Production System v4.0 - Quick Training Archive",
+    "archive_category": "Quick Training Models"
+  },
+  "archived_models": {
+    "quick_cvae_model.pth": {
+      "type": "ConditionalVAE",
+      "training_date": "2024-07-14",
+      "training_method": "Quick Training (5 epochs)",
+      "file_size_mb": 1.7,
+      "performance": "Fast training, moderate quality"
+    },
+    "quick_meta_learner.pth": {
+      "type": "AttentionMetaLearner", 
+      "training_date": "2024-07-14",
+      "training_method": "Quick Training (5 epochs)",
+      "file_size_mb": 0.2,
+      "performance": "Basic ensemble weighting"
+    },
+    "quick_feature_engineer.pkl": {
+      "type": "FeatureEngineer",
+      "training_date": "2024-07-14",
+      "purpose": "Quick training feature processing",
+      "file_size_mb": 0.04,
+      "performance": "Standard feature engineering pipeline"
+    }
+  },
+  "usage_context": {
+    "training_time": "~15 minutes",
+    "quality": "Development/testing quality",
+    "purpose": "Quick prototyping and validation",
+    "replacement": "Use active models for production"
+  },
+  "retention_policy": {
+    "keep_until": "2025-04-08",
+    "retention_months": 3,
+    "auto_cleanup": true,
+    "restore_available": true
+  }
+}

@@ -211,7 +211,7 @@ class HardwareResourceManager:
             # Model parameters memory estimation
             batch_size = config.get('batch_size', 32)
             hidden_size = config.get('hidden_size', 256)
-            latent_dim = config.get('latent_dim', 64)
+            latent_dim = config.get('latent_dim', 256)
             num_layers = config.get('num_layers', 4)
             decoder_layers = config.get('decoder_layers', 3)
             
@@ -264,7 +264,7 @@ class HardwareResourceManager:
         optimal_combinations = []
         
         # Define parameter search space with hardware constraints
-        batch_sizes = [32, 48, 64, 96, 128]  # Minimum 32 for model complexity
+        batch_sizes = [8, 16, 32, 48]  # for model complexity
         hidden_sizes = [128, 256, 384, 512, 768]
         num_layers_options = [2, 3, 4, 5, 6]
         
@@ -275,7 +275,7 @@ class HardwareResourceManager:
                         'batch_size': batch_size,
                         'hidden_size': hidden_size,
                         'num_layers': num_layers,
-                        'latent_dim': 64,
+                        'latent_dim': 256,
                         'decoder_layers': 3,
                         'temporal_context_dim': 128
                     }
@@ -334,7 +334,7 @@ class HardwareResourceManager:
                         'batch_size': 32,
                         'hidden_size': hidden_size,
                         'num_layers': 4,
-                        'latent_dim': 64,
+                        'latent_dim': 256,
                         'decoder_layers': 3,
                         'temporal_context_dim': 128
                     }
@@ -575,17 +575,17 @@ class HardwareResourceManager:
             # Calculate recommended batch sizes for RTX 3080
             gpu_memory = min(self.profile.gpu_memory_gb)
             if gpu_memory >= 10:
-                constraints['recommended_batch_sizes'] = [32, 48, 64, 96, 128, 160]
+                constraints['recommended_batch_sizes'] = [16, 32, 48, 64, 96, 128, 160]
             elif gpu_memory >= 8:
-                constraints['recommended_batch_sizes'] = [32, 48, 64, 96]
+                constraints['recommended_batch_sizes'] = [8, 16, 32, 48, 64, 96]
             else:
-                constraints['recommended_batch_sizes'] = [32, 48, 64]
+                constraints['recommended_batch_sizes'] = [4, 8, 16, 32, 48, 64]
             
             # Test viable hidden sizes
             test_config_base = {
                 'batch_size': 32,
                 'num_layers': 4,
-                'latent_dim': 64,
+                'latent_dim': 256,
                 'decoder_layers': 3,
                 'temporal_context_dim': 128
             }

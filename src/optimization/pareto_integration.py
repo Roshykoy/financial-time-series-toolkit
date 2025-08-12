@@ -8,7 +8,7 @@ from typing import Dict, Any, Optional, List
 from pathlib import Path
 
 from ..infrastructure.logging.logger import get_logger
-from ..config_legacy import CONFIG as LEGACY_CONFIG
+from ..config import CONFIG
 
 logger = get_logger(__name__)
 
@@ -131,14 +131,14 @@ def create_pareto_optimized_config(pareto_params: Optional[Dict[str, Any]] = Non
         Configuration dictionary with Pareto Front optimization applied
     """
     # Start with optimized base configuration
-    config = LEGACY_CONFIG.copy()
-    config.update({
-        'device': 'cuda' if torch.cuda.is_available() else 'cpu',
-        'epochs': 6,
-        'use_mixed_precision': True,
-        'early_stopping_patience': 4,
-        'gradient_clip_norm': 0.5035892758042647,
-    })
+    config = CONFIG.copy()
+    # config.update({
+       # 'device': 'cuda' if torch.cuda.is_available() else 'cpu',
+        #'epochs': 6,
+        #'use_mixed_precision': True,
+        #'early_stopping_patience': 4,
+        #'gradient_clip_norm': 0.5035892758042647,
+    #})
     
     # Load Pareto Front parameters if not provided
     if pareto_params is None:

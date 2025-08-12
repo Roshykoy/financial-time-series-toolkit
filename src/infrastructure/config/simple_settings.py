@@ -11,7 +11,7 @@ def get_flat_config() -> Dict[str, Any]:
     """Get flattened configuration for backward compatibility."""
     # Import the original config to maintain compatibility
     try:
-        from src.config_original import CONFIG
+        from src.config import CONFIG
         return CONFIG
     except ImportError:
         # Fallback to basic config if original is missing

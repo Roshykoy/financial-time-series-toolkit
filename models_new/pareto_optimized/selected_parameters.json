@@ -1,0 +1,68 @@
+{
+  "optimization_metadata": {
+    "method": "NSGA-II (Non-dominated Sorting Genetic Algorithm II)",
+    "completed": true,
+    "optimization_date": "2024-08-04T10:22:01",
+    "total_trials": 33,
+    "pareto_front_size": 9,
+    "selection_criteria": "Best balanced trade-off across all objectives"
+  },
+  "selected_parameters": {
+    "learning_rate": 0.002595477924793905,
+    "batch_size": 32,
+    "epochs": 10,
+    "latent_dim": 256,
+    "dropout": 0.20037341354186539,
+    "kl_weight": 0.04338946541121751,
+    "contrastive_weight": 0.12422572397946177,
+    "weight_decay": 8.698770238720067e-07,
+    "gradient_clip_norm": 0.25509741356676474,
+    "negative_samples": 8
+  },
+  "objective_scores": {
+    "accuracy": -3.3836956028826535,
+    "training_time_seconds": 122.79749359289805,
+    "model_complexity": 0.784925317291627,
+    "jsd_alignment_fidelity": -0.027705446533317652,
+    "combined_score": 30.042754465193426
+  },
+  "objective_weights": {
+    "model_complexity": {
+      "weight": 1.0,
+      "priority": "HIGH",
+      "direction": "minimize",
+      "description": "Minimize overfitting risk"
+    },
+    "jsd_alignment_fidelity": {
+      "weight": 1.0, 
+      "priority": "HIGH",
+      "direction": "maximize",
+      "description": "Statistical realism with historical data"
+    },
+    "training_time": {
+      "weight": 0.8,
+      "priority": "MEDIUM-HIGH", 
+      "direction": "minimize",
+      "description": "Minimize computational cost"
+    },
+    "accuracy": {
+      "weight": 0.6,
+      "priority": "MEDIUM",
+      "direction": "maximize", 
+      "description": "Maximize model prediction performance"
+    }
+  },
+  "performance_characteristics": {
+    "training_stability": "High (KL annealing, zero loss prevention)",
+    "convergence": "Stable (optimized learning rate and regularization)",
+    "overfitting_risk": "Low (optimized dropout and complexity)",
+    "computational_efficiency": "High (optimized batch size)",
+    "statistical_realism": "Excellent (JSD alignment validated)"
+  },
+  "integration_info": {
+    "auto_detection": true,
+    "compatible_with": "Production System v4.0",
+    "training_pipeline": "Automatic parameter loading in Option 2",
+    "validation": "40+ comprehensive tests ensure compatibility"
+  }
+}

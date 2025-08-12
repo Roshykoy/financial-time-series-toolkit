@@ -24,7 +24,7 @@ from ..meta_learner import AttentionMetaLearner
 from ..cvae_engine import train_one_epoch_cvae, evaluate_cvae
 from ..cvae_data_loader import create_cvae_data_loaders
 from ..feature_engineering import FeatureEngineer
-from ..config_legacy import CONFIG
+from ..config import CONFIG
 
 logger = get_logger(__name__)
 

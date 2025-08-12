@@ -30,7 +30,7 @@ from src.cvae_model import ConditionalVAE
 from src.meta_learner import AttentionMetaLearner
 from src.cvae_data_loader import create_cvae_data_loaders
 from src.feature_engineering import FeatureEngineer
-from src.config_legacy import CONFIG as LEGACY_CONFIG
+from src.config import CONFIG
 
 # Initialize enhanced systems
 configure_logging(log_level="INFO", log_file="marksix.log")
@@ -611,11 +611,7 @@ def run_quick_training():
         print("⚡ Starting quick training...")
         
         # Use legacy config with quick settings
-        try:
-            from src.config_original import CONFIG as ORIGINAL_CONFIG
-            config = ORIGINAL_CONFIG.copy()
-        except ImportError:
-            config = LEGACY_CONFIG.copy()
+        config = CONFIG.copy()
         
         config.update({
             'epochs': 5,
