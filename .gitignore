@@ -108,6 +108,8 @@ coverage.xml
 # OS specific files
 .DS_Store
 Thumbs.db
+# Colon-suffixed metadata
+*:*
 
 # Jupyter notebook outputs (keep notebooks but ignore outputs)
 */.ipynb_checkpoints/
