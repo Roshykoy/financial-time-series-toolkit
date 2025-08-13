@@ -118,24 +118,24 @@ class HardwareResourceManager:
     def _calculate_batch_size(self, ram_gb: float, gpu_memory_gb: List[float]) -> int:
         """Calculate recommended batch size based on available memory."""
         if gpu_memory_gb:
-            # GPU-based calculation with minimum viable batch size = 32
+            # GPU-based calculation with minimum viable batch size = 8
             min_gpu_memory = min(gpu_memory_gb)
             if min_gpu_memory >= 10:
                 return 128  # RTX 3080+ can handle larger batches
             elif min_gpu_memory >= 8:
                 return 64   # Good balance for 8-10GB GPUs
             elif min_gpu_memory >= 6:
-                return 32   # Minimum viable for model complexity < 1.0
+                return 8   # Minimum viable for model complexity < 1.0
             else:
-                return 32   # Force minimum even on lower VRAM
+                return 8   # Force minimum even on lower VRAM
         else:
             # CPU-based calculation - still respect minimum
             if ram_gb >= 32:
-                return 32
+                return 8
             elif ram_gb >= 16:
-                return 32
+                return 8
             else:
-                return 32   # Always minimum 32 for viable model complexity
+                return 8   # Always minimum 8 for viable model complexity
     
     def get_resource_status(self) -> Dict[str, Any]:
         """Get current resource usage status."""
@@ -209,7 +209,7 @@ class HardwareResourceManager:
             base_memory_gb = 1.0
             
             # Model parameters memory estimation
-            batch_size = config.get('batch_size', 32)
+            batch_size = config.get('batch_size', 8)
             hidden_size = config.get('hidden_size', 256)
             latent_dim = config.get('latent_dim', 256)
             num_layers = config.get('num_layers', 4)
@@ -307,16 +307,16 @@ class HardwareResourceManager:
         # Enforce minimum batch size for viable model complexity
         if 'batch_size' in constrained_ranges:
             if 'options' in constrained_ranges['batch_size']:
-                # Filter out batch sizes < 32
+                # Filter out batch sizes < 8
                 original_options = constrained_ranges['batch_size']['options']
-                constrained_options = [bs for bs in original_options if bs >= 32]
+                constrained_options = [bs for bs in original_options if bs >= 8]
                 constrained_ranges['batch_size']['options'] = constrained_options
                 logger.info(f"Constrained batch_size options from {original_options} to {constrained_options}")
             
             elif 'range' in constrained_ranges['batch_size']:
-                # Adjust range minimum to 32
+                # Adjust range minimum to 8
                 original_range = constrained_ranges['batch_size']['range']
-                constrained_range = (max(32, original_range[0]), original_range[1])
+                constrained_range = (max(8, original_range[0]), original_range[1])
                 constrained_ranges['batch_size']['range'] = constrained_range
                 logger.info(f"Constrained batch_size range from {original_range} to {constrained_range}")
         
@@ -326,12 +326,12 @@ class HardwareResourceManager:
             
             if 'options' in constrained_ranges['hidden_size']:
                 original_options = constrained_ranges['hidden_size']['options']
-                # Test each hidden_size option with batch_size=32 to see what fits
+                # Test each hidden_size option with batch_size=8 (minimum) to see what fits
                 viable_options = []
                 
                 for hidden_size in original_options:
                     test_config = {
-                        'batch_size': 32,
+                        'batch_size': 8,
                         'hidden_size': hidden_size,
                         'num_layers': 4,
                         'latent_dim': 256,
@@ -358,8 +358,8 @@ class HardwareResourceManager:
             current_batch = optimized_config['batch_size']
             recommended_batch = self.profile.recommended_batch_size
             
-            # Enforce minimum batch size of 32 for viable model complexity
-            min_viable_batch = 32
+            # Enforce minimum batch size of 8 for viable model complexity
+            min_viable_batch = 8
             optimal_batch = max(min_viable_batch, min(current_batch, recommended_batch))
             optimized_config['batch_size'] = optimal_batch
             
@@ -563,7 +563,7 @@ class HardwareResourceManager:
             'memory_aware': True,
             'gpu_memory_gb': min(self.profile.gpu_memory_gb) if self.profile.gpu_memory_gb else 0,
             'safety_margin': 0.8,  # Use 80% of available GPU memory
-            'min_batch_size': 32,  # Minimum for model_complexity < 1.0
+            'min_batch_size': 8,  # Minimum for model_complexity < 1.0
             'recommended_batch_sizes': [],
             'viable_hidden_sizes': [],
             'optimal_combinations': []
@@ -575,15 +575,15 @@ class HardwareResourceManager:
             # Calculate recommended batch sizes for RTX 3080
             gpu_memory = min(self.profile.gpu_memory_gb)
             if gpu_memory >= 10:
-                constraints['recommended_batch_sizes'] = [16, 32, 48, 64, 96, 128, 160]
+                constraints['recommended_batch_sizes'] = [8, 16, 32, 48, 64, 96, 128, 160]
             elif gpu_memory >= 8:
                 constraints['recommended_batch_sizes'] = [8, 16, 32, 48, 64, 96]
             else:
-                constraints['recommended_batch_sizes'] = [4, 8, 16, 32, 48, 64]
+                constraints['recommended_batch_sizes'] = [8, 16, 32, 48, 64]
             
             # Test viable hidden sizes
             test_config_base = {
-                'batch_size': 32,
+                'batch_size': 8,
                 'num_layers': 4,
                 'latent_dim': 256,
                 'decoder_layers': 3,
@@ -611,7 +611,7 @@ class HardwareResourceManager:
         
         else:
             # CPU fallback constraints
-            constraints['recommended_batch_sizes'] = [32, 48, 64]
+            constraints['recommended_batch_sizes'] = [8, 16, 24, 32, 48, 64]
             constraints['viable_hidden_sizes'] = [128, 256, 384, 512]
             logger.warning("GPU not available, using CPU-optimized constraints")
         

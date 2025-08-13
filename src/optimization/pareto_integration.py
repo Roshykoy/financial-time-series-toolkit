@@ -41,6 +41,7 @@ def load_pareto_parameters(pareto_file: Optional[str] = None) -> Optional[Dict[s
         
         # Look for saved parameters in standard locations
         search_paths = [
+            "models/pareto_optimized/selected_parameters.json",  # Primary location
             "models/best_parameters/latest_pareto_selection.json",
             "models/best_parameters/selected_pareto_params.json", 
             "models/best_parameters/pareto_selected_*.json",
@@ -104,11 +105,18 @@ def apply_pareto_parameters_to_config(
         'early_stopping_patience': 'early_stopping_patience'
     }
     
-    # Apply parameters
+    # Apply parameters with constraints
     applied_params = []
     for param_name, param_value in pareto_params.items():
         if param_name in param_mapping:
             config_key = param_mapping[param_name]
+            
+            # Apply minimum constraints for critical parameters
+            if param_name == 'batch_size':
+                # Enforce minimum batch size of 8 for viable model complexity
+                param_value = max(8, param_value)
+                logger.info(f"Enforced minimum batch_size: {pareto_params.get('batch_size', 'unknown')} → {param_value}")
+            
             config[config_key] = param_value
             applied_params.append(f"{param_name}={param_value}")
     

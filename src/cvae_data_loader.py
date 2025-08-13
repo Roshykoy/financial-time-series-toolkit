@@ -44,9 +44,10 @@ def _get_smart_pin_memory():
 def _calculate_optimal_batch_size(config):
     """Calculate optimal batch size based on available VRAM and configuration."""
     base_batch_size = config.get('batch_size', 8)
+    min_batch_size = 8  # Minimum viable batch size for model complexity
     
     if not torch.cuda.is_available() or config.get('optimized_batch_size') != 'auto':
-        return base_batch_size
+        return max(min_batch_size, base_batch_size)
     
     try:
         # Get current GPU memory info
@@ -55,7 +56,7 @@ def _calculate_optimal_batch_size(config):
             total_gb = total_memory / (1024**3)
             free_gb = free_memory / (1024**3)
             
-            # Conservative scaling based on available VRAM
+            # Conservative scaling based on available VRAM with minimum enforcement
             target_utilization = config.get('vram_utilization_target', 0.80)
             max_batch_size = config.get('max_batch_size', 32)
             
@@ -69,15 +70,18 @@ def _calculate_optimal_batch_size(config):
             optimal_batch_size = int(base_batch_size * scaling_factor)
             optimal_batch_size = min(optimal_batch_size, max_batch_size)
             
+            # Enforce minimum viable batch size
+            optimal_batch_size = max(min_batch_size, optimal_batch_size)
+            
             print(f"🚀 Hardware-optimized batch size: {base_batch_size} → {optimal_batch_size} "
-                  f"(VRAM: {free_gb:.1f}GB free / {total_gb:.1f}GB total)")
+                  f"(VRAM: {free_gb:.1f}GB free / {total_gb:.1f}GB total, min={min_batch_size})")
             
             return optimal_batch_size
         else:
-            return base_batch_size
+            return max(min_batch_size, base_batch_size)
     except Exception as e:
-        print(f"⚠️  Batch size optimization failed: {e}, using default: {base_batch_size}")
-        return base_batch_size
+        print(f"⚠️  Batch size optimization failed: {e}, using minimum: {min_batch_size}")
+        return min_batch_size
 
 class CVAEDataset(Dataset):
     """
