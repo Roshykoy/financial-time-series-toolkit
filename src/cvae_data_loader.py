@@ -411,10 +411,10 @@ def create_cvae_data_loaders(df, feature_engineer, config):
                 scaling_factor = config.get('batch_size_scaling_factor', 3.5)
                 max_dynamic_size = config.get('max_dynamic_batch_size', 64)
                 enhanced_batch_size = min(int(optimal_batch_size * scaling_factor), max_dynamic_size)
-                # Enforce maximum batch size limit of 8 for model complexity constraint
-                max_batch_limit = 8
-                optimal_batch_size = min(max_batch_limit, enhanced_batch_size)
-                print(f"🚀 Dynamic batch sizing: {enhanced_batch_size} → {optimal_batch_size} (memory pressure: {memory_pressure:.1%}, max_limit={max_batch_limit})")
+                # Enforce minimum batch size of 8 for viable model complexity
+                min_batch_size = 8
+                optimal_batch_size = max(min_batch_size, enhanced_batch_size)
+                print(f"🚀 Dynamic batch sizing: {enhanced_batch_size} → {optimal_batch_size} (memory pressure: {memory_pressure:.1%}, min={min_batch_size})")
         except Exception as e:
             print(f"⚠️ Dynamic batch sizing failed: {e}")
     

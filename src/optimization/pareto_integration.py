@@ -111,11 +111,12 @@ def apply_pareto_parameters_to_config(
         if param_name in param_mapping:
             config_key = param_mapping[param_name]
             
-            # Apply minimum constraints for critical parameters
+            # Apply batch size constraints for optimal training
             if param_name == 'batch_size':
-                # Enforce minimum batch size of 8 for viable model complexity
-                param_value = max(8, param_value)
-                logger.info(f"Enforced minimum batch_size: {pareto_params.get('batch_size', 'unknown')} → {param_value}")
+                # Prefer smaller batch sizes: clamp to range [8, 16] for better convergence
+                original_value = param_value
+                param_value = min(16, max(8, param_value))
+                logger.info(f"Constrained batch_size for optimal training: {original_value} → {param_value} (range: 8-16)")
             
             config[config_key] = param_value
             applied_params.append(f"{param_name}={param_value}")
