@@ -113,10 +113,13 @@ def apply_pareto_parameters_to_config(
             
             # Apply batch size constraints for optimal training
             if param_name == 'batch_size':
-                # Prefer smaller batch sizes: clamp to range [8, 16] for better convergence
+                # Enforce minimum batch size of 8, no ceiling - let hardware decide
                 original_value = param_value
-                param_value = min(16, max(8, param_value))
-                logger.info(f"Constrained batch_size for optimal training: {original_value} → {param_value} (range: 8-16)")
+                param_value = max(8, param_value)
+                if original_value != param_value:
+                    logger.info(f"Enforced minimum batch_size: {original_value} → {param_value}")
+                else:
+                    logger.info(f"Using Pareto batch_size: {param_value} (hardware will determine ceiling)")
             
             config[config_key] = param_value
             applied_params.append(f"{param_name}={param_value}")
