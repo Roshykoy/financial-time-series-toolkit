@@ -1,0 +1,103 @@
+{
+  "optimization_config": {
+    "max_trials": 2,
+    "max_duration_hours": 0.1,
+    "parallel_jobs": 1,
+    "random_seed": null,
+    "early_stopping": false,
+    "early_stopping_patience": 10,
+    "min_improvement": 0.001,
+    "enable_hardware_monitoring": true,
+    "cleanup_frequency": 5,
+    "memory_limit_gb": null,
+    "gpu_memory_fraction": 0.8,
+    "trial_timeout_minutes": 10.0,
+    "retry_failed_trials": false,
+    "max_retries": 2,
+    "save_intermediate_results": true,
+    "checkpoint_frequency": 5,
+    "backup_results": true,
+    "validation_strategy": "holdout",
+    "validation_split": 0.2,
+    "cross_validation_folds": 5
+  },
+  "search_space": {
+    "batch_size": {
+      "choices": [
+        4,
+        8,
+        16,
+        32,
+        64
+      ],
+      "type": "choice"
+    },
+    "dropout": {
+      "high": 0.5,
+      "low": 0.05,
+      "type": "uniform"
+    },
+    "hidden_size": {
+      "choices": [
+        64,
+        128,
+        256,
+        512,
+        768
+      ],
+      "type": "choice"
+    },
+    "learning_rate": {
+      "high": 0.01,
+      "low": 1e-06,
+      "type": "loguniform"
+    }
+  },
+  "all_trials": [],
+  "best_trial": null,
+  "optimization_summary": {
+    "total_trials": 0,
+    "completed_trials": 0,
+    "failed_trials": 0,
+    "success_rate": 0,
+    "best_score": null,
+    "algorithm": "RandomSearchOptimizer"
+  },
+  "hardware_profile": {
+    "cpu_cores": 12,
+    "cpu_frequency": 3700.033,
+    "total_memory_gb": 15.570480346679688,
+    "available_memory_gb": 13.405067443847656,
+    "gpu_available": true,
+    "gpu_count": 1,
+    "gpu_memory_gb": [
+      9.99951171875
+    ],
+    "gpu_names": [
+      "NVIDIA GeForce RTX 3080"
+    ],
+    "recommended_batch_size": 64,
+    "recommended_workers": 8,
+    "parallel_jobs": 6
+  },
+  "monitoring_data": [
+    {
+      "cpu_usage_percent": 0.5,
+      "memory_usage_percent": 13.9,
+      "memory_available_gb": 13.402870178222656,
+      "memory_used_gb": 1.9425849914550781,
+      "timestamp": 1754992572.139701,
+      "gpu_status": [
+        {
+          "device_id": 0,
+          "memory_allocated_gb": 0.0,
+          "memory_reserved_gb": 0.0,
+          "memory_free_gb": 9.99951171875,
+          "utilization_percent": 0.0
+        }
+      ]
+    }
+  ],
+  "start_time": "2025-08-12T17:56:11.137011",
+  "end_time": null
+}

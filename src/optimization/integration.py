@@ -116,7 +116,7 @@ class ModelTrainingInterface:
         """Generate cache key for configuration."""
         # Include only data-relevant parameters
         data_params = {
-            'batch_size': config.get('batch_size', 32),
+            'batch_size': config.get('batch_size', 8),
             'negative_samples': config.get('negative_samples', 16),
             'validation_split': config.get('validation_split', 0.2)
         }
@@ -365,8 +365,8 @@ class ModelTrainingInterface:
         base_time *= epochs / 5.0
         
         # Adjust for batch size
-        batch_size = config.get('batch_size', 32)
-        base_time *= (32.0 / batch_size) ** 0.5
+        batch_size = config.get('batch_size', 8)
+        base_time *= (8.0 / batch_size) ** 0.5
         
         # Adjust for model complexity
         hidden_size = config.get('hidden_size', 256)

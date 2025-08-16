@@ -300,7 +300,13 @@ class ParallelFeatureProcessor:
         cpu_count = multiprocessing.cpu_count()
         # Reserve cores for main process and DataLoader workers
         available_cores = max(1, cpu_count - 2)
-        optimal_workers = min(available_cores, self.config.get('max_workers', 8))
+        
+        # Handle 'auto' or integer values for max_workers
+        max_workers = self.config.get('max_workers', 8)
+        if max_workers == 'auto':
+            optimal_workers = available_cores
+        else:
+            optimal_workers = min(available_cores, int(max_workers))
         return optimal_workers
     
     def process_batch_parallel(self, number_sets_batch: List[List[int]], 

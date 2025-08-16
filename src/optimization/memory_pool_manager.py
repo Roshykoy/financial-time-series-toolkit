@@ -79,11 +79,11 @@ class TensorPool:
             (8, 6),      # Batch size 8, 6 numbers (base batch)
             (16, 6),     # Batch size 16, 6 numbers 
             (28, 6),     # Batch size 28, 6 numbers (Phase 1 optimized)
-            (32, 6),     # Batch size 32, 6 numbers
+            (8, 6),      # Batch size 8, 6 numbers
             (8, 17),     # Features: batch_size 8, 17 features
             (16, 17),    # Features: batch_size 16, 17 features  
             (28, 17),    # Features: batch_size 28, 17 features
-            (32, 17),    # Features: batch_size 32, 17 features
+            (8, 17),     # Features: batch_size 8, 17 features
             (10, 6),     # Temporal sequence length 10, 6 numbers
             (20, 6),     # Temporal sequence length 20, 6 numbers
         ]

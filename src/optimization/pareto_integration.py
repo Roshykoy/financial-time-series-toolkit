@@ -41,8 +41,8 @@ def load_pareto_parameters(pareto_file: Optional[str] = None) -> Optional[Dict[s
         
         # Look for saved parameters in standard locations
         search_paths = [
-            "models/pareto_optimized/selected_parameters.json",  # Primary location
-            "models/best_parameters/latest_pareto_selection.json",
+            #"models/pareto_optimized/selected_parameters.json",  # Primary location
+            #"models/best_parameters/latest_pareto_selection.json",
             "models/best_parameters/selected_pareto_params.json", 
             "models/best_parameters/pareto_selected_*.json",
             "models/best_parameters/pareto_front_nsga2_*.json",
@@ -93,6 +93,7 @@ def apply_pareto_parameters_to_config(
     param_mapping = {
         'learning_rate': 'learning_rate',
         'batch_size': 'batch_size',
+        'epochs': 'epochs',
         'hidden_size': 'hidden_size',
         'num_layers': 'num_layers',
         'dropout': 'dropout',

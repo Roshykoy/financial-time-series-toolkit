@@ -263,7 +263,7 @@ class MultiObjectiveFunction:
         complexity += (1 - dropout) * 0.2
         
         # Factor in batch size (smaller batch = more complex training)
-        batch_size = config.get('batch_size', 32)
+        batch_size = config.get('batch_size', 8)
         complexity += (64 / max(batch_size, 1)) * 0.2
         
         return min(complexity, 1.0)

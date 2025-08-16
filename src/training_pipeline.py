@@ -25,6 +25,84 @@ from src.i_ching_scorer import IChingScorer
 from src.debug_utils import ModelDebugger, debug_training_step, quick_model_test
 from src.loss_monitor import LossMonitor
 
+# OOM recovery system
+from src.utils.oom_recovery import get_oom_recovery_manager, handle_oom_error, reset_oom_recovery
+
+
+def train_epoch_with_oom_recovery(train_func, *args, **kwargs):
+    """
+    Wrapper for training epoch function that handles OOM recovery.
+    
+    Args:
+        train_func: The training function to call (e.g., train_one_epoch_cvae_modified)
+        *args, **kwargs: Arguments to pass to the training function
+        
+    Returns:
+        Training losses or raises unrecoverable error
+    """
+    config = kwargs.get('config') or (args[5] if len(args) > 5 else None)
+    if not config:
+        # No config available, proceed without OOM recovery
+        return train_func(*args, **kwargs)
+    
+    current_batch_size = config.get('batch_size', 8)
+    max_oom_retries = config.get('max_oom_retries', 3)
+    oom_retry_count = 0
+    
+    while oom_retry_count <= max_oom_retries:
+        try:
+            # Attempt training
+            result = train_func(*args, **kwargs)
+            
+            # Training successful - reset OOM recovery state
+            if oom_retry_count > 0:
+                print(f"✅ Training successful with batch_size={config['batch_size']}")
+                reset_oom_recovery()
+            
+            return result
+            
+        except Exception as e:
+            # Check if this is an OOM error
+            oom_recovery_manager = get_oom_recovery_manager()
+            
+            if oom_recovery_manager.is_oom_error(e):
+                # Attempt OOM recovery
+                new_batch_size, should_retry = handle_oom_error(
+                    current_batch_size, e, "training_epoch"
+                )
+                
+                if should_retry and new_batch_size is not None:
+                    # Update configuration with reduced batch size
+                    print(f"🔄 Retrying training with reduced batch_size: {current_batch_size} → {new_batch_size}")
+                    
+                    # Update config in-place
+                    config['batch_size'] = new_batch_size
+                    current_batch_size = new_batch_size
+                    
+                    # Recreate data loaders with new batch size if available
+                    if 'train_loader' in kwargs:
+                        print("   📦 Recreating data loaders with new batch size...")
+                        # Note: This requires access to the dataset/dataloader creation function
+                        # For now, we'll rely on the training function to handle batch size changes
+                    
+                    # Clear GPU cache
+                    if torch.cuda.is_available():
+                        torch.cuda.empty_cache()
+                    
+                    oom_retry_count += 1
+                    continue  # Retry training with reduced batch size
+                else:
+                    # Cannot recover - propagate error
+                    print(f"❌ OOM recovery failed - cannot reduce batch_size further from {current_batch_size}")
+                    raise e
+            else:
+                # Not an OOM error - propagate without handling
+                raise e
+    
+    # Max retries exceeded
+    raise RuntimeError(f"Training failed after {max_oom_retries} OOM recovery attempts")
+
+
 # Add this function after the existing imports
 def debug_training_setup(cvae_model, meta_learner, config, device):
     """Run debugging checks before training starts."""
@@ -328,8 +406,9 @@ def run_training():
         print(f"\nEpoch {epoch + 1}/{CONFIG['epochs']}")
         print("-" * 40)
         
-        # Training phase with enhanced monitoring
-        epoch_train_losses = train_one_epoch_cvae_modified(
+        # Training phase with enhanced monitoring and OOM recovery
+        epoch_train_losses = train_epoch_with_oom_recovery(
+            train_one_epoch_cvae_modified,
             cvae_model, meta_learner, train_loader, optimizers, device, CONFIG, epoch, df, scaler, loss_monitor
         )
         

@@ -42,10 +42,35 @@ def _get_smart_pin_memory():
         return torch.cuda.is_available()  # Fallback to basic CUDA check
 
 def _calculate_optimal_batch_size(config):
-    """Calculate optimal batch size based on available VRAM and configuration."""
+    """
+    Conservative batch size management for Pareto Front optimization.
+    
+    Only intervenes when:
+    1. Batch size < 8 (minimum enforcement)
+    2. OOM recovery is needed (handled separately in training pipeline)
+    
+    Args:
+        config: Configuration dictionary with batch_size and optimization settings
+        
+    Returns:
+        int: Adjusted batch size (minimum 8, otherwise unchanged)
+    """
     base_batch_size = config.get('batch_size', 8)
     min_batch_size = 8  # Minimum viable batch size for model complexity
     
+    # Conservative mode: only enforce minimum, don't scale up
+    conservative_mode = config.get('conservative_batch_sizing', True)
+    
+    if conservative_mode:
+        # Only enforce minimum constraint - don't interfere with Pareto optimization
+        if base_batch_size < min_batch_size:
+            print(f"🔧 Batch size constraint: {base_batch_size} → {min_batch_size} (minimum enforcement)")
+            return min_batch_size
+        else:
+            # Leave batch size unchanged for Pareto Front testing
+            return base_batch_size
+    
+    # Legacy aggressive optimization (when conservative_batch_sizing=False)
     if not torch.cuda.is_available() or config.get('optimized_batch_size') != 'auto':
         return max(min_batch_size, base_batch_size)
     
@@ -56,10 +81,7 @@ def _calculate_optimal_batch_size(config):
             total_gb = total_memory / (1024**3)
             free_gb = free_memory / (1024**3)
             
-            # Conservative scaling based on available VRAM with minimum enforcement
-            target_utilization = config.get('vram_utilization_target', 0.80)
-            max_batch_size = config.get('max_batch_size', 32)
-            
+            # Aggressive scaling (legacy behavior)
             if total_gb >= 8.0:  # High-end GPU
                 scaling_factor = min(3.5, free_gb / 2.0)  # Conservative scaling
             elif total_gb >= 6.0:  # Mid-range GPU  
@@ -68,7 +90,7 @@ def _calculate_optimal_batch_size(config):
                 scaling_factor = min(2.0, free_gb / 1.0)
             
             optimal_batch_size = int(base_batch_size * scaling_factor)
-            optimal_batch_size = min(optimal_batch_size, max_batch_size)
+            optimal_batch_size = min(optimal_batch_size, config.get('max_batch_size', 32))
             
             # Enforce minimum viable batch size
             optimal_batch_size = max(min_batch_size, optimal_batch_size)

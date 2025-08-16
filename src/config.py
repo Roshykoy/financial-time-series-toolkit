@@ -76,6 +76,12 @@ CONFIG = {
     "max_grad_norm": 0.5,           # Additional gradient clipping parameter
     "weight_decay": 1e-6,            # Much reduced from 1e-5
     
+    # Conservative Batch Size Management (NEW)
+    "conservative_batch_sizing": True,        # Only enforce minimum (8) and handle OOM
+    "min_batch_size": 8,                      # Absolute minimum batch size
+    "oom_reduction_steps": [0.75, 0.5, 0.375, 0.25, 0.125],  # Batch size reduction factors
+    "max_oom_retries": 3,                     # Maximum OOM recovery attempts
+    
     # Loss Function Weights - CONSERVATIVE
     "reconstruction_weight": 1.0,    # Keep main loss
     "kl_weight": 0.01,               # Much reduced from 0.1
